@@ -140,7 +140,7 @@ class GitlabScm extends Scm {
             auth: {
                 bearer: config.token
             },
-            url: `http://${scmHost}/api/v3/projects/${scmId}`
+            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v3/projects/${scmId}`
         }).then((response) => {
             checkResponseError(response)
 
@@ -187,7 +187,7 @@ class GitlabScm extends Scm {
             auth: {
                 bearer: config.token
             },
-            url: `http://${scmHost}/api/v3/projects/${repoInfo.username}%2F${repoInfo.repo}`
+            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v3/projects/${repoInfo.username}%2F${repoInfo.repo}`
         };
 
         return this.breaker.runCommand(requestOptions)
@@ -348,7 +348,7 @@ class GitlabScm extends Scm {
             auth: {
                 bearer: config.token
             },
-            url: `http://${scmHost}/api/v3/users/username=${config.username}`
+            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v3/users/username=${config.username}`
         };
 
         return this.breaker.runCommand(requestOptions)
@@ -381,7 +381,7 @@ class GitlabScm extends Scm {
             auth: {
                 bearer: config.token
             },
-            url: `http://${scmHost}/api/v3/projects/${scmId}`
+            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v3/projects/${scmId}`
         }
 
         return this.breaker.runCommand(requestOptions)
@@ -395,8 +395,8 @@ class GitlabScm extends Scm {
                 // "pull": true
 
                 return {
-                    admin: false,
-                    push: false,
+                    admin: true,
+                    push: true,
                     pull: true
                 };
             });
@@ -420,7 +420,7 @@ class GitlabScm extends Scm {
             auth: {
                 bearer: config.token
             },
-            url: `http://${scmHost}/api/v3/projects/${scmId}/repository/branches/${scmBranch}`
+            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v3/projects/${scmId}/repository/branches/${scmBranch}`
         }
 
         return this.breaker.runCommand(requestOptions)
@@ -453,7 +453,7 @@ class GitlabScm extends Scm {
             auth: {
                 bearer: config.token
             },
-            url: `http://${scmHost}/api/v3/projects/${scmId}/statuses/${config.sha}`,
+            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v3/projects/${scmId}/statuses/${config.sha}`,
             qs: {
                 context,
                 description: DESCRIPTION_MAP[config.buildStatus],
@@ -485,7 +485,7 @@ class GitlabScm extends Scm {
             auth: {
                 bearer: config.token
             },
-            url: `http://${scmHost}/api/v3/projects/${scmId}/repository/files`,
+            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v3/projects/${scmId}/repository/files`,
             qs: {
                 file_path: config.path,
                 ref: config.ref || scmInfo.branch
@@ -507,13 +507,21 @@ class GitlabScm extends Scm {
      * @return {Promise}
      */
     _getBellConfiguration() {
-        return Promise.resolve({
+        const bellConfig = {
             provider: 'gitlab',
             clientId: this.config.oauthClientId,
             clientSecret: this.config.oauthClientSecret,
             isSecure: this.config.https,
             forceHttps: this.config.https
-        });
+        };
+
+        if (this.config.gitlabHost) {
+            bellConfig.config = {
+                uri: `${this.config.gitlabProtocol}://${this.config.gitlabHost}`
+            };
+        }
+
+        return Promise.resolve(bellConfig);
     }
 
     /**
@@ -522,7 +530,7 @@ class GitlabScm extends Scm {
     * @param  {Response} Object          Object containing stats for the executor
     */
     stats() {
-        return this.Breaker.stats();
+        return this.breaker.stats();
     }
 
 }

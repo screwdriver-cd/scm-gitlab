@@ -119,7 +119,7 @@ class GitlabScm extends Scm {
             gitlabConfig.pathPrefix = '';
         }
 
-        this.breaker = new Breaker(request, this.config.fusebox);
+        this.breaker = new Breaker(Request, this.config.fusebox);
     }
 
     /**
@@ -376,7 +376,7 @@ class GitlabScm extends Scm {
 
         // fetch repo info from scm
         var requestOptions = {
-            json: true
+            json: true,
             method: 'GET',
             auth: {
                 bearer: config.token
@@ -415,7 +415,7 @@ class GitlabScm extends Scm {
 
         // fetch repo#branch info from scm
         var requestOptions = {
-            json: true
+            json: true,
             method: 'GET',
             auth: {
                 bearer: config.token
@@ -448,7 +448,7 @@ class GitlabScm extends Scm {
         const context = config.jobName ? `Screwdriver/${config.jobName}` : 'Screwdriver';
 
         var requestOptions = {
-            json: true
+            json: true,
             method: 'POST',
             auth: {
                 bearer: config.token
@@ -467,7 +467,7 @@ class GitlabScm extends Scm {
 
 
     /**
-    * Fetch content of a file from github
+    * Fetch content of a file from gitlab
     * @method getFile
     * @param  {Object}   config              Configuration
     * @param  {String}   config.scmUri       The scmUri to get permissions on
@@ -480,7 +480,7 @@ class GitlabScm extends Scm {
         const [scmHost, scmId, scmBranch] = config.scmUri.split(':');
 
         var requestOptions = {
-            json: true
+            json: true,
             method: 'GET',
             auth: {
                 bearer: config.token

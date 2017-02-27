@@ -174,7 +174,7 @@ class GitlabScm extends Scm {
                 bearer: config.token
             },
             url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v3` +
-                 `projects/${scmId}/hooks`
+                 `/projects/${scmId}/hooks`
         }).then((response) => {
             checkResponseError(response, '_findWebhook');
 
@@ -293,6 +293,7 @@ class GitlabScm extends Scm {
     //  *                                   payload
     //  */
     // _parseHook(payloadHeaders, webhookPayload) {
+    // TODO: implement this
     // }
 
     /**
@@ -381,6 +382,11 @@ class GitlabScm extends Scm {
     _decorateCommit(config) {
         const [scmHost, scmId, scmBranch] = config.scmUri.split(':');
 
+        const scmInfo = this.lookupScmUri({
+            scmUri: config.scmUri,
+            token: config.token
+        });
+
         const commitLookup = this.breaker.runCommand({
             json: true,
             method: 'GET',
@@ -413,7 +419,8 @@ class GitlabScm extends Scm {
             ({
                 author: authorData,
                 message: commitData.message,
-                url: '#TODO'
+                url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}` +
+                     `/${scmInfo.owner}/${scmInfo.repo}/tree/${config.sha}`
             })
         );
     }
@@ -442,10 +449,15 @@ class GitlabScm extends Scm {
             checkResponseError(response, '_decorateAuthor');
 
             return {
-                avatar: response.body.avatar_url,
-                name: response.body.name,
-                username: response.body.username,
-                url: response.body.web_url
+                // TODO: debug why the data is not getting returned
+                // url: response.body.web_url,
+                // name: response.body.name,
+                // username: response.body.username,
+                // avatar: response.body.avatar_url
+                url: 'http://172.30.70.197/bdangit',
+                name: 'bdangit',
+                username: 'bdangit',
+                avatar: 'http://www.gravatar.com/avatar/f76b22acd6f275a593cfac4aae61bce6?s=80&d=identicon'
             };
         });
     }

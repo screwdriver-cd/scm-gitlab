@@ -1,3 +1,4 @@
 node_modules/
 artifacts/
 features/*.feature
+gitlab.js

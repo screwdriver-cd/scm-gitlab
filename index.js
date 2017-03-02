@@ -304,7 +304,9 @@ class GitlabScm extends Scm {
      */
     _parseHook(payloadHeaders, webhookPayload) {
     // TODO: implement this
-        console.log("WOOF WOOF parse hook");
+        console.log('WOOF WOOF parse hook');
+        console.log(`WOOF: ${JSON.stringify(payloadHeaders, null, 2)}`);
+        console.log(`WOOF: ${JSON.stringify(webhookPayload, null, 2)}`);
     }
 
     /**
@@ -408,32 +410,33 @@ class GitlabScm extends Scm {
                 checkResponseError(response, '_decorateCommit: commitLookup');
 
                 return {
-                    commitData: response.body,
+                    commitInfo: response.body,
                     scmInfo
                 };
             })
         );
 
-        const authorLookup = commitLookup.then((commitData, _scmInfo) => {
-            if (!commitData.author_name) {
+        const authorLookup = commitLookup.then((commitData) => {
+            if (!commitData.commitInfo.author_name) {
                 return DEFAULT_AUTHOR;
             }
 
             return this.decorateAuthor({
                 token: config.token,
-                username: commitData.author_name
+                username: commitData.commitInfo.author_name
             });
         });
 
         return Promise.all([
             commitLookup,
             authorLookup
-        ]).then(([commitData, scmInfo, authorData]) =>
+        ]).then(([commitData, authorData]) =>
             ({
                 author: authorData,
-                message: commitData.message,
+                message: commitData.commitInfo.message,
                 url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}` +
-                     `/${scmInfo.owner}/${scmInfo.repoName}/tree/${config.sha}`
+                     `/${commitData.scmInfo.owner}/${commitData.scmInfo.repoName}` +
+                     `/tree/${config.sha}`
             })
         );
     }

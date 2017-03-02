@@ -193,7 +193,7 @@ class GitlabScm extends Scm {
             checkResponseError(response, '_findWebhook');
 
             const screwdriverHook = response.body.find(hook =>
-                Hoek.reach(hook, 'config.url') === config.url
+                Hoek.reach(hook, 'url') === config.url
             );
 
             return screwdriverHook;
@@ -208,14 +208,12 @@ class GitlabScm extends Scm {
      * @param  {Object}     config.scmUri       Information about the repo
      * @param  {String}     config.token        admin token for repo
      * @param  {String}     config.url          url for webhook notifications
-     * @param  {String}     config.secret
      * @return {Promise}                        resolves when complete
      */
     _createWebhook(config) {
         const repoInfo = getScmUriParts(config.scmUri);
         const params = {
             url: config.url,
-            token: config.secret,
             push_events: true,
             merge_requests_events: true
         };
@@ -227,7 +225,7 @@ class GitlabScm extends Scm {
 
         if (config.hookInfo) {
             action.method = 'PUT';
-            action.url += `/${config.hookInfo}`;
+            action.url += `/${config.hookInfo.id}`;
         }
 
         return this.breaker.runCommand({
@@ -262,7 +260,7 @@ class GitlabScm extends Scm {
                 hookInfo,
                 scmUri: config.scmUri,
                 token: config.token,
-                url: config.webHookUrl
+                url: config.webhookUrl
             })
         );
     }
@@ -293,20 +291,21 @@ class GitlabScm extends Scm {
         });
     }
 
-    // /**
-    //  * Given a SCM webhook payload & its associated headers, aggregate the
-    //  * necessary data to execute a Screwdriver job with.
-    //  * @method _parseHook
-    //  * @param  {Object}  payloadHeaders  The request headers associated with the
-    //  *                                   webhook payload
-    //  * @param  {Object}  webhookPayload  The webhook payload received from the
-    //  *                                   SCM service.
-    //  * @return {Promise}                 A key-map of data related to the received
-    //  *                                   payload
-    //  */
-    // _parseHook(payloadHeaders, webhookPayload) {
+    /**
+     * Given a SCM webhook payload & its associated headers, aggregate the
+     * necessary data to execute a Screwdriver job with.
+     * @method _parseHook
+     * @param  {Object}  payloadHeaders  The request headers associated with the
+     *                                   webhook payload
+     * @param  {Object}  webhookPayload  The webhook payload received from the
+     *                                   SCM service.
+     * @return {Promise}                 A key-map of data related to the received
+     *                                   payload
+     */
+    _parseHook(payloadHeaders, webhookPayload) {
     // TODO: implement this
-    // }
+        console.log("WOOF WOOF parse hook");
+    }
 
     /**
     * Checkout the source code from a repository; resolves as an object with checkout commands

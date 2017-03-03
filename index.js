@@ -321,7 +321,6 @@ class GitlabScm extends Scm {
             parsed.branch = webhookPayload.ref.split('/').slice(-1);
             parsed.sha = webhookPayload.checkout_sha;
 
-            console.log(`WOOF: ${parsed.type}/${parsed.action} ${JSON.stringify(parsed, null, 2)}`);
             return Promise.resolve(parsed);
         }
         case 'merge_request': {
@@ -345,8 +344,6 @@ class GitlabScm extends Scm {
             parsed.prNum = mergeRequest.iid;
             parsed.prRef = mergeRequest.source_branch;
 
-            console.log(`WOOF: ${parsed.type}/${parsed.action} ${JSON.stringify(parsed, null, 2)}`);
-
             return Promise.resolve(parsed);
         }
         default:
@@ -367,7 +364,8 @@ class GitlabScm extends Scm {
     * @return {Promise}
     */
     _getCheckoutCommand(config) {
-        const checkoutUrl = `${config.host}/${config.org}/${config.repo}`;
+        const checkoutUrl = `${this.config.gitlabProtocol}://${config.host}` +
+                            `/${config.org}/${config.repo}`;
         const checkoutRef = config.prRef ? config.branch : config.sha; // if PR, use pipeline branch
         const command = [];
 
@@ -377,7 +375,7 @@ class GitlabScm extends Scm {
         command.push('if [ ! -z $SCM_USERNAME ] && [ ! -z $SCM_ACCESS_TOKEN ]; then '
             + 'SCM_URL="$SCM_USERNAME:$SCM_ACCESS_TOKEN@$SCM_URL"; fi');
         command.push(`git clone --quiet --progress --branch ${config.branch} `
-            + 'https://$SCM_URL $SD_SOURCE_DIR');
+            + '$SCM_URL $SD_SOURCE_DIR');
         // Reset to SHA
         command.push(`git reset --hard ${checkoutRef}`);
         command.push(`echo Reset to ${checkoutRef}`);

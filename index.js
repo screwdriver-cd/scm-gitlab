@@ -303,10 +303,55 @@ class GitlabScm extends Scm {
      *                                   payload
      */
     _parseHook(payloadHeaders, webhookPayload) {
-    // TODO: implement this
-        console.log('WOOF WOOF parse hook');
-        console.log(`WOOF: ${JSON.stringify(payloadHeaders, null, 2)}`);
-        console.log(`WOOF: ${JSON.stringify(webhookPayload, null, 2)}`);
+        // console.log('WOOF WOOF parse hook');
+        // console.log(`WOOF: ${JSON.stringify(payloadHeaders, null, 2)}`);
+        // console.log(`WOOF: ${JSON.stringify(webhookPayload, null, 2)}`);
+        const parsed = {};
+
+        switch (webhookPayload.object_kind) {
+        case 'push': {
+            if (webhookPayload.event_name !== 'push') {
+                return Promise.resolve(null);
+            }
+
+            parsed.type = 'repo';
+            parsed.action = 'push';
+            parsed.username = webhookPayload.user_name;
+            parsed.checkoutUrl = webhookPayload.project.git_http_url;
+            parsed.branch = webhookPayload.ref.split('/').slice(-1);
+            parsed.sha = webhookPayload.checkout_sha;
+
+            console.log(`WOOF: ${parsed.type}/${parsed.action} ${JSON.stringify(parsed, null, 2)}`);
+            return Promise.resolve(parsed);
+        }
+        case 'merge_request': {
+            const mergeRequest = webhookPayload.object_attributes;
+
+            if (mergeRequest.state === 'opened') {
+                parsed.action = 'opened';
+            } else if (mergeRequest.state === 'reopened') {
+                parsed.action = 'reopened';
+            } else if (mergeRequest.state === 'closed') {
+                parsed.action = 'closed';
+            } else {
+                return Promise.resolve(null);
+            }
+
+            parsed.type = 'pr';
+            parsed.username = webhookPayload.user.username;
+            parsed.checkoutUrl = mergeRequest.source.git_http_url;
+            parsed.branch = mergeRequest.target_branch;
+            parsed.sha = mergeRequest.last_commit.id;
+            parsed.prNum = mergeRequest.iid;
+            parsed.prRef = mergeRequest.source_branch;
+
+            console.log(`WOOF: ${parsed.type}/${parsed.action} ${JSON.stringify(parsed, null, 2)}`);
+
+            return Promise.resolve(parsed);
+        }
+        default:
+            return Promise.resolve(null);
+        }
     }
 
     /**
@@ -435,7 +480,7 @@ class GitlabScm extends Scm {
                 author: authorData,
                 message: commitData.commitInfo.message,
                 url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}` +
-                     `/${commitData.scmInfo.owner}/${commitData.scmInfo.repoName}` +
+                     `/${commitData.scmInfo.owner}/${commitData.scmInfo.reponame}` +
                      `/tree/${config.sha}`
             })
         );

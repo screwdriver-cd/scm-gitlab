@@ -303,9 +303,6 @@ class GitlabScm extends Scm {
      *                                   payload
      */
     _parseHook(payloadHeaders, webhookPayload) {
-        // console.log('WOOF WOOF parse hook');
-        // console.log(`WOOF: ${JSON.stringify(payloadHeaders, null, 2)}`);
-        // console.log(`WOOF: ${JSON.stringify(webhookPayload, null, 2)}`);
         const parsed = {};
 
         switch (webhookPayload.object_kind) {
@@ -369,16 +366,15 @@ class GitlabScm extends Scm {
         const checkoutRef = config.prRef ? config.branch : config.sha; // if PR, use pipeline branch
         const command = [];
 
+        command.push('git version');
+
         // Git clone
         command.push(`echo Cloning ${checkoutUrl}, on branch ${config.branch}`);
-        command.push(`export SCM_URL=${checkoutUrl}`);
-        command.push('if [ ! -z $SCM_USERNAME ] && [ ! -z $SCM_ACCESS_TOKEN ]; then '
-            + 'SCM_URL="$SCM_USERNAME:$SCM_ACCESS_TOKEN@$SCM_URL"; fi');
         command.push(`git clone --quiet --progress --branch ${config.branch} `
-            + '$SCM_URL $SD_SOURCE_DIR');
+            + `${checkoutUrl} $SD_SOURCE_DIR`);
         // Reset to SHA
+        command.push(`echo Reset to SHA ${checkoutRef}`);
         command.push(`git reset --hard ${checkoutRef}`);
-        command.push(`echo Reset to ${checkoutRef}`);
         // Set config
         command.push('echo Setting user name and user email');
         command.push(`git config user.name ${this.config.username}`);
@@ -386,14 +382,13 @@ class GitlabScm extends Scm {
 
         // For pull requests
         if (config.prRef) {
-            const prRef = config.prRef.replace('merge', 'head:pr');
-
-            // Fetch a pull request
             command.push(`echo Fetching PR and merging with ${config.branch}`);
-            command.push(`git fetch origin ${prRef}`);
-            // Merge a pull request with pipeline branch
-            command.push(`git merge --no-edit ${config.sha}`);
+            command.push(`git fetch origin ${config.prRef}`);
+            command.push(`git merge ${config.sha}`);
         }
+
+        command.push('pwd');
+        command.push('cat screwdriver.yaml');
 
         return Promise.resolve({
             name: 'sd-checkout-code',
@@ -507,18 +502,18 @@ class GitlabScm extends Scm {
         }).then((response) => {
             checkResponseError(response, '_decorateAuthor');
 
-            return DEFAULT_AUTHOR;
-            // {
-                // TODO: debug why the data is not getting returned
-                // url: response.body.web_url,
-                // name: response.body.name,
-                // username: response.body.username,
-                // avatar: response.body.avatar_url
-            //     url: 'http://172.30.70.197/bdangit',
-            //     name: 'bdangit',
-            //     username: 'bdangit',
-            //     avatar: 'http://www.gravatar.com/avatar/f76b22acd6f275a593cfac4aae61bce6?s=80&d=identicon'
-            // };
+            const author = response.body[0];
+
+            if (!author.username) {
+                return DEFAULT_AUTHOR;
+            }
+
+            return {
+                url: author.web_url,
+                name: author.name,
+                username: author.username,
+                avatar: author.avatar_url
+            };
         });
     }
 
@@ -608,7 +603,7 @@ class GitlabScm extends Scm {
                 bearer: config.token
             },
             url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v3` +
-                 `/projects/${repoInfo.repoId}}/statuses/${config.sha}`,
+                 `/projects/${repoInfo.repoId}/statuses/${config.sha}`,
             qs: {
                 context,
                 description: DESCRIPTION_MAP[config.buildStatus],

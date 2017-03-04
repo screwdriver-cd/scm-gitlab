@@ -366,8 +366,6 @@ class GitlabScm extends Scm {
         const checkoutRef = config.prRef ? config.branch : config.sha; // if PR, use pipeline branch
         const command = [];
 
-        command.push('git version');
-
         // Git clone
         command.push(`echo Cloning ${checkoutUrl}, on branch ${config.branch}`);
         command.push(`git clone --quiet --progress --branch ${config.branch} `
@@ -386,9 +384,6 @@ class GitlabScm extends Scm {
             command.push(`git fetch origin ${config.prRef}`);
             command.push(`git merge ${config.sha}`);
         }
-
-        command.push('pwd');
-        command.push('cat screwdriver.yaml');
 
         return Promise.resolve({
             name: 'sd-checkout-code',
@@ -626,7 +621,7 @@ class GitlabScm extends Scm {
     _getFile(config) {
         const repoInfo = getScmUriParts(config.scmUri);
 
-        this.breaker.runCommand({
+        return this.breaker.runCommand({
             json: true,
             method: 'GET',
             auth: {

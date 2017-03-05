@@ -327,7 +327,7 @@ class GitlabScm extends Scm {
                 parsed.action = 'opened';
             } else if (mergeRequest.state === 'reopened') {
                 parsed.action = 'reopened';
-            } else if (mergeRequest.state === 'closed') {
+            } else if (mergeRequest.state === 'closed' || mergeRequest.state === 'merged') {
                 parsed.action = 'closed';
             } else {
                 return Promise.resolve(null);

@@ -52,19 +52,19 @@ function checkResponseError(response, caller) {
         return;
     }
 
-    const errorMessage = Hoek.reach(response, 'body.error.message', {
-        default: `SCM service unavailable (${response.statusCode}).`
+    const errorCode = Hoek.reach(response, 'statusCode', {
+        default: 'SCM service unavailable.'
     });
-    const errorReason = Hoek.reach(response, 'body.error.detail.required', {
+    const errorReason = Hoek.reach(response, 'body.message', {
         default: JSON.stringify(response.body)
     });
 
-    throw new Error(`${errorMessage} Reason "${errorReason} Caller "${caller}"`);
+    throw new Error(`${errorCode} Reason "${errorReason}" Caller "${caller}"`);
 }
 
 /**
 * Get repo information
-* @method getRepoInfo
+* @method getRepoInfoByCheckoutUrl
 * @param  {String}  checkoutUrl      The url to check out repo
 * @return {Object}                   An object with the hostname, repo, branch, and owner
 */
@@ -340,6 +340,7 @@ class GitlabScm extends Scm {
             parsed.sha = mergeRequest.last_commit.id;
             parsed.prNum = mergeRequest.iid;
             parsed.prRef = mergeRequest.source_branch;
+            parsed.hookId = mergeRequest.id;
 
             return Promise.resolve(parsed);
         }

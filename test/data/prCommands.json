@@ -1,0 +1,4 @@
+{
+    "name": "sd-checkout-code",
+    "command": "echo Cloning https://hostName/orgName/repoName, on branch branchName && git clone --quiet --progress --branch branchName https://hostName/orgName/repoName $SD_SOURCE_DIR && echo Reset to SHA branchName && git reset --hard branchName && echo Setting user name and user email && git config user.name sd-buildbot && git config user.email dev-null@screwdriver.cd && echo Fetching PR and merging with branchName && git fetch origin prBranch && git merge shaValue"
+}

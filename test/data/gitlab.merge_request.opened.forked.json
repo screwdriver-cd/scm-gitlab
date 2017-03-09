@@ -1,9 +1,9 @@
 {
   "object_kind": "merge_request",
   "user": {
-    "name": "bdangit",
-    "username": "bdangit",
-    "avatar_url": "http://www.gravatar.com/avatar/f76b22acd6f275a593cfac4aae61bce6?s=80&d=identicon"
+    "name": "wooflab",
+    "username": "wooflab",
+    "avatar_url": "http://www.gravatar.com/avatar/3aa7ca48582a80075023efdd29db3960?s=80&d=identicon"
   },
   "project": {
     "name": "quickstart-generic",
@@ -22,20 +22,20 @@
     "http_url": "http://192.168.7.30/bdangit/quickstart-generic.git"
   },
   "object_attributes": {
-    "id": 10,
+    "id": 11,
     "target_branch": "master",
-    "source_branch": "tabbycat",
-    "source_project_id": 3,
-    "author_id": 2,
+    "source_branch": "new-file",
+    "source_project_id": 6,
+    "author_id": 3,
     "assignee_id": null,
-    "title": "fix tabby cat",
-    "created_at": "2017-03-09 14:28:06 UTC",
-    "updated_at": "2017-03-09 14:28:06 UTC",
+    "title": "Add new file",
+    "created_at": "2017-03-09 14:49:04 UTC",
+    "updated_at": "2017-03-09 14:49:04 UTC",
     "milestone_id": null,
     "state": "opened",
     "merge_status": "unchecked",
     "target_project_id": 3,
-    "iid": 6,
+    "iid": 7,
     "description": "",
     "position": 0,
     "locked_at": null,
@@ -54,18 +54,18 @@
     "source": {
       "name": "quickstart-generic",
       "description": "",
-      "web_url": "http://192.168.7.30/bdangit/quickstart-generic",
+      "web_url": "http://192.168.7.30/wooflab/quickstart-generic",
       "avatar_url": null,
-      "git_ssh_url": "git@192.168.7.30:bdangit/quickstart-generic.git",
-      "git_http_url": "http://192.168.7.30/bdangit/quickstart-generic.git",
-      "namespace": "bdangit",
+      "git_ssh_url": "git@192.168.7.30:wooflab/quickstart-generic.git",
+      "git_http_url": "http://192.168.7.30/wooflab/quickstart-generic.git",
+      "namespace": "wooflab",
       "visibility_level": 20,
-      "path_with_namespace": "bdangit/quickstart-generic",
+      "path_with_namespace": "wooflab/quickstart-generic",
       "default_branch": "master",
-      "homepage": "http://192.168.7.30/bdangit/quickstart-generic",
-      "url": "git@192.168.7.30:bdangit/quickstart-generic.git",
-      "ssh_url": "git@192.168.7.30:bdangit/quickstart-generic.git",
-      "http_url": "http://192.168.7.30/bdangit/quickstart-generic.git"
+      "homepage": "http://192.168.7.30/wooflab/quickstart-generic",
+      "url": "git@192.168.7.30:wooflab/quickstart-generic.git",
+      "ssh_url": "git@192.168.7.30:wooflab/quickstart-generic.git",
+      "http_url": "http://192.168.7.30/wooflab/quickstart-generic.git"
     },
     "target": {
       "name": "quickstart-generic",
@@ -84,17 +84,17 @@
       "http_url": "http://192.168.7.30/bdangit/quickstart-generic.git"
     },
     "last_commit": {
-      "id": "249b26f2278c39f9efc55986f845dd98ae011763",
-      "message": "Update Makefile",
-      "timestamp": "2017-03-09T14:24:36+00:00",
-      "url": "http://192.168.7.30/bdangit/quickstart-generic/commit/249b26f2278c39f9efc55986f845dd98ae011763",
+      "id": "9e7f71e836098f51921c8c3225a961ff7102ee48",
+      "message": "Add new file",
+      "timestamp": "2017-03-09T14:48:54+00:00",
+      "url": "http://192.168.7.30/bdangit/quickstart-generic/commit/9e7f71e836098f51921c8c3225a961ff7102ee48",
       "author": {
-        "name": "bdangit",
-        "email": "me@bdang.it"
+        "name": "wooflab",
+        "email": "bendang@gmail.com"
       }
     },
     "work_in_progress": false,
-    "url": "http://192.168.7.30/bdangit/quickstart-generic/merge_requests/6",
+    "url": "http://192.168.7.30/bdangit/quickstart-generic/merge_requests/7",
     "action": "open"
   },
   "repository": {

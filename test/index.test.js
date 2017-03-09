@@ -220,13 +220,25 @@ describe('index', function () {
                 hookId: 99
             };
             const headers = {
-                'x-event-key': 'pullrequest:created',
-                'x-request-uuid': '1e8d4e8e-5fcf-4624-b091-b10bd6ecaf5e'
+                "content-type": "application/json",
+                "x-gitlab-event": "Merge Request Hook",
+                "connection": "close",
+                "host": "192.168.79.140:9001",
+                "content-length": "3273"
             };
 
             return scm.parseHook(headers, testPayloadOpen)
                 .then(result => assert.deepEqual(result, expected));
         });
+
+// // const headers for reopened:
+// const headers = {
+//     "content-type": "application/json",
+//     "x-gitlab-event": "Merge Request Hook",
+//     "connection": "close",
+//     "host": "192.168.79.140:9001",
+//     "content-length": "3281"
+// };
 
         it('resolves the correct parsed config for closed PR after merged', () => {
             const expected = {
@@ -241,8 +253,11 @@ describe('index', function () {
                 hookId: '1e8d4e8e-5fcf-4624-b091-b10bd6ecaf5e'
             };
             const headers = {
-                'x-event-key': 'pullrequest:fullfilled',
-                'x-request-uuid': '1e8d4e8e-5fcf-4624-b091-b10bd6ecaf5e'
+                "content-type": "application/json",
+                "x-gitlab-event": "Merge Request Hook",
+                "connection": "close",
+                "host": "192.168.79.140:9001",
+                "content-length": "3316"
             };
 
             return scm.parseHook(headers, testPayloadClose)

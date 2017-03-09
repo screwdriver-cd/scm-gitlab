@@ -30,10 +30,10 @@
     "assignee_id": null,
     "title": "fix tabby cat",
     "created_at": "2017-03-09 14:28:06 UTC",
-    "updated_at": "2017-03-09 14:28:06 UTC",
+    "updated_at": "2017-03-09 14:32:25 UTC",
     "milestone_id": null,
-    "state": "opened",
-    "merge_status": "unchecked",
+    "state": "reopened",
+    "merge_status": "can_be_merged",
     "target_project_id": 3,
     "iid": 6,
     "description": "",
@@ -95,7 +95,7 @@
     },
     "work_in_progress": false,
     "url": "http://192.168.7.30/bdangit/quickstart-generic/merge_requests/6",
-    "action": "open"
+    "action": "reopen"
   },
   "repository": {
     "name": "quickstart-generic",

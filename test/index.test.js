@@ -9,6 +9,7 @@ const sinon = require('sinon');
 const testPayloadOpen = require('./data/gitlab.merge_request.opened.json');
 const testPayloadClose = require('./data/gitlab.merge_request.closed.json');
 const testPayloadPush = require('./data/gitlab.push.json');
+const token = 'myAccessToken';
 
 require('sinon-as-promised');
 sinon.assert.expose(assert, { prefix: '' });
@@ -125,7 +126,7 @@ describe('index', function () {
 
             return scm.parseUrl({
                 checkoutUrl: 'git@gitlab.com:batman/test.git#master',
-                token: 'myAccessToken'
+                token
             }).then((parsed) => {
                 assert.calledWith(requestMock, expectedOptions);
                 assert.equal(parsed, expected);
@@ -138,7 +139,7 @@ describe('index', function () {
 
             return scm.parseUrl({
                 checkoutUrl: 'https://batman@gitlab.com/batman/test.git#mynewbranch',
-                token: 'myAccessToken'
+                token
             }).then((parsed) => {
                 assert.calledWith(requestMock, expectedOptions);
                 assert.equal(parsed, expected);
@@ -152,7 +153,7 @@ describe('index', function () {
 
             return scm.parseUrl({
                 checkoutUrl: 'https://batman@gitlab.com/batman/test.git#mynewbranch',
-                token: 'myAccessToken'
+                token
             })
                 .then(() => assert.fail('Should not get here'))
                 .catch((error) => {
@@ -173,7 +174,7 @@ describe('index', function () {
 
             return scm.parseUrl({
                 checkoutUrl: 'https://batman@gitlab.com/batman/test.git#mynewbranch',
-                token: 'myAccessToken'
+                token
             })
                 .then(() => assert.fail('Should not get here'))
                 .catch((error) => {
@@ -195,7 +196,7 @@ describe('index', function () {
 
             return scm.parseUrl({
                 checkoutUrl: 'https://batman@gitlab.com/batman/test.git#mynewbranch',
-                token: 'myAccessToken'
+                token
             })
                 .then(() => assert.fail('Should not get here'))
                 .catch((error) => {
@@ -317,95 +318,91 @@ describe('index', function () {
         });
     });
 
-    // describe('decorateAuthor', () => {
-    //     const apiUrl = 'https://gitlab.com/api/v3/users/batman';
-    //     const expectedOptions = {
-    //         url: apiUrl,
-    //         method: 'GET',
-    //         json: true,
-    //         auth: {
-    //             bearer: token
-    //         }
-    //     };
-    //     let fakeResponse;
-    //
-    //     beforeEach(() => {
-    //         fakeResponse = {
-    //             statusCode: 200,
-    //             body: {
-    //                 username: 'batman',
-    //                 display_name: 'Batman',
-    //                 uuid: '{4f1a9b7f-586e-4e80-b9eb-a7589b4a165f}',
-    //                 links: {
-    //                     html: {
-    //                         href: 'https://gitlab.com/batman/'
-    //                     },
-    //                     avatar: {
-    //                         href: 'https://gitlab.com/account/batman/avatar/32/'
-    //                     }
-    //                 }
-    //             }
-    //         };
-    //         requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
-    //     });
-    //
-    //     it('resolves to correct decorated author', () => {
-    //         const expected = {
-    //             url: 'https://gitlab.com/batman/',
-    //             name: 'Batman',
-    //             username: 'batman',
-    //             avatar: 'https://gitlab.com/account/batman/avatar/32/'
-    //         };
-    //
-    //         return scm.decorateAuthor({
-    //             username: 'batman',
-    //             token
-    //         }).then((decorated) => {
-    //             assert.calledWith(requestMock, expectedOptions);
-    //             assert.deepEqual(decorated, expected);
-    //         });
-    //     });
-    //
-    //     it('rejects if status code is not 200', () => {
-    //         fakeResponse = {
-    //             statusCode: 404,
-    //             body: {
-    //                 error: {
-    //                     message: 'Resource not found',
-    //                     detail: 'There is no API hosted at this URL'
-    //                 }
-    //             }
-    //         };
-    //
-    //         requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
-    //
-    //         return scm.decorateAuthor({
-    //             username: 'batman',
-    //             token
-    //         }).then(() => {
-    //             assert.fail('Should not get here');
-    //         }).catch((error) => {
-    //             assert.calledWith(requestMock, expectedOptions);
-    //             assert.match(error.message, 'STATUS CODE 404');
-    //         });
-    //     });
-    //
-    //     it('rejects if fails', () => {
-    //         const err = new Error('Gitlab API error');
-    //
-    //         requestMock.yieldsAsync(err);
-    //
-    //         return scm.decorateAuthor({
-    //             username: 'batman',
-    //             token
-    //         }).then(() => {
-    //             assert.fail('Should not get here');
-    //         }).catch((error) => {
-    //             assert.calledWith(requestMock, expectedOptions);
-    //             assert.equal(error, err);
-    //         });
-    //     });
-    // });
+    describe('decorateAuthor', () => {
+        const apiUrl = 'https://gitlab.com/api/v3/users';
+        const expectedOptions = {
+            url: apiUrl,
+            method: 'GET',
+            json: true,
+            auth: {
+                bearer: token
+            },
+            qs: {
+                username: 'batman'
+            }
+        };
+        let fakeResponse;
+
+        beforeEach(() => {
+            fakeResponse = {
+                statusCode: 200,
+                body: [{
+                    username: 'batman',
+                    name: 'Batman',
+                    id: 12345,
+                    state: 'active',
+                    avatar_url: 'https://gitlab.com/uploads/user/avatar/12345/avatar.png',
+                    web_url: 'https://gitlab.com/batman'
+                }]
+            };
+            requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
+        });
+
+        it('resolves to correct decorated author', () => {
+            const expected = {
+                url: 'https://gitlab.com/batman',
+                name: 'Batman',
+                username: 'batman',
+                avatar: 'https://gitlab.com/uploads/user/avatar/12345/avatar.png'
+            };
+
+            return scm.decorateAuthor({
+                username: 'batman',
+                token
+            }).then((decorated) => {
+                assert.calledWith(requestMock, expectedOptions);
+                assert.deepEqual(decorated, expected);
+            });
+        });
+
+        it('rejects if status code is not 200', () => {
+            fakeResponse = {
+                statusCode: 404,
+                body: {
+                    message: 'Resource not found'
+                }
+            };
+
+            requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
+
+            return scm.decorateAuthor({
+                username: 'batman',
+                token
+            }).then(() => {
+                assert.fail('Should not get here');
+            }).catch((error) => {
+                assert.calledWith(requestMock, expectedOptions);
+                assert.match(error.message, '404 Reason "Resource not found" ' +
+                                            'Caller "_decorateAuthor"');
+            });
+        });
+
+        it('rejects if fails', () => {
+            const err = new Error('Gitlab API error');
+
+            requestMock.yieldsAsync(err);
+
+            return scm.decorateAuthor({
+                username: 'batman',
+                token
+            }).then(() => {
+                assert.fail('Should not get here');
+            }).catch((error) => {
+                assert.calledWith(requestMock, expectedOptions);
+                assert.equal(error, err);
+            });
+        });
+    });
     //
     // describe('decorateUrl', () => {
     //     const apiUrl = 'https://gitlab.com/api/v3/repositories/repoId';

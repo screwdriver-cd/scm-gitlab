@@ -1,163 +1,57 @@
 {
+  "object_kind": "push",
+  "event_name": "push",
+  "before": "c699b638e303920fe6c50593cd7659559ae45243",
+  "after": "76506776e7931f843206c54586266468aec1a92e",
   "ref": "refs/heads/master",
-  "before": "9049f1265b7d61be4a8904a9a27120d2064dab3b",
-  "after": "0d1a26e67d8f5eaf1f6ba5c57fc3c7d91ac0fd1c",
-  "created": false,
-  "deleted": false,
-  "forced": false,
-  "base_ref": null,
-  "compare": "https://github.com/baxterthehacker/public-repo/compare/9049f1265b7d...0d1a26e67d8f",
+  "checkout_sha": "76506776e7931f843206c54586266468aec1a92e",
+  "message": null,
+  "user_id": 2,
+  "user_name": "bdangit",
+  "user_email": "me@bdang.it",
+  "user_avatar": "http://www.gravatar.com/avatar/f76b22acd6f275a593cfac4aae61bce6?s=80&d=identicon",
+  "project_id": 3,
+  "project": {
+    "name": "quickstart-generic",
+    "description": "",
+    "web_url": "http://example.com/bdangit/quickstart-generic",
+    "avatar_url": null,
+    "git_ssh_url": "git@example.com:bdangit/quickstart-generic.git",
+    "git_http_url": "http://example.com/bdangit/quickstart-generic.git",
+    "namespace": "bdangit",
+    "visibility_level": 20,
+    "path_with_namespace": "bdangit/quickstart-generic",
+    "default_branch": "master",
+    "homepage": "http://example.com/bdangit/quickstart-generic",
+    "url": "git@example.com:bdangit/quickstart-generic.git",
+    "ssh_url": "git@example.com:bdangit/quickstart-generic.git",
+    "http_url": "http://example.com/bdangit/quickstart-generic.git"
+  },
   "commits": [
     {
-      "id": "0d1a26e67d8f5eaf1f6ba5c57fc3c7d91ac0fd1c",
-      "tree_id": "f9d2a07e9488b91af2641b26b9407fe22a451433",
-      "distinct": true,
-      "message": "Update README.md",
-      "timestamp": "2015-05-05T19:40:15-04:00",
-      "url": "https://github.com/baxterthehacker/public-repo/commit/0d1a26e67d8f5eaf1f6ba5c57fc3c7d91ac0fd1c",
+      "id": "76506776e7931f843206c54586266468aec1a92e",
+      "message": "Update my_script.sh",
+      "timestamp": "2017-03-10T08:46:29+00:00",
+      "url": "http://example.com/bdangit/quickstart-generic/commit/76506776e7931f843206c54586266468aec1a92e",
       "author": {
-        "name": "baxterthehacker",
-        "email": "baxterthehacker@users.noreply.github.com",
-        "username": "baxterthehacker"
+        "name": "bdangit",
+        "email": "dev-null@email.com"
       },
-      "committer": {
-        "name": "baxterthehacker",
-        "email": "baxterthehacker@users.noreply.github.com",
-        "username": "baxterthehacker"
-      },
-      "added": [
-
-      ],
-      "removed": [
-
-      ],
+      "added": [],
       "modified": [
-        "README.md"
-      ]
+        "my_script.sh"
+      ],
+      "removed": []
     }
   ],
-  "head_commit": {
-    "id": "0d1a26e67d8f5eaf1f6ba5c57fc3c7d91ac0fd1c",
-    "tree_id": "f9d2a07e9488b91af2641b26b9407fe22a451433",
-    "distinct": true,
-    "message": "Update README.md",
-    "timestamp": "2015-05-05T19:40:15-04:00",
-    "url": "https://github.com/baxterthehacker/public-repo/commit/0d1a26e67d8f5eaf1f6ba5c57fc3c7d91ac0fd1c",
-    "author": {
-      "name": "baxterthehacker",
-      "email": "baxterthehacker@users.noreply.github.com",
-      "username": "baxterthehacker"
-    },
-    "committer": {
-      "name": "baxterthehacker",
-      "email": "baxterthehacker@users.noreply.github.com",
-      "username": "baxterthehacker"
-    },
-    "added": [
-
-    ],
-    "removed": [
-
-    ],
-    "modified": [
-      "README.md"
-    ]
-  },
+  "total_commits_count": 1,
   "repository": {
-    "id": 35129377,
-    "name": "public-repo",
-    "full_name": "baxterthehacker/public-repo",
-    "owner": {
-      "name": "baxterthehacker",
-      "email": "baxterthehacker@users.noreply.github.com"
-    },
-    "private": false,
-    "html_url": "https://github.com/baxterthehacker/public-repo",
+    "name": "quickstart-generic",
+    "url": "git@example.com:bdangit/quickstart-generic.git",
     "description": "",
-    "fork": false,
-    "url": "https://github.com/baxterthehacker/public-repo",
-    "forks_url": "https://api.github.com/repos/baxterthehacker/public-repo/forks",
-    "keys_url": "https://api.github.com/repos/baxterthehacker/public-repo/keys{/key_id}",
-    "collaborators_url": "https://api.github.com/repos/baxterthehacker/public-repo/collaborators{/collaborator}",
-    "teams_url": "https://api.github.com/repos/baxterthehacker/public-repo/teams",
-    "hooks_url": "https://api.github.com/repos/baxterthehacker/public-repo/hooks",
-    "issue_events_url": "https://api.github.com/repos/baxterthehacker/public-repo/issues/events{/number}",
-    "events_url": "https://api.github.com/repos/baxterthehacker/public-repo/events",
-    "assignees_url": "https://api.github.com/repos/baxterthehacker/public-repo/assignees{/user}",
-    "branches_url": "https://api.github.com/repos/baxterthehacker/public-repo/branches{/branch}",
-    "tags_url": "https://api.github.com/repos/baxterthehacker/public-repo/tags",
-    "blobs_url": "https://api.github.com/repos/baxterthehacker/public-repo/git/blobs{/sha}",
-    "git_tags_url": "https://api.github.com/repos/baxterthehacker/public-repo/git/tags{/sha}",
-    "git_refs_url": "https://api.github.com/repos/baxterthehacker/public-repo/git/refs{/sha}",
-    "trees_url": "https://api.github.com/repos/baxterthehacker/public-repo/git/trees{/sha}",
-    "statuses_url": "https://api.github.com/repos/baxterthehacker/public-repo/statuses/{sha}",
-    "languages_url": "https://api.github.com/repos/baxterthehacker/public-repo/languages",
-    "stargazers_url": "https://api.github.com/repos/baxterthehacker/public-repo/stargazers",
-    "contributors_url": "https://api.github.com/repos/baxterthehacker/public-repo/contributors",
-    "subscribers_url": "https://api.github.com/repos/baxterthehacker/public-repo/subscribers",
-    "subscription_url": "https://api.github.com/repos/baxterthehacker/public-repo/subscription",
-    "commits_url": "https://api.github.com/repos/baxterthehacker/public-repo/commits{/sha}",
-    "git_commits_url": "https://api.github.com/repos/baxterthehacker/public-repo/git/commits{/sha}",
-    "comments_url": "https://api.github.com/repos/baxterthehacker/public-repo/comments{/number}",
-    "issue_comment_url": "https://api.github.com/repos/baxterthehacker/public-repo/issues/comments{/number}",
-    "contents_url": "https://api.github.com/repos/baxterthehacker/public-repo/contents/{+path}",
-    "compare_url": "https://api.github.com/repos/baxterthehacker/public-repo/compare/{base}...{head}",
-    "merges_url": "https://api.github.com/repos/baxterthehacker/public-repo/merges",
-    "archive_url": "https://api.github.com/repos/baxterthehacker/public-repo/{archive_format}{/ref}",
-    "downloads_url": "https://api.github.com/repos/baxterthehacker/public-repo/downloads",
-    "issues_url": "https://api.github.com/repos/baxterthehacker/public-repo/issues{/number}",
-    "pulls_url": "https://api.github.com/repos/baxterthehacker/public-repo/pulls{/number}",
-    "milestones_url": "https://api.github.com/repos/baxterthehacker/public-repo/milestones{/number}",
-    "notifications_url": "https://api.github.com/repos/baxterthehacker/public-repo/notifications{?since,all,participating}",
-    "labels_url": "https://api.github.com/repos/baxterthehacker/public-repo/labels{/name}",
-    "releases_url": "https://api.github.com/repos/baxterthehacker/public-repo/releases{/id}",
-    "created_at": 1430869212,
-    "updated_at": "2015-05-05T23:40:12Z",
-    "pushed_at": 1430869217,
-    "git_url": "git://github.com/baxterthehacker/public-repo.git",
-    "ssh_url": "git@github.com:baxterthehacker/public-repo.git",
-    "clone_url": "https://github.com/baxterthehacker/public-repo.git",
-    "svn_url": "https://github.com/baxterthehacker/public-repo",
-    "homepage": null,
-    "size": 0,
-    "stargazers_count": 0,
-    "watchers_count": 0,
-    "language": null,
-    "has_issues": true,
-    "has_downloads": true,
-    "has_wiki": true,
-    "has_pages": true,
-    "forks_count": 0,
-    "mirror_url": null,
-    "open_issues_count": 0,
-    "forks": 0,
-    "open_issues": 0,
-    "watchers": 0,
-    "default_branch": "master",
-    "stargazers": 0,
-    "master_branch": "master"
-  },
-  "pusher": {
-    "name": "baxterthehacker",
-    "email": "baxterthehacker@users.noreply.github.com"
-  },
-  "sender": {
-    "login": "baxterthehacker2",
-    "id": 6752317,
-    "avatar_url": "https://avatars.githubusercontent.com/u/6752317?v=3",
-    "gravatar_id": "",
-    "url": "https://api.github.com/users/baxterthehacker2",
-    "html_url": "https://github.com/baxterthehacker2",
-    "followers_url": "https://api.github.com/users/baxterthehacker2/followers",
-    "following_url": "https://api.github.com/users/baxterthehacker2/following{/other_user}",
-    "gists_url": "https://api.github.com/users/baxterthehacker2/gists{/gist_id}",
-    "starred_url": "https://api.github.com/users/baxterthehacker2/starred{/owner}{/repo}",
-    "subscriptions_url": "https://api.github.com/users/baxterthehacker2/subscriptions",
-    "organizations_url": "https://api.github.com/users/baxterthehacker2/orgs",
-    "repos_url": "https://api.github.com/users/baxterthehacker2/repos",
-    "events_url": "https://api.github.com/users/baxterthehacker2/events{/privacy}",
-    "received_events_url": "https://api.github.com/users/baxterthehacker2/received_events",
-    "type": "User",
-    "site_admin": false
+    "homepage": "http://example.com/bdangit/quickstart-generic",
+    "git_http_url": "http://example.com/bdangit/quickstart-generic.git",
+    "git_ssh_url": "git@example.com:bdangit/quickstart-generic.git",
+    "visibility_level": 20
   }
 }

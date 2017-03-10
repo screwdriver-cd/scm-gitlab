@@ -305,6 +305,12 @@ class GitlabScm extends Scm {
     _parseHook(payloadHeaders, webhookPayload) {
         const parsed = {};
 
+        // console.log(`WOOF: header ${JSON.stringify(payloadHeaders, null, 2)}`);
+        // console.log(`WOOF: payload ${JSON.stringify(webhookPayload, null, 2)}`);
+
+        // hookId is not in header or payload
+        parsed.hookId = null;
+
         switch (webhookPayload.object_kind) {
         case 'push': {
             if (webhookPayload.event_name !== 'push') {
@@ -315,7 +321,7 @@ class GitlabScm extends Scm {
             parsed.action = 'push';
             parsed.username = webhookPayload.user_name;
             parsed.checkoutUrl = webhookPayload.project.git_http_url;
-            parsed.branch = webhookPayload.ref.split('/').slice(-1);
+            parsed.branch = webhookPayload.ref.split('/').slice(-1)[0];
             parsed.sha = webhookPayload.checkout_sha;
 
             return Promise.resolve(parsed);
@@ -340,7 +346,6 @@ class GitlabScm extends Scm {
             parsed.sha = mergeRequest.last_commit.id;
             parsed.prNum = mergeRequest.iid;
             parsed.prRef = mergeRequest.source_branch;
-            parsed.hookId = mergeRequest.id;
 
             return Promise.resolve(parsed);
         }

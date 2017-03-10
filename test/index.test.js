@@ -211,53 +211,38 @@ describe('index', function () {
             const expected = {
                 type: 'pr',
                 action: 'opened',
-                username: 'root',
-                checkoutUrl: 'http://example.com/awesome_space/awesome_project.git',
+                username: 'bdangit',
+                checkoutUrl: 'http://example.com/bdangit/quickstart-generic.git',
                 branch: 'master',
-                sha: 'da1560886d4f094c3e6c9ef40349f7d38b5d27d7',
-                prNum: 1,
-                prRef: 'ms-viewport',
-                hookId: 99
+                sha: '249b26f2278c39f9efc55986f845dd98ae011763',
+                prNum: 6,
+                prRef: 'tabbycat',
+                hookId: null
             };
             const headers = {
-                "content-type": "application/json",
-                "x-gitlab-event": "Merge Request Hook",
-                "connection": "close",
-                "host": "192.168.79.140:9001",
-                "content-length": "3273"
+                'content-type': 'application/json',
+                'x-gitlab-event': 'Merge Request Hook'
             };
 
             return scm.parseHook(headers, testPayloadOpen)
                 .then(result => assert.deepEqual(result, expected));
         });
 
-// // const headers for reopened:
-// const headers = {
-//     "content-type": "application/json",
-//     "x-gitlab-event": "Merge Request Hook",
-//     "connection": "close",
-//     "host": "192.168.79.140:9001",
-//     "content-length": "3281"
-// };
-
         it('resolves the correct parsed config for closed PR after merged', () => {
             const expected = {
                 type: 'pr',
                 action: 'closed',
-                username: 'robin',
-                checkoutUrl: 'https://batman@gitlab.com/batman/test.git',
+                username: 'bdangit',
+                checkoutUrl: 'http://example.com/bdangit/quickstart-generic.git',
                 branch: 'master',
-                sha: '40171b678527',
-                prNum: 3,
-                prRef: 'mynewbranch',
-                hookId: '1e8d4e8e-5fcf-4624-b091-b10bd6ecaf5e'
+                sha: 'bc2b3a48a428ed23e15960e8d703bf7e3a8a4f54',
+                prNum: 2,
+                prRef: 'fix-this-stuff',
+                hookId: null
             };
             const headers = {
-                "content-type": "application/json",
-                "x-gitlab-event": "Merge Request Hook",
-                "connection": "close",
-                "host": "192.168.79.140:9001",
-                "content-length": "3316"
+                'content-type': 'application/json',
+                'x-gitlab-event': 'Merge Request Hook'
             };
 
             return scm.parseHook(headers, testPayloadClose)
@@ -268,17 +253,17 @@ describe('index', function () {
             const expected = {
                 type: 'pr',
                 action: 'closed',
-                username: 'robin',
-                checkoutUrl: 'https://batman@gitlab.com/batman/test.git',
+                username: 'bdangit',
+                checkoutUrl: 'http://example.com/bdangit/quickstart-generic.git',
                 branch: 'master',
-                sha: '40171b678527',
-                prNum: 3,
-                prRef: 'mynewbranch',
-                hookId: '1e8d4e8e-5fcf-4624-b091-b10bd6ecaf5e'
+                sha: 'bc2b3a48a428ed23e15960e8d703bf7e3a8a4f54',
+                prNum: 2,
+                prRef: 'fix-this-stuff',
+                hookId: null
             };
             const headers = {
-                'x-event-key': 'pullrequest:rejected',
-                'x-request-uuid': '1e8d4e8e-5fcf-4624-b091-b10bd6ecaf5e'
+                'content-type': 'application/json',
+                'x-gitlab-event': 'Merge Request Hook'
             };
 
             return scm.parseHook(headers, testPayloadClose)
@@ -289,15 +274,15 @@ describe('index', function () {
             const expected = {
                 type: 'repo',
                 action: 'push',
-                username: 'robin',
-                checkoutUrl: 'https://batman@gitlab.com/batman/test.git',
-                branch: 'stuff',
-                sha: '9ff49b2d1437567cad2b5fed7a0706472131e927',
-                hookId: '1e8d4e8e-5fcf-4624-b091-b10bd6ecaf5e'
+                username: 'bdangit',
+                checkoutUrl: 'http://example.com/bdangit/quickstart-generic.git',
+                branch: 'master',
+                sha: '76506776e7931f843206c54586266468aec1a92e',
+                hookId: null
             };
             const headers = {
-                'x-event-key': 'repo:push',
-                'x-request-uuid': '1e8d4e8e-5fcf-4624-b091-b10bd6ecaf5e'
+                'content-type': 'application/json',
+                'x-gitlab-event': 'Push Hook'
             };
 
             return scm.parseHook(headers, testPayloadPush)

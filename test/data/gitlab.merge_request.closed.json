@@ -8,18 +8,18 @@
   "project": {
     "name": "quickstart-generic",
     "description": "",
-    "web_url": "http://192.168.7.30/bdangit/quickstart-generic",
+    "web_url": "http://example.com/bdangit/quickstart-generic",
     "avatar_url": null,
-    "git_ssh_url": "git@192.168.7.30:bdangit/quickstart-generic.git",
-    "git_http_url": "http://192.168.7.30/bdangit/quickstart-generic.git",
+    "git_ssh_url": "git@example.com:bdangit/quickstart-generic.git",
+    "git_http_url": "http://example.com/bdangit/quickstart-generic.git",
     "namespace": "bdangit",
     "visibility_level": 20,
     "path_with_namespace": "bdangit/quickstart-generic",
     "default_branch": "master",
-    "homepage": "http://192.168.7.30/bdangit/quickstart-generic",
-    "url": "git@192.168.7.30:bdangit/quickstart-generic.git",
-    "ssh_url": "git@192.168.7.30:bdangit/quickstart-generic.git",
-    "http_url": "http://192.168.7.30/bdangit/quickstart-generic.git"
+    "homepage": "http://example.com/bdangit/quickstart-generic",
+    "url": "git@example.com:bdangit/quickstart-generic.git",
+    "ssh_url": "git@example.com:bdangit/quickstart-generic.git",
+    "http_url": "http://example.com/bdangit/quickstart-generic.git"
   },
   "object_attributes": {
     "id": 6,
@@ -54,53 +54,53 @@
     "source": {
       "name": "quickstart-generic",
       "description": "",
-      "web_url": "http://192.168.7.30/bdangit/quickstart-generic",
+      "web_url": "http://example.com/bdangit/quickstart-generic",
       "avatar_url": null,
-      "git_ssh_url": "git@192.168.7.30:bdangit/quickstart-generic.git",
-      "git_http_url": "http://192.168.7.30/bdangit/quickstart-generic.git",
+      "git_ssh_url": "git@example.com:bdangit/quickstart-generic.git",
+      "git_http_url": "http://example.com/bdangit/quickstart-generic.git",
       "namespace": "bdangit",
       "visibility_level": 20,
       "path_with_namespace": "bdangit/quickstart-generic",
       "default_branch": "master",
-      "homepage": "http://192.168.7.30/bdangit/quickstart-generic",
-      "url": "git@192.168.7.30:bdangit/quickstart-generic.git",
-      "ssh_url": "git@192.168.7.30:bdangit/quickstart-generic.git",
-      "http_url": "http://192.168.7.30/bdangit/quickstart-generic.git"
+      "homepage": "http://example.com/bdangit/quickstart-generic",
+      "url": "git@example.com:bdangit/quickstart-generic.git",
+      "ssh_url": "git@example.com:bdangit/quickstart-generic.git",
+      "http_url": "http://example.com/bdangit/quickstart-generic.git"
     },
     "target": {
       "name": "quickstart-generic",
       "description": "",
-      "web_url": "http://192.168.7.30/bdangit/quickstart-generic",
+      "web_url": "http://example.com/bdangit/quickstart-generic",
       "avatar_url": null,
-      "git_ssh_url": "git@192.168.7.30:bdangit/quickstart-generic.git",
-      "git_http_url": "http://192.168.7.30/bdangit/quickstart-generic.git",
+      "git_ssh_url": "git@example.com:bdangit/quickstart-generic.git",
+      "git_http_url": "http://example.com/bdangit/quickstart-generic.git",
       "namespace": "bdangit",
       "visibility_level": 20,
       "path_with_namespace": "bdangit/quickstart-generic",
       "default_branch": "master",
-      "homepage": "http://192.168.7.30/bdangit/quickstart-generic",
-      "url": "git@192.168.7.30:bdangit/quickstart-generic.git",
-      "ssh_url": "git@192.168.7.30:bdangit/quickstart-generic.git",
-      "http_url": "http://192.168.7.30/bdangit/quickstart-generic.git"
+      "homepage": "http://example.com/bdangit/quickstart-generic",
+      "url": "git@example.com:bdangit/quickstart-generic.git",
+      "ssh_url": "git@example.com:bdangit/quickstart-generic.git",
+      "http_url": "http://example.com/bdangit/quickstart-generic.git"
     },
     "last_commit": {
       "id": "bc2b3a48a428ed23e15960e8d703bf7e3a8a4f54",
       "message": "cats meow",
       "timestamp": "2017-03-03T06:31:19+00:00",
-      "url": "http://192.168.7.30/bdangit/quickstart-generic/commit/bc2b3a48a428ed23e15960e8d703bf7e3a8a4f54",
+      "url": "http://example.com/bdangit/quickstart-generic/commit/bc2b3a48a428ed23e15960e8d703bf7e3a8a4f54",
       "author": {
         "name": "bdangit",
-        "email": "me@bdang.it"
+        "email": "dev-null@email.com"
       }
     },
     "work_in_progress": false,
-    "url": "http://192.168.7.30/bdangit/quickstart-generic/merge_requests/2",
+    "url": "http://example.com/bdangit/quickstart-generic/merge_requests/2",
     "action": "close"
   },
   "repository": {
     "name": "quickstart-generic",
-    "url": "git@192.168.7.30:bdangit/quickstart-generic.git",
+    "url": "git@example.com:bdangit/quickstart-generic.git",
     "description": "",
-    "homepage": "http://192.168.7.30/bdangit/quickstart-generic"
+    "homepage": "http://example.com/bdangit/quickstart-generic"
   }
 }

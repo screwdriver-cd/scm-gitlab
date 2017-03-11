@@ -412,7 +412,7 @@ class GitlabScm extends Scm {
             scmUri: config.scmUri,
             token: config.token
         }).then((scmInfo) => {
-            const baseUrl = `${scmInfo.host}/${scmInfo.owner}/${scmInfo.reponame}`;
+            const baseUrl = `${scmInfo.hostname}/${scmInfo.owner}/${scmInfo.reponame}`;
 
             return {
                 branch: scmInfo.branch,
@@ -611,6 +611,8 @@ class GitlabScm extends Scm {
                 state: STATE_MAP[config.buildStatus] || 'failure',
                 target_url: config.url
             }
+        }).then((response) => {
+            checkResponseError(response, '_updateCommitStatus');
         });
     }
 

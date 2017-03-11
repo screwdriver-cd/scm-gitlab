@@ -3,9 +3,9 @@
 const assert = require('chai').assert;
 const mockery = require('mockery');
 const sinon = require('sinon');
-// const testCommands = require('./data/commands.json');
-// const testPrCommands = require('./data/prCommands.json');
-// const testCustomPrCommands = require('./data/customPrCommands.json');
+const testCommands = require('./data/commands.json');
+const testPrCommands = require('./data/prCommands.json');
+const testCustomPrCommands = require('./data/customPrCommands.json');
 const testPayloadOpen = require('./data/gitlab.merge_request.opened.json');
 const testPayloadClose = require('./data/gitlab.merge_request.closed.json');
 const testPayloadPush = require('./data/gitlab.push.json');
@@ -619,158 +619,156 @@ describe('index', function () {
     //         });
     //     });
     // });
-    //
-    // describe('getCommitSha', () => {
-    //     const apiUrl =
-    //         'https://gitlab.com/api/v3/repositories/repoId/refs/branches/branchName';
-    //     const scmUri = 'hostName:repoId:branchName';
-    //     const expectedOptions = {
-    //         url: apiUrl,
-    //         method: 'GET',
-    //         json: true,
-    //         auth: {
-    //             bearer: token
-    //         }
-    //     };
-    //     let fakeResponse;
-    //
-    //     beforeEach(() => {
-    //         fakeResponse = {
-    //             statusCode: 200,
-    //             body: {
-    //                 target: {
-    //                     hash: 'hashValue'
-    //                 }
-    //             }
-    //         };
-    //         requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
-    //     });
-    //
-    //     it('resolves to correct commit sha', () =>
-    //         scm.getCommitSha({
-    //             scmUri,
-    //             token
-    //         }).then((sha) => {
-    //             assert.calledWith(requestMock, expectedOptions);
-    //             assert.deepEqual(sha, 'hashValue');
-    //         })
-    //     );
-    //
-    //     it('rejects if status code is not 200', () => {
-    //         fakeResponse = {
-    //             statusCode: 404,
-    //             body: {
-    //                 error: {
-    //                     message: 'Resource not found',
-    //                     detail: 'There is no API hosted at this URL'
-    //                 }
-    //             }
-    //         };
-    //
-    //         requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
-    //
-    //         return scm.getCommitSha({
-    //             scmUri,
-    //             token
-    //         }).then(() => {
-    //             assert.fail('Should not get here');
-    //         }).catch((error) => {
-    //             assert.calledWith(requestMock, expectedOptions);
-    //             assert.match(error.message, 'STATUS CODE 404');
-    //         });
-    //     });
-    //
-    //     it('rejects if fails', () => {
-    //         const err = new Error('Gitlab API error');
-    //
-    //         requestMock.yieldsAsync(err);
-    //
-    //         return scm.getCommitSha({
-    //             scmUri,
-    //             token
-    //         }).then(() => {
-    //             assert.fail('Should not get here');
-    //         }).catch((error) => {
-    //             assert.calledWith(requestMock, expectedOptions);
-    //             assert.equal(error, err);
-    //         });
-    //     });
-    // });
-    //
-    // describe('getFile', () => {
-    //     const apiUrl = 'https://gitlab.com/api/v3/repositories/repoId/src/branchName' +
-    //                    '/path/to/file.txt';
-    //     const scmUri = 'hostName:repoId:branchName';
-    //     const params = {
-    //         scmUri,
-    //         token,
-    //         path: 'path/to/file.txt'
-    //     };
-    //     const expectedOptions = {
-    //         url: apiUrl,
-    //         method: 'GET',
-    //         json: true,
-    //         auth: {
-    //             bearer: token
-    //         }
-    //     };
-    //     let fakeResponse;
-    //
-    //     beforeEach(() => {
-    //         fakeResponse = {
-    //             statusCode: 200,
-    //             body: {
-    //                 node: 'nodeValue',
-    //                 path: 'path/to/file.txt',
-    //                 data: 'dataValue',
-    //                 size: 14
-    //             }
-    //         };
-    //         requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
-    //     });
-    //
-    //     it('resolves to correct commit sha', () =>
-    //         scm.getFile(params).then((content) => {
-    //             assert.calledWith(requestMock, expectedOptions);
-    //             assert.deepEqual(content, 'dataValue');
-    //         })
-    //     );
-    //
-    //     it('rejects if status code is not 200', () => {
-    //         fakeResponse = {
-    //             statusCode: 404,
-    //             body: {
-    //                 error: {
-    //                     message: 'Resource not found',
-    //                     detail: 'There is no API hosted at this URL'
-    //                 }
-    //             }
-    //         };
-    //
-    //         requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
-    //
-    //         return scm.getFile(params).then(() => {
-    //             assert.fail('Should not get here');
-    //         }).catch((error) => {
-    //             assert.calledWith(requestMock, expectedOptions);
-    //             assert.match(error.message, 'STATUS CODE 404');
-    //         });
-    //     });
-    //
-    //     it('rejects if fails', () => {
-    //         const err = new Error('Gitlab API error');
-    //
-    //         requestMock.yieldsAsync(err);
-    //
-    //         return scm.getFile(params).then(() => {
-    //             assert.fail('Should not get here');
-    //         }).catch((error) => {
-    //             assert.calledWith(requestMock, expectedOptions);
-    //             assert.equal(error, err);
-    //         });
-    //     });
-    // });
-    //
+
+    describe('getCommitSha', () => {
+        const apiUrl = 'https://gitlab.com/api/v3/projects/repoId' +
+                       '/repository/branches/branchName';
+        const scmUri = 'hostName:repoId:branchName';
+        const expectedOptions = {
+            url: apiUrl,
+            method: 'GET',
+            json: true,
+            auth: {
+                bearer: token
+            }
+        };
+        let fakeResponse;
+
+        beforeEach(() => {
+            fakeResponse = {
+                statusCode: 200,
+                body: {
+                    commit: {
+                        id: 'hashValue'
+                    }
+                }
+            };
+            requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
+        });
+
+        it('resolves to correct commit sha', () =>
+            scm.getCommitSha({
+                scmUri,
+                token
+            }).then((sha) => {
+                assert.calledWith(requestMock, expectedOptions);
+                assert.deepEqual(sha, 'hashValue');
+            })
+        );
+
+        it('rejects if status code is not 200', () => {
+            fakeResponse = {
+                statusCode: 404,
+                body: {
+                    message: 'Resource not found'
+                }
+            };
+
+            requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
+
+            return scm.getCommitSha({
+                scmUri,
+                token
+            }).then(() => {
+                assert.fail('Should not get here');
+            }).catch((error) => {
+                assert.calledWith(requestMock, expectedOptions);
+                assert.match(error.message, '404 Reason "Resource not found" ' +
+                                            'Caller "_getCommitSha"');
+            });
+        });
+
+        it('rejects if fails', () => {
+            const err = new Error('Gitlab API error');
+
+            requestMock.yieldsAsync(err);
+
+            return scm.getCommitSha({
+                scmUri,
+                token
+            }).then(() => {
+                assert.fail('Should not get here');
+            }).catch((error) => {
+                assert.calledWith(requestMock, expectedOptions);
+                assert.equal(error, err);
+            });
+        });
+    });
+
+    describe('getFile', () => {
+        const apiUrl = 'https://gitlab.com/api/v3/projects/repoId' +
+                       '/repository/files';
+        const scmUri = 'hostName:repoId:branchName';
+        const params = {
+            scmUri,
+            token,
+            path: 'path/to/file.txt'
+        };
+        const expectedOptions = {
+            url: apiUrl,
+            method: 'GET',
+            json: true,
+            auth: {
+                bearer: token
+            },
+            qs: {
+                file_path: 'path/to/file.txt',
+                ref: 'branchName'
+            }
+        };
+        let fakeResponse;
+
+        beforeEach(() => {
+            fakeResponse = {
+                statusCode: 200,
+                body: {
+                    encoding: 'ascii',
+                    content: 'dataValue'
+                }
+            };
+            requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
+        });
+
+        it('resolves to correct commit sha', () =>
+            scm.getFile(params).then((content) => {
+                assert.calledWith(requestMock, expectedOptions);
+                assert.deepEqual(content, 'dataValue');
+            })
+        );
+
+        it('rejects if status code is not 200', () => {
+            fakeResponse = {
+                statusCode: 404,
+                body: {
+                    message: 'Resource not found'
+                }
+            };
+
+            requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
+
+            return scm.getFile(params).then(() => {
+                assert.fail('Should not get here');
+            }).catch((error) => {
+                assert.calledWith(requestMock, expectedOptions);
+                assert.match(error.message, '404 Reason "Resource not found" ' +
+                                            'Caller "_getFile"');
+            });
+        });
+
+        it('rejects if fails', () => {
+            const err = new Error('Gitlab API error');
+
+            requestMock.yieldsAsync(err);
+
+            return scm.getFile(params).then(() => {
+                assert.fail('Should not get here');
+            }).catch((error) => {
+                assert.calledWith(requestMock, expectedOptions);
+                assert.equal(error, err);
+            });
+        });
+    });
+
     // describe('getPermissions', () => {
     //     const pull = {
     //         url: 'https://gitlab.com/api/v3/repositories/repoIdPrefix',
@@ -939,95 +937,95 @@ describe('index', function () {
     //     });
     // });
     //
-    // describe('updateCommitStatus', () => {
-    //     let config;
-    //     let apiUrl;
-    //     let fakeResponse;
-    //     let expectedOptions;
-    //
-    //     beforeEach(() => {
-    //         config = {
-    //             scmUri: 'hostName:repoId:branchName',
-    //             sha: '1111111111111111111111111111111111111111',
-    //             buildStatus: 'SUCCESS',
-    //             token: 'bearerToken',
-    //             url: 'http://valid.url',
-    //             jobName: 'main'
-    //         };
-    //         apiUrl = 'https://gitlab.com/api/v3/repositories/repoId/commit/' +
-    //                  `${config.sha}/statuses/build`;
-    //         fakeResponse = {
-    //             statusCode: 201
-    //         };
-    //         expectedOptions = {
-    //             url: apiUrl,
-    //             method: 'POST',
-    //             json: true,
-    //             body: {
-    //                 url: config.url,
-    //                 state: 'SUCCESSFUL',
-    //                 key: config.sha,
-    //                 description: 'Screwdriver/main'
-    //             },
-    //             auth: {
-    //                 bearer: 'bearerToken'     // Decoded access token
-    //             }
-    //         };
-    //         requestMock.yieldsAsync(null, fakeResponse);
-    //     });
-    //
-    //     it('successfully update status', () =>
-    //         scm.updateCommitStatus(config).then(() => {
-    //             assert.calledWith(requestMock, expectedOptions);
-    //         })
-    //     );
-    //
-    //     it('successfully update status with correct values', () => {
-    //         config.buildStatus = 'ABORTED';
-    //         delete config.jobName;
-    //
-    //         expectedOptions.body.state = 'STOPPED';
-    //         expectedOptions.body.description = 'Screwdriver';
-    //
-    //         return scm.updateCommitStatus(config).then(() => {
-    //             assert.calledWith(requestMock, expectedOptions);
-    //         });
-    //     });
-    //
-    //     it('rejects if status code is not 201 or 200', () => {
-    //         fakeResponse = {
-    //             statusCode: 401,
-    //             body: {
-    //                 error: {
-    //                     message: 'Access token expired'
-    //                 }
-    //             }
-    //         };
-    //
-    //         requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
-    //
-    //         return scm.updateCommitStatus(config).then(() => {
-    //             assert.fail('Should not get here');
-    //         }).catch((error) => {
-    //             assert.calledWith(requestMock, expectedOptions);
-    //             assert.match(error.message, 'STATUS CODE 401');
-    //         });
-    //     });
-    //
-    //     it('rejects if fails', () => {
-    //         const err = new Error('Gitlab API error');
-    //
-    //         requestMock.yieldsAsync(err);
-    //
-    //         return scm.updateCommitStatus(config).then(() => {
-    //             assert.fail('Should not get here');
-    //         }).catch((error) => {
-    //             assert.calledWith(requestMock, expectedOptions);
-    //             assert.equal(error, err);
-    //         });
-    //     });
-    // });
-    //
+    describe('updateCommitStatus', () => {
+        let config;
+        let apiUrl;
+        let fakeResponse;
+        let expectedOptions;
+
+        beforeEach(() => {
+            config = {
+                scmUri: 'hostName:repoId:branchName',
+                sha: '1111111111111111111111111111111111111111',
+                buildStatus: 'SUCCESS',
+                token,
+                url: 'http://valid.url',
+                jobName: 'main'
+            };
+            apiUrl = 'https://gitlab.com/api/v3/projects/repoId/statuses/' +
+                     `${config.sha}`;
+            fakeResponse = {
+                statusCode: 201
+            };
+            expectedOptions = {
+                url: apiUrl,
+                method: 'POST',
+                json: true,
+                qs: {
+                    context: 'Screwdriver/main',
+                    target_url: config.url,
+                    state: 'success',
+                    description: 'Everything looks good!'
+                },
+                auth: {
+                    bearer: token
+                }
+            };
+            requestMock.yieldsAsync(null, fakeResponse);
+        });
+
+        it('successfully update status', () =>
+            scm.updateCommitStatus(config).then(() => {
+                assert.calledWith(requestMock, expectedOptions);
+            })
+        );
+
+        it('successfully update status with correct values', () => {
+            config.buildStatus = 'ABORTED';
+            delete config.jobName;
+
+            expectedOptions.qs.context = 'Screwdriver';
+            expectedOptions.qs.state = 'failure';
+            expectedOptions.qs.description = 'Aborted mid-flight';
+
+            return scm.updateCommitStatus(config).then(() => {
+                assert.calledWith(requestMock, expectedOptions);
+            });
+        });
+
+        it('rejects if status code is not 201 or 200', () => {
+            fakeResponse = {
+                statusCode: 401,
+                body: {
+                    message: 'Access token expired'
+                }
+            };
+
+            requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
+
+            return scm.updateCommitStatus(config).then(() => {
+                assert.fail('Should not get here');
+            }).catch((error) => {
+                assert.calledWith(requestMock, expectedOptions);
+                assert.match(error.message, '401 Reason "Access token expired" ' +
+                                            'Caller "_updateCommitStatus"');
+            });
+        });
+
+        it('rejects if fails', () => {
+            const err = new Error('Gitlab API error');
+
+            requestMock.yieldsAsync(err);
+
+            return scm.updateCommitStatus(config).then(() => {
+                assert.fail('Should not get here');
+            }).catch((error) => {
+                assert.calledWith(requestMock, expectedOptions);
+                assert.equal(error, err);
+            });
+        });
+    });
+
     describe('getBellConfiguration', () => {
         it('resolves a default configuration', () =>
             scm.getBellConfiguration().then((config) => {
@@ -1045,43 +1043,43 @@ describe('index', function () {
         );
     });
 
-    // describe('getCheckoutCommand', () => {
-    //     const config = {
-    //         branch: 'branchName',
-    //         host: 'hostName',
-    //         org: 'orgName',
-    //         repo: 'repoName',
-    //         sha: 'shaValue'
-    //     };
-    //
-    //     it('resolves checkout command without prRef', () =>
-    //         scm.getCheckoutCommand(config).then((command) => {
-    //             assert.deepEqual(command, testCommands);
-    //         })
-    //     );
-    //
-    //     it('resolves checkout command with prRef', () => {
-    //         config.prRef = 'prBranch';
-    //
-    //         return scm.getCheckoutCommand(config).then((command) => {
-    //             assert.deepEqual(command, testPrCommands);
-    //         });
-    //     });
-    //
-    //     it('resolves checkout command with custom username and email', () => {
-    //         scm = new GitlabScm({
-    //             oauthClientId: 'myclientid',
-    //             oauthClientSecret: 'myclientsecret',
-    //             username: 'abcd',
-    //             email: 'dev-null@my.email.com'
-    //         });
-    //
-    //         return scm.getCheckoutCommand(config)
-    //             .then((command) => {
-    //                 assert.deepEqual(command, testCustomPrCommands);
-    //             });
-    //     });
-    // });
+    describe('getCheckoutCommand', () => {
+        const config = {
+            branch: 'branchName',
+            host: 'hostName',
+            org: 'orgName',
+            repo: 'repoName',
+            sha: 'shaValue'
+        };
+
+        it('resolves checkout command without prRef', () =>
+            scm.getCheckoutCommand(config).then((command) => {
+                assert.deepEqual(command, testCommands);
+            })
+        );
+
+        it('resolves checkout command with prRef', () => {
+            config.prRef = 'prBranch';
+
+            return scm.getCheckoutCommand(config).then((command) => {
+                assert.deepEqual(command, testPrCommands);
+            });
+        });
+
+        it('resolves checkout command with custom username and email', () => {
+            scm = new GitlabScm({
+                oauthClientId: 'myclientid',
+                oauthClientSecret: 'myclientsecret',
+                username: 'abcd',
+                email: 'dev-null@my.email.com'
+            });
+
+            return scm.getCheckoutCommand(config)
+                .then((command) => {
+                    assert.deepEqual(command, testCustomPrCommands);
+                });
+        });
+    });
 
     describe('stats', () => {
         it('returns the correct stats', () => {

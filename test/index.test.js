@@ -403,102 +403,94 @@ describe('index', function () {
             });
         });
     });
-    //
-    // describe('decorateUrl', () => {
-    //     const apiUrl = 'https://gitlab.com/api/v3/repositories/repoId';
-    //     const selfLink = 'https://gitlab.com/d2lam2/test';
-    //     const repoOptions = {
-    //         url: apiUrl,
-    //         method: 'GET',
-    //         json: true,
-    //         auth: {
-    //             bearer: token
-    //         }
-    //     };
-    //     let fakeResponse;
-    //     let expectedOptions;
-    //
-    //     beforeEach(() => {
-    //         fakeResponse = {
-    //             statusCode: 200,
-    //             body: {
-    //                 full_name: 'username/branchName',
-    //                 links: {
-    //                     html: {
-    //                         href: selfLink
-    //                     }
-    //                 }
-    //             }
-    //         };
-    //         expectedOptions = {
-    //             url: apiUrl,
-    //             method: 'GET',
-    //             json: true,
-    //             auth: {
-    //                 bearer: token
-    //             }
-    //         };
-    //         requestMock.withArgs(repoOptions)
-    //             .yieldsAsync(null, fakeResponse, fakeResponse.body);
-    //     });
-    //
-    //     it('resolves to correct decorated url object', () => {
-    //         const expected = {
-    //             url: selfLink,
-    //             name: 'username/branchName',
-    //             branch: 'branchName'
-    //         };
-    //
-    //         return scm.decorateUrl({
-    //             scmUri: 'hostName:repoId:branchName',
-    //             token
-    //         }).then((decorated) => {
-    //             assert.calledWith(requestMock, expectedOptions);
-    //             assert.deepEqual(decorated, expected);
-    //         });
-    //     });
-    //
-    //     it('rejects if status code is not 200', () => {
-    //         fakeResponse = {
-    //             statusCode: 404,
-    //             body: {
-    //                 error: {
-    //                     message: 'Resource not found',
-    //                     detail: 'There is no API hosted at this URL'
-    //                 }
-    //             }
-    //         };
-    //
-    //         requestMock.withArgs(repoOptions).yieldsAsync(null, fakeResponse, fakeResponse.body);
-    //
-    //         return scm.decorateUrl({
-    //             scmUri: 'hostName:repoId:branchName',
-    //             token
-    //         }).then(() => {
-    //             assert.fail('Should not get here');
-    //         }).catch((error) => {
-    //             assert.calledWith(requestMock, expectedOptions);
-    //             assert.match(error.message, 'STATUS CODE 404');
-    //         });
-    //     });
-    //
-    //     it('rejects if fails', () => {
-    //         const err = new Error('Gitlab API error');
-    //
-    //         requestMock.withArgs(repoOptions).yieldsAsync(err);
-    //
-    //         return scm.decorateUrl({
-    //             scmUri: 'repoName:repoId:branchName',
-    //             token
-    //         }).then(() => {
-    //             assert.fail('Should not get here');
-    //         }).catch((error) => {
-    //             assert.called(requestMock);
-    //             assert.equal(error, err);
-    //         });
-    //     });
-    // });
-    //
+
+    describe('decorateUrl', () => {
+        const apiUrl = 'https://gitlab.com/api/v3/projects/repoId';
+        const repoOptions = {
+            url: apiUrl,
+            method: 'GET',
+            json: true,
+            auth: {
+                bearer: token
+            }
+        };
+        let fakeResponse;
+        let expectedOptions;
+
+        beforeEach(() => {
+            fakeResponse = {
+                statusCode: 200,
+                body: {
+                    path_with_namespace: 'username/repoName'
+                }
+            };
+            expectedOptions = {
+                url: apiUrl,
+                method: 'GET',
+                json: true,
+                auth: {
+                    bearer: token
+                }
+            };
+            requestMock.withArgs(repoOptions)
+                .yieldsAsync(null, fakeResponse, fakeResponse.body);
+        });
+
+        it('resolves to correct decorated url object', () => {
+            const expected = {
+                url: 'https://hostName/username/repoName/tree/branchName',
+                name: 'username/repoName',
+                branch: 'branchName'
+            };
+
+            return scm.decorateUrl({
+                scmUri: 'hostName:repoId:branchName',
+                token
+            }).then((decorated) => {
+                assert.calledWith(requestMock, expectedOptions);
+                assert.deepEqual(decorated, expected);
+            });
+        });
+
+        it('rejects if status code is not 200', () => {
+            fakeResponse = {
+                statusCode: 404,
+                body: {
+                    message: 'Resource not found'
+                }
+            };
+
+            requestMock.withArgs(repoOptions).yieldsAsync(null, fakeResponse, fakeResponse.body);
+
+            return scm.decorateUrl({
+                scmUri: 'hostName:repoId:branchName',
+                token
+            }).then(() => {
+                assert.fail('Should not get here');
+            }).catch((error) => {
+                assert.calledWith(requestMock, expectedOptions);
+                assert.match(error.message, '404 Reason "Resource not found" ' +
+                                            'Caller "lookupScmUri"');
+            });
+        });
+
+        it('rejects if fails', () => {
+            const err = new Error('Gitlab API error');
+
+            requestMock.withArgs(repoOptions).yieldsAsync(err);
+
+            return scm.decorateUrl({
+                scmUri: 'repoName:repoId:branchName',
+                token
+            }).then(() => {
+                assert.fail('Should not get here');
+            }).catch((error) => {
+                assert.called(requestMock);
+                assert.equal(error, err);
+            });
+        });
+    });
+
     // describe('decorateCommit', () => {
     //     const sha = '1111111111111111111111111111111111111111';
     //     const repoUrl =
@@ -1036,23 +1028,23 @@ describe('index', function () {
     //     });
     // });
     //
-    // describe('getBellConfiguration', () => {
-    //     it('resolves a default configuration', () =>
-    //         scm.getBellConfiguration().then((config) => {
-    //             assert.deepEqual(config, {
-    //                 clientId: 'myclientid',
-    //                 clientSecret: 'myclientsecret',
-    //                 config: {
-    //                     uri: 'https://gitlab.com'
-    //                 },
-    //                 forceHttps: false,
-    //                 isSecure: false,
-    //                 provider: 'gitlab'
-    //             });
-    //         })
-    //     );
-    // });
-    //
+    describe('getBellConfiguration', () => {
+        it('resolves a default configuration', () =>
+            scm.getBellConfiguration().then((config) => {
+                assert.deepEqual(config, {
+                    clientId: 'myclientid',
+                    clientSecret: 'myclientsecret',
+                    config: {
+                        uri: 'https://gitlab.com'
+                    },
+                    forceHttps: false,
+                    isSecure: false,
+                    provider: 'gitlab'
+                });
+            })
+        );
+    });
+
     // describe('getCheckoutCommand', () => {
     //     const config = {
     //         branch: 'branchName',
@@ -1090,25 +1082,25 @@ describe('index', function () {
     //             });
     //     });
     // });
-    //
-    // describe('stats', () => {
-    //     it('returns the correct stats', () => {
-    //         assert.deepEqual(scm.stats(), {
-    //             requests: {
-    //                 total: 0,
-    //                 timeouts: 0,
-    //                 success: 0,
-    //                 failure: 0,
-    //                 concurrent: 0,
-    //                 averageTime: 0
-    //             },
-    //             breaker: {
-    //                 isClosed: true
-    //             }
-    //         });
-    //     });
-    // });
-    //
+
+    describe('stats', () => {
+        it('returns the correct stats', () => {
+            assert.deepEqual(scm.stats(), {
+                requests: {
+                    total: 0,
+                    timeouts: 0,
+                    success: 0,
+                    failure: 0,
+                    concurrent: 0,
+                    averageTime: 0
+                },
+                breaker: {
+                    isClosed: true
+                }
+            });
+        });
+    });
+
     // describe('_addWebhook', () => {
     //     const oauthToken = 'oauthToken';
     //     const scmUri = 'hostName:repoId:branchName';

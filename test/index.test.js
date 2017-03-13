@@ -491,134 +491,143 @@ describe('index', function () {
         });
     });
 
-    // describe('decorateCommit', () => {
-    //     const sha = '1111111111111111111111111111111111111111';
-    //     const repoUrl =
-    //         `https://gitlab.com/api/v3/repositories/repoId/commit/${sha}`;
-    //     const authorUrl = 'https://gitlab.com/api/v3/users/username';
-    //     const selfLink = `https://gitlab.com/repoId/commits/${sha}`;
-    //     const repoOptions = {
-    //         url: repoUrl,
-    //         method: 'GET',
-    //         json: true,
-    //         auth: {
-    //             bearer: token
-    //         }
-    //     };
-    //     const authorOptions = {
-    //         url: authorUrl,
-    //         method: 'GET',
-    //         json: true,
-    //         auth: {
-    //             bearer: token
-    //         }
-    //     };
-    //     let fakeResponse;
-    //     let fakeAuthorResponse;
-    //
-    //     beforeEach(() => {
-    //         fakeResponse = {
-    //             statusCode: 200,
-    //             body: {
-    //                 message: 'testing',
-    //                 links: {
-    //                     html: {
-    //                         href: selfLink
-    //                     }
-    //                 },
-    //                 author: {
-    //                     user: {
-    //                         username: 'username'
-    //                     }
-    //                 }
-    //             }
-    //         };
-    //         fakeAuthorResponse = {
-    //             statusCode: 200,
-    //             body: {
-    //                 username: 'username',
-    //                 display_name: 'displayName',
-    //                 uuid: 'uuid',
-    //                 links: {
-    //                     html: {
-    //                         href: 'https://gitlab.com/username/'
-    //                     },
-    //                     avatar: {
-    //                         href: 'https://gitlab.com/account/username/avatar/32/'
-    //                     }
-    //                 }
-    //             }
-    //         };
-    //         requestMock.withArgs(repoOptions)
-    //             .yieldsAsync(null, fakeResponse, fakeResponse.body);
-    //         requestMock.withArgs(authorOptions)
-    //             .yieldsAsync(null, fakeAuthorResponse, fakeAuthorResponse.body);
-    //     });
-    //
-    //     it('resolves to correct decorated object', () => {
-    //         const expected = {
-    //             url: selfLink,
-    //             message: 'testing',
-    //             author: {
-    //                 url: 'https://gitlab.com/username/',
-    //                 name: 'displayName',
-    //                 username: 'username',
-    //                 avatar: 'https://gitlab.com/account/username/avatar/32/'
-    //             }
-    //         };
-    //
-    //         return scm.decorateCommit({
-    //             sha,
-    //             scmUri: 'hostName:repoId:branchName',
-    //             token
-    //         }).then((decorated) => {
-    //             assert.calledTwice(requestMock);
-    //             assert.deepEqual(decorated, expected);
-    //         });
-    //     });
-    //
-    //     it('rejects if status code is not 200', () => {
-    //         fakeResponse = {
-    //             statusCode: 404,
-    //             body: {
-    //                 error: {
-    //                     message: 'Resource not found',
-    //                     detail: 'There is no API hosted at this URL'
-    //                 }
-    //             }
-    //         };
-    //
-    //         requestMock.withArgs(repoOptions).yieldsAsync(null, fakeResponse, fakeResponse.body);
-    //
-    //         return scm.decorateCommit({
-    //             sha,
-    //             scmUri: 'hostName:repoId:branchName',
-    //             token
-    //         }).then(() => {
-    //             assert.fail('Should not get here');
-    //         }).catch((error) => {
-    //             assert.calledOnce(requestMock);
-    //             assert.match(error.message, 'STATUS CODE 404');
-    //         });
-    //     });
-    //
-    //     it('rejects if fails', () => {
-    //         const err = new Error('Gitlab API error');
-    //
-    //         requestMock.withArgs(repoOptions).yieldsAsync(err);
-    //
-    //         return scm.decorateCommit({
-    //             sha,
-    //             scmUri: 'hostName:repoId:branchName',
-    //             token
-    //         }).then(() => {
-    //             assert.fail('Should not get here');
-    //         }).catch((error) => {
-    //             assert.called(requestMock);
-    //             assert.equal(error, err);
-    //         });
-    //     });
-    // });
+    describe('decorateCommit', () => {
+        const sha = '1111111111111111111111111111111111111111';
+        let lookupScmUri;
+        let lookupScmUriResponse;
+        let commitLookup;
+        let commitLookupResponse;
+        let authorLookup;
+        let authorLookupResponse;
+        let fakeResponse;
+
+        beforeEach(() => {
+            lookupScmUri = {
+                json: true,
+                method: 'GET',
+                auth: {
+                    bearer: token
+                },
+                url: 'https://gitlab.com/api/v3/projects/repoId'
+            };
+            lookupScmUriResponse = {
+                statusCode: 200,
+                body: {
+                    path_with_namespace: 'owner/repoName'
+                }
+            };
+
+            commitLookup = {
+                json: true,
+                method: 'GET',
+                auth: {
+                    bearer: token
+                },
+                url: 'https://gitlab.com/api/v3/projects/owner%2FrepoName' +
+                     `/repository/commits/${sha}`
+            };
+            commitLookupResponse = {
+                statusCode: 200,
+                body: {
+                    author_name: 'username',
+                    message: 'testing'
+                }
+            };
+
+            authorLookup = {
+                json: true,
+                method: 'GET',
+                auth: {
+                    bearer: token
+                },
+                url: 'https://gitlab.com/api/v3/users',
+                qs: {
+                    username: 'username'
+                }
+            };
+            authorLookupResponse = {
+                statusCode: 200,
+                body: [{
+                    username: 'username',
+                    name: 'displayName',
+                    id: 12345,
+                    state: 'active',
+                    avatar_url: 'https://gitlab.com/uploads/user/avatar/12345/avatar.png',
+                    web_url: 'https://gitlab.com/username'
+                }]
+            };
+
+            requestMock.withArgs(lookupScmUri)
+                .yieldsAsync(null, lookupScmUriResponse, lookupScmUriResponse.body);
+            requestMock.withArgs(commitLookup)
+                .yieldsAsync(null, commitLookupResponse, commitLookupResponse.body);
+            requestMock.withArgs(authorLookup)
+                .yieldsAsync(null, authorLookupResponse, authorLookupResponse.body);
+        });
+
+        it('resolves to correct decorated object', () => {
+            const expected = {
+                message: 'testing',
+                author: {
+                    url: 'https://gitlab.com/username',
+                    name: 'displayName',
+                    username: 'username',
+                    avatar: 'https://gitlab.com/uploads/user/avatar/12345/avatar.png'
+                },
+                url: `https://gitlab.com/owner/repoName/tree/${sha}`
+            };
+
+            return scm.decorateCommit({
+                sha,
+                scmUri: 'hostName:repoId:branchName',
+                token
+            }).then((decorated) => {
+                assert.calledThrice(requestMock);
+                assert.deepEqual(decorated, expected);
+            });
+        });
+
+        it('rejects if status code is not 200', () => {
+            fakeResponse = {
+                statusCode: 404,
+                body: {
+                    message: 'Resource not found'
+                }
+            };
+
+            requestMock.withArgs(commitLookup)
+                .yieldsAsync(null, fakeResponse, fakeResponse.body);
+
+            return scm.decorateCommit({
+                sha,
+                scmUri: 'hostName:repoId:branchName',
+                token
+            }).then(() => {
+                assert.fail('Should not get here');
+            }).catch((error) => {
+                assert.calledTwice(requestMock);
+                assert.match(error.message, '404 Reason "Resource not found" ' +
+                                            'Caller "_decorateCommit: commitLookup"');
+            });
+        });
+
+        it('rejects if fails', () => {
+            const err = new Error('Gitlab API error');
+
+            requestMock.withArgs(commitLookup).yieldsAsync(err);
+
+            return scm.decorateCommit({
+                sha,
+                scmUri: 'hostName:repoId:branchName',
+                token
+            }).then(() => {
+                assert.fail('Should not get here');
+            }).catch((error) => {
+                assert.called(requestMock);
+                assert.equal(error, err);
+            });
+        });
+    });
 
     describe('getCommitSha', () => {
         const apiUrl = 'https://gitlab.com/api/v3/projects/repoId' +

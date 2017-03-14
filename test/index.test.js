@@ -848,7 +848,7 @@ describe('index', function () {
                 assert.calledOnce(requestMock);
                 assert.calledWith(requestMock, expectedOptions);
                 assert.deepEqual(permissions, {
-                    admin: false,
+                    admin: true,
                     push: true,
                     pull: true
                 });

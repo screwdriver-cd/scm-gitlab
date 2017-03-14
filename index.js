@@ -346,7 +346,7 @@ class GitlabScm extends Scm {
             parsed.branch = mergeRequest.target_branch;
             parsed.sha = mergeRequest.last_commit.id;
             parsed.prNum = mergeRequest.iid;
-            parsed.prRef = mergeRequest.source_branch;
+            parsed.prRef = `merge_requests/${mergeRequest.iid}`;
 
             return Promise.resolve(parsed);
         }
@@ -715,13 +715,13 @@ class GitlabScm extends Scm {
             url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v3` +
                  `/projects/${repoInfo.repoId}/merge_requests`
         }).then((response) => {
-            checkResponseError(response);
+            checkResponseError(response, '_getOpenedPRs');
 
             const prList = response.body;
 
             return prList.map(pr => ({
-                name: `PR-${pr.id}`,
-                ref: pr.source_branch
+                name: `PR-${pr.iid}`,
+                ref: `merge_requests/${pr.iid}`
             }));
         });
     }

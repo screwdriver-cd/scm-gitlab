@@ -693,6 +693,40 @@ class GitlabScm extends Scm {
     }
 
     /**
+    * Get list of objects (each consists of opened PR name and ref (branch)) of a pipeline
+    * @method getOpenedPRs
+    * @param  {Object}   config              Configuration
+    * @param  {String}   config.scmUri       The scmUri to get opened PRs
+    * @param  {String}   config.token        The token used to authenticate to the SCM
+    * @return {Promise}
+    */
+    _getOpenedPRs(config) {
+        const repoInfo = getScmUriParts(config.scmUri);
+
+        return this.breaker.runCommand({
+            method: 'GET',
+            json: true,
+            auth: {
+                bearer: config.token
+            },
+            qs: {
+                state: 'opened'
+            },
+            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v3` +
+                 `/projects/${repoInfo.repoId}/merge_requests`
+        }).then((response) => {
+            checkResponseError(response);
+
+            const prList = response.body;
+
+            return prList.map(pr => ({
+                name: `PR-${pr.id}`,
+                ref: pr.source_branch
+            }));
+        });
+    }
+
+    /**
     * Retrieve stats for the executor
     * @method stats
     * @param  {Response} Object          Object containing stats for the executor

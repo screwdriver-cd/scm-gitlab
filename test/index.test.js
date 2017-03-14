@@ -1433,46 +1433,59 @@ describe('index', function () {
         });
     });
 
-    // describe('_getOpenedPRs', () => {
-    //     const oauthToken = 'oauthToken';
-    //     const scmUri = 'hostName:repoId:branchName';
-    //     const expectedOptions = {
-    //         url: 'https://gitlab.com/api/v3/repositories/repoId/pullrequests',
-    //         method: 'GET',
-    //         json: true,
-    //         auth: {
-    //             bearer: oauthToken
-    //         }
-    //     };
-    //
-    //     it('returns response of expected format from Gitlab', () => {
-    //         requestMock.yieldsAsync(null, {
-    //             body: {
-    //                 values: [{
-    //                     id: 1,
-    //                     source: {
-    //                         branch: {
-    //                             name: 'testbranch'
-    //                         }
-    //                     }
-    //                 }]
-    //             },
-    //             statusCode: 200
-    //         });
-    //
-    //         // eslint-disable-next-line no-underscore-dangle
-    //         return scm._getOpenedPRs({
-    //             scmUri,
-    //             token: oauthToken
-    //         })
-    //         .then((response) => {
-    //             assert.calledWith(requestMock, expectedOptions);
-    //             assert.deepEqual(response, [{
-    //                 name: 'PR-1',
-    //                 ref: 'testbranch'
-    //             }]);
-    //         }
-    //         );
-    //     });
-    // });
+    describe('_getOpenedPRs', () => {
+        const scmUri = 'hostName:repoId:branchName';
+        const expectedOptions = {
+            url: 'https://gitlab.com/api/v3/projects/repoId/merge_requests',
+            method: 'GET',
+            json: true,
+            auth: {
+                bearer: token
+            },
+            qs: {
+                state: 'opened'
+            }
+        };
+
+        it('returns response of expected format from Gitlab', () => {
+            requestMock.yieldsAsync(null, {
+                statusCode: 200,
+                body: [
+                    {
+                        id: 1,
+                        iid: 1,
+                        target_branch: 'master',
+                        source_branch: 'test1',
+                        project_id: 3
+                    },
+                    {
+                        id: 2,
+                        iid: 2,
+                        target_branch: 'master',
+                        source_branch: 'test2',
+                        project_id: 3
+                    }
+                ]
+            });
+
+            // eslint-disable-next-line no-underscore-dangle
+            return scm._getOpenedPRs({
+                scmUri,
+                token
+            })
+            .then((response) => {
+                assert.calledWith(requestMock, expectedOptions);
+                assert.deepEqual(response, [
+                    {
+                        name: 'PR-1',
+                        ref: 'test1'
+                    },
+                    {
+                        name: 'PR-2',
+                        ref: 'test2'
+                    }
+                ]);
+            });
+        });
+    });
 });

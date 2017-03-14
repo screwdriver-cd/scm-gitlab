@@ -778,174 +778,274 @@ describe('index', function () {
         });
     });
 
-    // describe('getPermissions', () => {
-    //     const pull = {
-    //         url: 'https://gitlab.com/api/v3/repositories/repoIdPrefix',
-    //         method: 'GET',
-    //         json: true,
-    //         auth: {
-    //             bearer: token
-    //         }
-    //     };
-    //     const push = {
-    //         url: 'https://gitlab.com/api/v3/repositories/repoIdPrefix?role=contributor',
-    //         method: 'GET',
-    //         json: true,
-    //         auth: {
-    //             bearer: token
-    //         }
-    //     };
-    //     const admin = {
-    //         url: 'https://gitlab.com/api/v3/repositories/repoIdPrefix?role=admin',
-    //         method: 'GET',
-    //         json: true,
-    //         auth: {
-    //             bearer: token
-    //         }
-    //     };
-    //     const readResponse = {
-    //         statusCode: 200,
-    //         body: {
-    //             values: [
-    //                 { uuid: 'repoIdSuffix1' },
-    //                 { uuid: 'repoIdSuffix2' },
-    //                 { uuid: 'repoIdSuffix3' }
-    //             ]
-    //         }
-    //     };
-    //     const writeResponse = {
-    //         statusCode: 200,
-    //         body: {
-    //             values: [
-    //                 { uuid: 'repoIdSuffix1' },
-    //                 { uuid: 'repoIdSuffix2' }
-    //             ]
-    //         }
-    //     };
-    //     const adminResponse = {
-    //         statusCode: 200,
-    //         body: {
-    //             values: [
-    //                 { uuid: 'repoIdSuffix1' }
-    //             ]
-    //         }
-    //     };
-    //
-    //     beforeEach(() => {
-    //         requestMock.withArgs(pull).yieldsAsync(null, readResponse, readResponse.body);
-    //         requestMock.withArgs(push).yieldsAsync(null, writeResponse, writeResponse.body);
-    //         requestMock.withArgs(admin).yieldsAsync(null, adminResponse, adminResponse.body);
-    //     });
-    //
-    //     it('get correct admin permissions', () => {
-    //         const scmUri = 'hostName:repoIdPrefix/repoIdSuffix1:branchName';
-    //
-    //         return scm.getPermissions({
-    //             scmUri,
-    //             token
-    //         }).then((permissions) => {
-    //             assert.calledThrice(requestMock);
-    //             assert.calledWith(requestMock, pull);
-    //             assert.calledWith(requestMock, push);
-    //             assert.calledWith(requestMock, admin);
-    //             assert.deepEqual(permissions, {
-    //                 admin: true,
-    //                 push: true,
-    //                 pull: true
-    //             });
-    //         });
-    //     });
-    //
-    //     it('get correct push permissions', () => {
-    //         const scmUri = 'hostName:repoIdPrefix/repoIdSuffix2:branchName';
-    //
-    //         return scm.getPermissions({
-    //             scmUri,
-    //             token
-    //         }).then((permissions) => {
-    //             assert.calledThrice(requestMock);
-    //             assert.calledWith(requestMock, pull);
-    //             assert.calledWith(requestMock, push);
-    //             assert.calledWith(requestMock, admin);
-    //             assert.deepEqual(permissions, {
-    //                 admin: false,
-    //                 push: true,
-    //                 pull: true
-    //             });
-    //         });
-    //     });
-    //
-    //     it('get correct pull permissions', () => {
-    //         const scmUri = 'hostName:repoIdPrefix/repoIdSuffix3:branchName';
-    //
-    //         return scm.getPermissions({
-    //             scmUri,
-    //             token
-    //         }).then((permissions) => {
-    //             assert.deepEqual(permissions, {
-    //                 admin: false,
-    //                 push: false,
-    //                 pull: true
-    //             });
-    //         });
-    //     });
-    //
-    //     it('no permissions', () => {
-    //         const scmUri = 'hostName:repoIdPrefix/repoIdSuffix:branchName';
-    //
-    //         return scm.getPermissions({
-    //             scmUri,
-    //             token
-    //         }).then((permissions) => {
-    //             assert.deepEqual(permissions, {
-    //                 admin: false,
-    //                 push: false,
-    //                 pull: false
-    //             });
-    //         });
-    //     });
-    //
-    //     it('rejects if status code is not 200', () => {
-    //         const scmUri = 'hostName:repoIdPrefix/repoIdSuffix:branchName';
-    //         const fakeResponse = {
-    //             statusCode: 404,
-    //             body: {
-    //                 error: {
-    //                     message: 'Resource not found',
-    //                     detail: 'There is no API hosted at this URL'
-    //                 }
-    //             }
-    //         };
-    //
-    //         requestMock.withArgs(pull).yieldsAsync(null, fakeResponse, fakeResponse.body);
-    //
-    //         return scm.getPermissions({
-    //             scmUri,
-    //             token
-    //         }).then(() => {
-    //             assert.fail('Should not get here');
-    //         }).catch((error) => {
-    //             assert.match(error.message, 'STATUS CODE 404');
-    //         });
-    //     });
-    //
-    //     it('rejects if fails', () => {
-    //         const error = new Error('Gitlab API error');
-    //         const scmUri = 'hostName:repoIdPrefix/repoIdSuffix:branchName';
-    //
-    //         requestMock.withArgs(pull).yieldsAsync(error);
-    //
-    //         return scm.getPermissions({
-    //             scmUri,
-    //             token
-    //         }).then(() => {
-    //             assert.fail('Should not get here');
-    //         }).catch((err) => {
-    //             assert.equal(error, err);
-    //         });
-    //     });
-    // });
-    //
+    describe('getPermissions', () => {
+        let expectedOptions;
+        let fakeResponse;
+
+        beforeEach(() => {
+            expectedOptions = {
+                url: 'https://gitlab.com/api/v3/projects/repoId',
+                method: 'GET',
+                json: true,
+                auth: {
+                    bearer: token
+                }
+            };
+
+            fakeResponse = {
+                statusCode: 200,
+                body: {
+                    permissions: {
+                        project_access: {
+                            access_level: 50
+                        }
+                    }
+                }
+            };
+
+            requestMock.withArgs(expectedOptions)
+                .yieldsAsync(null, fakeResponse, fakeResponse.body);
+        });
+
+        it('get correct permissions for level 50', () => {
+            const scmUri = 'hostName:repoId:branchName';
+
+            return scm.getPermissions({
+                scmUri,
+                token
+            }).then((permissions) => {
+                assert.calledOnce(requestMock);
+                assert.calledWith(requestMock, expectedOptions);
+                assert.deepEqual(permissions, {
+                    admin: true,
+                    push: true,
+                    pull: true
+                });
+            });
+        });
+
+        it('get correct permissions for level 40', () => {
+            fakeResponse = {
+                statusCode: 200,
+                body: {
+                    permissions: {
+                        project_access: {
+                            access_level: 40
+                        }
+                    }
+                }
+            };
+
+            requestMock.withArgs(expectedOptions)
+                .yieldsAsync(null, fakeResponse, fakeResponse.body);
+
+            const scmUri = 'hostName:repoId:branchName';
+
+            return scm.getPermissions({
+                scmUri,
+                token
+            }).then((permissions) => {
+                assert.calledOnce(requestMock);
+                assert.calledWith(requestMock, expectedOptions);
+                assert.deepEqual(permissions, {
+                    admin: false,
+                    push: true,
+                    pull: true
+                });
+            });
+        });
+
+        it('get correct permissions for level 30', () => {
+            fakeResponse = {
+                statusCode: 200,
+                body: {
+                    permissions: {
+                        project_access: {
+                            access_level: 30
+                        }
+                    }
+                }
+            };
+
+            requestMock.withArgs(expectedOptions)
+                .yieldsAsync(null, fakeResponse, fakeResponse.body);
+
+            const scmUri = 'hostName:repoId:branchName';
+
+            return scm.getPermissions({
+                scmUri,
+                token
+            }).then((permissions) => {
+                assert.calledOnce(requestMock);
+                assert.calledWith(requestMock, expectedOptions);
+                assert.deepEqual(permissions, {
+                    admin: false,
+                    push: true,
+                    pull: true
+                });
+            });
+        });
+
+        it('get correct permissions for level 20', () => {
+            fakeResponse = {
+                statusCode: 200,
+                body: {
+                    permissions: {
+                        project_access: {
+                            access_level: 20
+                        }
+                    }
+                }
+            };
+
+            requestMock.withArgs(expectedOptions)
+                .yieldsAsync(null, fakeResponse, fakeResponse.body);
+
+            const scmUri = 'hostName:repoId:branchName';
+
+            return scm.getPermissions({
+                scmUri,
+                token
+            }).then((permissions) => {
+                assert.calledOnce(requestMock);
+                assert.calledWith(requestMock, expectedOptions);
+                assert.deepEqual(permissions, {
+                    admin: false,
+                    push: false,
+                    pull: true
+                });
+            });
+        });
+
+        it('get correct permissions for level 10', () => {
+            fakeResponse = {
+                statusCode: 200,
+                body: {
+                    permissions: {
+                        project_access: {
+                            access_level: 10
+                        }
+                    }
+                }
+            };
+
+            requestMock.withArgs(expectedOptions)
+                .yieldsAsync(null, fakeResponse, fakeResponse.body);
+
+            const scmUri = 'hostName:repoId:branchName';
+
+            return scm.getPermissions({
+                scmUri,
+                token
+            }).then((permissions) => {
+                assert.calledOnce(requestMock);
+                assert.calledWith(requestMock, expectedOptions);
+                assert.deepEqual(permissions, {
+                    admin: false,
+                    push: false,
+                    pull: false
+                });
+            });
+        });
+
+        it('get correct permissions for level 90', () => {
+            fakeResponse = {
+                statusCode: 200,
+                body: {
+                    permissions: {
+                        project_access: {
+                            access_level: 90
+                        }
+                    }
+                }
+            };
+
+            requestMock.withArgs(expectedOptions)
+                .yieldsAsync(null, fakeResponse, fakeResponse.body);
+
+            const scmUri = 'hostName:repoId:branchName';
+
+            return scm.getPermissions({
+                scmUri,
+                token
+            }).then((permissions) => {
+                assert.calledOnce(requestMock);
+                assert.calledWith(requestMock, expectedOptions);
+                assert.deepEqual(permissions, {
+                    admin: false,
+                    push: false,
+                    pull: false
+                });
+            });
+        });
+
+        it('get correct permissions when no access_level is present', () => {
+            fakeResponse = {
+                statusCode: 200,
+                body: {}
+            };
+
+            requestMock.withArgs(expectedOptions)
+                .yieldsAsync(null, fakeResponse, fakeResponse.body);
+
+            const scmUri = 'hostName:repoId:branchName';
+
+            return scm.getPermissions({
+                scmUri,
+                token
+            }).then((permissions) => {
+                assert.calledOnce(requestMock);
+                assert.calledWith(requestMock, expectedOptions);
+                assert.deepEqual(permissions, {
+                    admin: false,
+                    push: false,
+                    pull: false
+                });
+            });
+        });
+
+        it('rejects if status code is not 200', () => {
+            const scmUri = 'hostName:repoId:branchName';
+
+            fakeResponse = {
+                statusCode: 404,
+                body: {
+                    message: 'Resource not found'
+                }
+            };
+
+            requestMock.withArgs(expectedOptions)
+                .yieldsAsync(null, fakeResponse, fakeResponse.body);
+
+            return scm.getPermissions({
+                scmUri,
+                token
+            }).then(() => {
+                assert.fail('Should not get here');
+            }).catch((error) => {
+                assert.match(error.message, '404 Reason "Resource not found" ' +
+                                            'Caller "_getPermissions"');
+            });
+        });
+
+        it('rejects if fails', () => {
+            const error = new Error('Gitlab API error');
+            const scmUri = 'hostName:repoId:branchName';
+
+            requestMock.withArgs(expectedOptions)
+                .yieldsAsync(error);
+
+            return scm.getPermissions({
+                scmUri,
+                token
+            }).then(() => {
+                assert.fail('Should not get here');
+            }).catch((err) => {
+                assert.equal(error, err);
+            });
+        });
+    });
+
     describe('updateCommitStatus', () => {
         let config;
         let apiUrl;
@@ -1108,349 +1208,231 @@ describe('index', function () {
         });
     });
 
-    // describe('_addWebhook', () => {
-    //     const oauthToken = 'oauthToken';
-    //     const scmUri = 'hostName:repoId:branchName';
-    //
-    //     beforeEach(() => {
-    //         requestMock.yieldsAsync(null, {
-    //             statusCode: 200
-    //         });
-    //     });
-    //
-    //     it('works', () => {
-    //         requestMock.onFirstCall().yieldsAsync(null, {
-    //             body: {
-    //                 values: [],
-    //                 size: 0
-    //             },
-    //             statusCode: 200
-    //         });
-    //
-    //         /* eslint-disable no-underscore-dangle */
-    //         return scm._addWebhook({
-    //         /* eslint-enable no-underscore-dangle */
-    //             scmUri,
-    //             token: oauthToken,
-    //             url: 'url'
-    //         })
-    //         .then(() => {
-    //             assert.calledWith(requestMock, {
-    //                 json: true,
-    //                 method: 'GET',
-    //                 auth: {
-    //                     bearer: oauthToken
-    //                 },
-    //                 url: 'https://gitlab.com/api/v3/projects/repoId/hooks'
-    //             });
-    //             assert.calledWith(requestMock, {
-    //                 body: {
-    //                     description: 'Screwdriver-CD build trigger',
-    //                     url: 'url',
-    //                     active: true,
-    //                     events: [
-    //                         'repo:push',
-    //                         'pullrequest:created',
-    //                         'pullrequest:fulfilled',
-    //                         'pullrequest:rejected',
-    //                         'pullrequest:updated'
-    //                     ]
-    //                 },
-    //                 json: true,
-    //                 method: 'POST',
-    //                 auth: {
-    //                     bearer: oauthToken
-    //                 },
-    //                 url: 'https://gitlab.com/api/v3/projects/repoId/hooks'
-    //             });
-    //         });
-    //     });
-    //
-    //     it('updates a pre-existing webhook', () => {
-    //         const uuid = 'uuidValue';
-    //
-    //         requestMock.onFirstCall().yieldsAsync(null, {
-    //             body: {
-    //                 pagelen: 30,
-    //                 values: [{
-    //                     url: 'url',
-    //                     uuid
-    //                 }],
-    //                 page: 1,
-    //                 size: 3
-    //             },
-    //             statusCode: 200
-    //         });
-    //
-    //         /* eslint-disable no-underscore-dangle */
-    //         return scm._addWebhook({
-    //         /* eslint-enable no-underscore-dangle */
-    //             scmUri,
-    //             token: oauthToken,
-    //             url: 'url'
-    //         }).then(() => {
-    //             assert.calledWith(requestMock, {
-    //                 json: true,
-    //                 method: 'GET',
-    //                 auth: {
-    //                     bearer: oauthToken
-    //                 },
-    //                 url: 'https://gitlab.com/api/v3/projects/repoId/hooks'
-    //             });
-    //             assert.calledWith(requestMock, {
-    //                 body: {
-    //                     description: 'Screwdriver-CD build trigger',
-    //                     url: 'url',
-    //                     active: true,
-    //                     events: [
-    //                         'repo:push',
-    //                         'pullrequest:created',
-    //                         'pullrequest:fulfilled',
-    //                         'pullrequest:rejected',
-    //                         'pullrequest:updated'
-    //                     ]
-    //                 },
-    //                 json: true,
-    //                 method: 'PUT',
-    //                 auth: {
-    //                     bearer: oauthToken
-    //                 },
-    //                 url: `https://gitlab.com/api/v3/projects/repoId/hooks/${uuid}`
-    //             });
-    //         });
-    //     });
-    //
-    //     it('updates a hook on a repo with a lot of other hooks', () => {
-    //         const fakeValues = [];
-    //         const uuid = 'uuid';
-    //
-    //         for (let i = 0; i < 30; i += 1) {
-    //             fakeValues.push({});
-    //         }
-    //
-    //         requestMock.onFirstCall().yieldsAsync(null, {
-    //             body: {
-    //                 pagelen: 30,
-    //                 values: fakeValues,
-    //                 page: 1,
-    //                 size: 30
-    //             },
-    //             statusCode: 200
-    //         });
-    //         requestMock.onSecondCall().yieldsAsync(null, {
-    //             body: {
-    //                 pagelen: 30,
-    //                 values: [{
-    //                     url: 'url',
-    //                     uuid: 'uuid'
-    //                 }],
-    //                 page: 2,
-    //                 size: 1
-    //             },
-    //             statusCode: 200
-    //         });
-    //
-    //         /* eslint-disable no-underscore-dangle */
-    //         return scm._addWebhook({
-    //         /* eslint-enable no-underscore-dangle */
-    //             scmUri,
-    //             token: oauthToken,
-    //             url: 'url'
-    //         }).then(() => {
-    //             assert.calledWith(requestMock, {
-    //                 json: true,
-    //                 method: 'GET',
-    //                 auth: {
-    //                     bearer: oauthToken
-    //                 },
-    //                 url: 'https://gitlab.com/api/v3/projects/repoId/hooks'
-    //             });
-    //             assert.calledWith(requestMock, {
-    //                 body: {
-    //                     description: 'Screwdriver-CD build trigger',
-    //                     url: 'url',
-    //                     active: true,
-    //                     events: [
-    //                         'repo:push',
-    //                         'pullrequest:created',
-    //                         'pullrequest:fulfilled',
-    //                         'pullrequest:rejected',
-    //                         'pullrequest:updated'
-    //                     ]
-    //                 },
-    //                 json: true,
-    //                 method: 'PUT',
-    //                 auth: {
-    //                     bearer: oauthToken
-    //                 },
-    //                 url: `https://gitlab.com/api/v3/projects/repoId/hooks/${uuid}`
-    //             });
-    //         });
-    //     });
-    //
-    //     it('rejects when failing to get the current list of webhooks', () => {
-    //         const expectedMessage = [
-    //             'Your credentials lack one or more required privilege scopes.',
-    //             'Reason "webhook"'
-    //         ].join(' ');
-    //         const testErrorBody = {
-    //             type: 'error',
-    //             error: {
-    //                 message: 'Your credentials lack one or more required privilege scopes.',
-    //                 detail: {
-    //                     granted: ['repository'],
-    //                     required: ['webhook']
-    //                 }
-    //             }
-    //         };
-    //
-    //         requestMock.onFirstCall().yieldsAsync(null, {
-    //             body: testErrorBody,
-    //             statusCode: 403
-    //         });
-    //
-    //         /* eslint-disable no-underscore-dangle */
-    //         return scm._addWebhook({
-    //         /* eslint-enable no-underscore-dangle */
-    //             scmUri,
-    //             token,
-    //             url: 'url'
-    //         }).then(assert.fail, (err) => {
-    //             assert.strictEqual(err.message, expectedMessage);
-    //         });
-    //     });
-    //
-    //     it('rejects with a stringified error when bitbucket API fails to list webhooks', () => {
-    //         const statusCode = 500;
-    //         const expectedMessage = `SCM service unavailable (${statusCode}). Reason "undefined"`;
-    //
-    //         requestMock.onFirstCall().yieldsAsync(null, {
-    //             body: undefined,
-    //             statusCode
-    //         });
-    //
-    //         /* eslint-disable no-underscore-dangle */
-    //         return scm._addWebhook({
-    //         /* eslint-enable no-underscore-dangle */
-    //             scmUri,
-    //             token,
-    //             url: 'url'
-    //         }).then(assert.fail, (err) => {
-    //             assert.strictEqual(err.message, expectedMessage);
-    //         });
-    //     });
-    //
-    //     it('rejects when failing to create a webhook', () => {
-    //         const testErrorBody = {
-    //             type: 'error',
-    //             error: {
-    //                 message: 'Your credentials lack one or more required privilege scopes.',
-    //                 detail: {
-    //                     granted: ['repository'],
-    //                     required: ['webhook']
-    //                 }
-    //             }
-    //         };
-    //
-    //         requestMock.onFirstCall().yieldsAsync(null, {
-    //             body: {
-    //                 values: [],
-    //                 size: 0
-    //             },
-    //             statusCode: 200
-    //         });
-    //         requestMock.onSecondCall().yieldsAsync(null, {
-    //             body: testErrorBody,
-    //             statusCode: 403
-    //         });
-    //
-    //         /* eslint-disable no-underscore-dangle */
-    //         return scm._addWebhook({
-    //         /* eslint-enable no-underscore-dangle */
-    //             scmUri,
-    //             token,
-    //             url: 'url'
-    //         }).then(assert.fail, (err) => {
-    //             assert.strictEqual(err.message, [
-    //                 'Your credentials lack one or more required privilege scopes.',
-    //                 'Reason "webhook"'
-    //             ].join(' '));
-    //         });
-    //     });
-    //
-    //     it('rejects when failing to update a webhook', () => {
-    //         const expectedMessage = [
-    //             'Your credentials lack one or more required privilege scopes.',
-    //             'Reason "webhook"'
-    //         ].join(' ');
-    //         const testErrorBody = {
-    //             type: 'error',
-    //             error: {
-    //                 message: 'Your credentials lack one or more required privilege scopes.',
-    //                 detail: {
-    //                     granted: ['repository'],
-    //                     required: ['webhook']
-    //                 }
-    //             }
-    //         };
-    //
-    //         requestMock.onFirstCall().yieldsAsync(null, {
-    //             body: {
-    //                 values: [{
-    //                     url: 'url',
-    //                     uuid: 'uuid'
-    //                 }],
-    //                 size: 1
-    //             },
-    //             statusCode: 200
-    //         });
-    //         requestMock.onSecondCall().yieldsAsync(null, {
-    //             body: testErrorBody,
-    //             statusCode: 403
-    //         });
-    //
-    //         /* eslint-disable no-underscore-dangle */
-    //         return scm._addWebhook({
-    //         /* eslint-enable no-underscore-dangle */
-    //             scmUri,
-    //             token,
-    //             url: 'url'
-    //         }).then(assert.fail, (err) => {
-    //             assert.strictEqual(err.message, expectedMessage);
-    //         });
-    //     });
-    //
-    //     it('rejects with a stringified error when bitbucket API fails to update webhook', () => {
-    //         const statusCode = 500;
-    //         const expectedMessage = `SCM service unavailable (${statusCode}). Reason "{}"`;
-    //
-    //         requestMock.onFirstCall().yieldsAsync(null, {
-    //             body: {
-    //                 values: [{
-    //                     url: 'url',
-    //                     uuid: 'uuid'
-    //                 }],
-    //                 size: 1
-    //             },
-    //             statusCode: 200
-    //         });
-    //         requestMock.onSecondCall().yieldsAsync(null, {
-    //             body: {},
-    //             statusCode
-    //         });
-    //
-    //         /* eslint-disable no-underscore-dangle */
-    //         return scm._addWebhook({
-    //         /* eslint-enable no-underscore-dangle */
-    //             scmUri,
-    //             token,
-    //             url: 'url'
-    //         }).then(assert.fail, (err) => {
-    //             assert.strictEqual(err.message, expectedMessage);
-    //         });
-    //     });
-    // });
-    //
+    describe('_addWebhook', () => {
+        let findWebhookResponse;
+        let createWebhookResponse;
+        const hookid = 'hookid';
+        const scmUri = 'hostName:repoId:branchName';
+
+        beforeEach(() => {
+            requestMock.yieldsAsync(null, {
+                statusCode: 200
+            });
+        });
+
+        it('works', () => {
+            findWebhookResponse = {
+                body: [],
+                statusCode: 200
+            };
+
+            requestMock.onFirstCall().yieldsAsync(null, findWebhookResponse);
+
+            /* eslint-disable no-underscore-dangle */
+            return scm._addWebhook({
+            /* eslint-enable no-underscore-dangle */
+                scmUri,
+                token,
+                webhookUrl: 'url'
+            })
+            .then(() => {
+                assert.calledWith(requestMock, {
+                    json: true,
+                    method: 'GET',
+                    auth: {
+                        bearer: token
+                    },
+                    url: 'https://gitlab.com/api/v3/projects/repoId/hooks'
+                });
+                assert.calledWith(requestMock, {
+                    json: true,
+                    method: 'POST',
+                    auth: {
+                        bearer: token
+                    },
+                    url: 'https://gitlab.com/api/v3/projects/repoId/hooks',
+                    qs: {
+                        url: 'url',
+                        push_events: true,
+                        merge_requests_events: true
+                    }
+                });
+            });
+        });
+
+        it('updates a pre-existing webhook', () => {
+            findWebhookResponse = {
+                statusCode: 200,
+                body: [
+                    {
+                        id: hookid,
+                        url: 'url',
+                        created_at: '2017-03-02T06:38:01.338Z',
+                        push_events: true,
+                        tag_push_events: false,
+                        enable_ssl_verification: true,
+                        project_id: 3,
+                        issues_events: false,
+                        merge_requests_events: true,
+                        note_events: false,
+                        build_events: false,
+                        pipeline_events: false,
+                        wiki_page_events: false
+                    }
+                ]
+            };
+
+            requestMock.onFirstCall().yieldsAsync(null, findWebhookResponse);
+
+            /* eslint-disable no-underscore-dangle */
+            return scm._addWebhook({
+            /* eslint-enable no-underscore-dangle */
+                scmUri,
+                token,
+                webhookUrl: 'url'
+            }).then(() => {
+                assert.calledWith(requestMock, {
+                    json: true,
+                    method: 'GET',
+                    auth: {
+                        bearer: token
+                    },
+                    url: 'https://gitlab.com/api/v3/projects/repoId/hooks'
+                });
+                assert.calledWith(requestMock, {
+                    json: true,
+                    method: 'PUT',
+                    auth: {
+                        bearer: token
+                    },
+                    url: `https://gitlab.com/api/v3/projects/repoId/hooks/${hookid}`,
+                    qs: {
+                        url: 'url',
+                        push_events: true,
+                        merge_requests_events: true
+                    }
+                });
+            });
+        });
+
+        it('rejects when failing to get the current list of webhooks', () => {
+            findWebhookResponse = {
+                statusCode: 403,
+                body: {
+                    message: 'Your credentials lack one or more required privilege scopes.'
+                }
+            };
+
+            requestMock.onFirstCall().yieldsAsync(null, findWebhookResponse);
+
+            /* eslint-disable no-underscore-dangle */
+            return scm._addWebhook({
+            /* eslint-enable no-underscore-dangle */
+                scmUri,
+                token,
+                webhookUrl: 'url'
+            }).then(assert.fail, (error) => {
+                assert.match(error.message, '403 Reason "Your credentials lack one or more ' +
+                                            'required privilege scopes." ' +
+                                            'Caller "_findWebhook"');
+            });
+        });
+
+        it('rejects with a stringified error when gitlab API fails to list webhooks', () => {
+            findWebhookResponse = {
+                statusCode: 500,
+                body: {
+                    blah: 'undefined'
+                }
+            };
+
+            requestMock.onFirstCall().yieldsAsync(null, findWebhookResponse);
+
+            /* eslint-disable no-underscore-dangle */
+            return scm._addWebhook({
+            /* eslint-enable no-underscore-dangle */
+                scmUri,
+                token,
+                url: 'url'
+            }).then(assert.fail, (error) => {
+                assert.match(error.message, '500 Reason "{"blah":"undefined"}" ' +
+                                            'Caller "_findWebhook"');
+            });
+        });
+
+        it('rejects when failing to create a webhook', () => {
+            findWebhookResponse = {
+                statusCode: 200,
+                body: []
+            };
+            createWebhookResponse = {
+                statusCode: 403,
+                body: {
+                    message: 'Your credentials lack one or more required privilege scopes.'
+                }
+            };
+
+            requestMock.onFirstCall().yieldsAsync(null, findWebhookResponse);
+            requestMock.onSecondCall().yieldsAsync(null, createWebhookResponse);
+
+            /* eslint-disable no-underscore-dangle */
+            return scm._addWebhook({
+            /* eslint-enable no-underscore-dangle */
+                scmUri,
+                token,
+                url: 'url'
+            }).then(assert.fail, (error) => {
+                assert.match(error.message, '403 Reason "Your credentials lack one or more ' +
+                                            'required privilege scopes." ' +
+                                            'Caller "_createWebhook"');
+            });
+        });
+
+        it('rejects when failing to update a webhook', () => {
+            findWebhookResponse = {
+                statusCode: 200,
+                body: [
+                    {
+                        id: hookid,
+                        url: 'url',
+                        created_at: '2017-03-02T06:38:01.338Z',
+                        push_events: true,
+                        tag_push_events: false,
+                        enable_ssl_verification: true,
+                        project_id: 3,
+                        issues_events: false,
+                        merge_requests_events: true,
+                        note_events: false,
+                        build_events: false,
+                        pipeline_events: false,
+                        wiki_page_events: false
+                    }
+                ]
+            };
+            createWebhookResponse = {
+                statusCode: 403,
+                body: {
+                    message: 'Your credentials lack one or more required privilege scopes.'
+                }
+            };
+
+            requestMock.onFirstCall().yieldsAsync(null, findWebhookResponse);
+            requestMock.onSecondCall().yieldsAsync(null, createWebhookResponse);
+
+            /* eslint-disable no-underscore-dangle */
+            return scm._addWebhook({
+            /* eslint-enable no-underscore-dangle */
+                scmUri,
+                token,
+                url: 'url'
+            }).then(assert.fail, (err) => {
+                assert.strictEqual(err.message, '403 Reason "Your credentials lack one or more ' +
+                                                'required privilege scopes." ' +
+                                                'Caller "_createWebhook"');
+            });
+        });
+    });
+
     // describe('_getOpenedPRs', () => {
     //     const oauthToken = 'oauthToken';
     //     const scmUri = 'hostName:repoId:branchName';

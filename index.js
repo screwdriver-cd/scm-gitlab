@@ -192,11 +192,10 @@ class GitlabScm extends Scm {
         }).then((response) => {
             checkResponseError(response, '_findWebhook');
 
-            const screwdriverHook = response.body.find(hook =>
-                Hoek.reach(hook, 'url') === config.url
-            );
+            const hooks = response.body;
+            const result = hooks.find(hook => hook.url === config.url);
 
-            return screwdriverHook;
+            return result;
         });
     }
 
@@ -236,6 +235,8 @@ class GitlabScm extends Scm {
             },
             url: action.url,
             qs: params
+        }).then((response) => {
+            checkResponseError(response, '_createWebhook');
         });
     }
 
@@ -540,17 +541,37 @@ class GitlabScm extends Scm {
         }).then((response) => {
             checkResponseError(response, '_getPermissions');
 
-            // TODO: trasnlate gitlab::access into admin, push, pull
-            // ref: https://docs.gitlab.com/ee/api/members.html
-            // "admin": false,
-            // "push": false,
-            // "pull": true
-
-            return {
-                admin: true,
-                push: true,
-                pull: true
+            const result = {
+                admin: false,
+                push: false,
+                pull: false
             };
+            const permissions = response.body.permissions;
+            const accessLevel = Hoek.reach(permissions, 'project_access.access_level', {
+                default: 0
+            });
+
+            // ref: https://docs.gitlab.com/ee/api/members.html
+            // ref: https://docs.gitlab.com/ee/user/permissions.html
+            switch (accessLevel) {
+            case 50: // Owner
+                result.admin = true;
+                // falls through
+            case 40: // Master
+                // falls through
+            case 30: // Developer
+                result.push = true;
+                // falls through
+            case 20: // reporter
+                result.pull = true;
+                // falls through
+            case 10: // Guest
+                // falls through
+            default:
+                break;
+            }
+
+            return result;
         });
     }
 

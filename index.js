@@ -555,9 +555,9 @@ class GitlabScm extends Scm {
             // ref: https://docs.gitlab.com/ee/user/permissions.html
             switch (accessLevel) {
             case 50: // Owner
-                result.admin = true;
                 // falls through
             case 40: // Master
+                result.admin = true;
                 // falls through
             case 30: // Developer
                 result.push = true;

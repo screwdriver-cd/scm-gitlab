@@ -306,9 +306,6 @@ class GitlabScm extends Scm {
     _parseHook(payloadHeaders, webhookPayload) {
         const parsed = {};
 
-        // console.log(`WOOF: header ${JSON.stringify(payloadHeaders, null, 2)}`);
-        // console.log(`WOOF: payload ${JSON.stringify(webhookPayload, null, 2)}`);
-
         // hookId is not in header or payload
         parsed.hookId = null;
 
@@ -346,7 +343,7 @@ class GitlabScm extends Scm {
             parsed.branch = mergeRequest.target_branch;
             parsed.sha = mergeRequest.last_commit.id;
             parsed.prNum = mergeRequest.iid;
-            parsed.prRef = mergeRequest.source_branch;
+            parsed.prRef = `merge_requests/${mergeRequest.iid}`;
 
             return Promise.resolve(parsed);
         }
@@ -368,6 +365,7 @@ class GitlabScm extends Scm {
     * @return {Promise}
     */
     _getCheckoutCommand(config) {
+        // TODO: this needs to be fixed to support private / internal repos.
         const checkoutUrl = `${this.config.gitlabProtocol}://${config.host}` +
                             `/${config.org}/${config.repo}`;
         const checkoutRef = config.prRef ? config.branch : config.sha; // if PR, use pipeline branch
@@ -504,11 +502,14 @@ class GitlabScm extends Scm {
         }).then((response) => {
             checkResponseError(response, '_decorateAuthor');
 
-            const author = response.body[0];
-
-            if (!author.username) {
-                return DEFAULT_AUTHOR;
-            }
+            const author = Hoek.reach(response, 'body.0', {
+                default: {
+                    web_url: DEFAULT_AUTHOR.url,
+                    name: DEFAULT_AUTHOR.name,
+                    username: DEFAULT_AUTHOR.username,
+                    avatar_url: DEFAULT_AUTHOR.avatar
+                }
+            });
 
             return {
                 url: author.web_url,
@@ -715,13 +716,13 @@ class GitlabScm extends Scm {
             url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v3` +
                  `/projects/${repoInfo.repoId}/merge_requests`
         }).then((response) => {
-            checkResponseError(response);
+            checkResponseError(response, '_getOpenedPRs');
 
             const prList = response.body;
 
             return prList.map(pr => ({
-                name: `PR-${pr.id}`,
-                ref: pr.source_branch
+                name: `PR-${pr.iid}`,
+                ref: `merge_requests/${pr.iid}`
             }));
         });
     }

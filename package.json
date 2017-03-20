@@ -18,25 +18,25 @@
     "screwdriver",
     "gitlab"
   ],
-  "license": "BSD-3-Clause",
+  "license": "MIT",
   "author": "Ben Dang <me@bdang.it>",
   "contributors": [],
   "devDependencies": {
     "chai": "^3.5.0",
-    "eslint": "^3.2.2",
-    "eslint-config-screwdriver": "^2.0.0",
-    "jenkins-mocha": "^4.0.0",
+    "eslint": "^3.17.0",
+    "eslint-config-screwdriver": "^2.1.2",
+    "jenkins-mocha": "^4.1.2",
     "mockery": "^2.0.0",
-    "sinon": "^1.17.6",
+    "sinon": "^1.17.7",
     "sinon-as-promised": "^4.0.2"
   },
   "dependencies": {
-    "circuit-fuses": "^2.1.0",
+    "circuit-fuses": "^2.2.1",
     "hoek": "^4.1.0",
-    "joi": "^10.0.5",
-    "request": "^2.75.0",
-    "screwdriver-data-schema": "^16.0.0",
-    "screwdriver-scm-base": "^2.5.1"
+    "joi": "^10.2.2",
+    "request": "^2.80.0",
+    "screwdriver-data-schema": "^16.3.0",
+    "screwdriver-scm-base": "^2.6.0"
   },
   "release": {
     "debug": false,

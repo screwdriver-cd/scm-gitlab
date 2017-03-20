@@ -1,5 +1,5 @@
 # scm-gitlab
-[![Version][npm-image]][npm-url] ![Downloads][downloads-image] [![Build Status][status-image]][status-url] [![Open Issues][issues-image]][issues-url] [![Dependency Status][daviddm-image]][daviddm-url] ![License][license-image]
+[![Open Issues][issues-image]][issues-url]
 
 > This scm plugin extends the [scm-base-class], and provides methods to fetch and update data in gitlab.
 
@@ -29,6 +29,7 @@ The class has a variety of knobs to tweak when interacting with GitLab.
 const scm = new GitlabScm({
     oauthClientId: 'abcdef',
     oauthClientSecret: 'hijklm',
+    gitlabHost: 'gitlab.com'
 });
 ```
 
@@ -46,13 +47,5 @@ npm test
 
 Code licensed under the BSD 3-Clause license. See LICENSE file for terms.
 
-[npm-image]: https://img.shields.io/npm/v/screwdriver-scm-gitlab.svg
-[npm-url]: https://npmjs.org/package/screwdriver-scm-gitlab
-[downloads-image]: https://img.shields.io/npm/dt/screwdriver-scm-gitlab.svg
-[license-image]: https://img.shields.io/npm/l/screwdriver-scm-gitlab.svg
-[issues-url]: https://gitlab.com/bdangit/scm-gitlab/issues
-[status-image]: https://cd.screwdriver.cd/pipelines/8/badge
-[status-url]: https://cd.screwdriver.cd/pipelines/8
-[daviddm-image]: https://david-dm.org/screwdriver-cd/scm-gitlab.svg?theme=shields.io
-[daviddm-url]: https://david-dm.org/screwdriver-cd/scm-gitlab
-[scm-base-class]: https://gitlab.com/screwdriver-cd/scm-base
+[issues-url]: https://github.com/bdangit/scm-gitlab/issues
+[scm-base-class]: https://github.com/screwdriver-cd/scm-base

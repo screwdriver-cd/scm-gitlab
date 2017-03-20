@@ -217,7 +217,7 @@ describe('index', function () {
                 branch: 'master',
                 sha: '249b26f2278c39f9efc55986f845dd98ae011763',
                 prNum: 6,
-                prRef: 'tabbycat',
+                prRef: 'merge_requests/6',
                 hookId: null
             };
             const headers = {
@@ -238,7 +238,7 @@ describe('index', function () {
                 branch: 'master',
                 sha: 'bc2b3a48a428ed23e15960e8d703bf7e3a8a4f54',
                 prNum: 2,
-                prRef: 'fix-this-stuff',
+                prRef: 'merge_requests/2',
                 hookId: null
             };
             const headers = {
@@ -259,7 +259,7 @@ describe('index', function () {
                 branch: 'master',
                 sha: 'bc2b3a48a428ed23e15960e8d703bf7e3a8a4f54',
                 prNum: 2,
-                prRef: 'fix-this-stuff',
+                prRef: 'merge_requests/2',
                 hookId: null
             };
             const headers = {
@@ -1453,14 +1453,14 @@ describe('index', function () {
                 body: [
                     {
                         id: 1,
-                        iid: 1,
+                        iid: 2,
                         target_branch: 'master',
                         source_branch: 'test1',
                         project_id: 3
                     },
                     {
                         id: 2,
-                        iid: 2,
+                        iid: 3,
                         target_branch: 'master',
                         source_branch: 'test2',
                         project_id: 3
@@ -1477,12 +1477,12 @@ describe('index', function () {
                 assert.calledWith(requestMock, expectedOptions);
                 assert.deepEqual(response, [
                     {
-                        name: 'PR-1',
-                        ref: 'test1'
+                        name: 'PR-2',
+                        ref: 'merge_requests/2'
                     },
                     {
-                        name: 'PR-2',
-                        ref: 'test2'
+                        name: 'PR-3',
+                        ref: 'merge_requests/3'
                     }
                 ]);
             });

@@ -321,6 +321,8 @@ class GitlabScm extends Scm {
             parsed.checkoutUrl = webhookPayload.project.git_http_url;
             parsed.branch = webhookPayload.ref.split('/').slice(-1)[0];
             parsed.sha = webhookPayload.checkout_sha;
+            parsed.lastCommitMessage = Hoek.reach(webhookPayload,
+                    'commits.-1.message', { default: '' });
 
             return Promise.resolve(parsed);
         }

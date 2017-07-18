@@ -279,6 +279,7 @@ describe('index', function () {
                 checkoutUrl: 'http://example.com/bdangit/quickstart-generic.git',
                 branch: 'master',
                 sha: '76506776e7931f843206c54586266468aec1a92e',
+                lastCommitMessage: 'lastcommitmessage',
                 hookId: null
             };
             const headers = {

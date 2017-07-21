@@ -305,9 +305,11 @@ class GitlabScm extends Scm {
      */
     _parseHook(payloadHeaders, webhookPayload) {
         const parsed = {};
+        const scmContexts = this._getScmContexts();
 
         // hookId is not in header or payload
         parsed.hookId = null;
+        parsed.scmContext = scmContexts[0];
 
         switch (webhookPayload.object_kind) {
         case 'push': {
@@ -676,7 +678,11 @@ class GitlabScm extends Scm {
      * @return {Promise}
      */
     _getBellConfiguration() {
-        const bellConfig = {
+        const scmContexts = this._getScmContexts();
+        const scmContext = scmContexts[0];
+        const bellConfig = {};
+
+        bellConfig[scmContext] = {
             provider: 'gitlab',
             clientId: this.config.oauthClientId,
             clientSecret: this.config.oauthClientSecret,
@@ -685,7 +691,7 @@ class GitlabScm extends Scm {
         };
 
         if (this.config.gitlabHost) {
-            bellConfig.config = {
+            bellConfig[scmContext].config = {
                 uri: `${this.config.gitlabProtocol}://${this.config.gitlabHost}`
             };
         }
@@ -736,6 +742,35 @@ class GitlabScm extends Scm {
         return this.breaker.stats();
     }
 
+    /**
+     * Get an array of scm context (e.g. gitlab.com)
+     * @method getScmContext
+     * @return {Array}
+     */
+    _getScmContexts() {
+        const contextName = this.config.gitlabHost
+            ? [`gitlab:${this.config.gitlabHost}`]
+            : ['gitlab:gitlab.com'];
+
+        return contextName;
+    }
+
+    /**
+     * Determin if a scm module can handle the received webhook
+     * @method canHandleWebhook
+     * @param {Object}    headers    The request headers associated with the webhook payload
+     * @param {Object}    payload    The webhook payload received from the SCM service
+     * @return {Promise}
+     */
+    _canHandleWebhook(headers, payload) {
+        if (!Object.keys(headers).includes('x-gitlab-event')) {
+            return Promise.resolve(false);
+        }
+
+        return this._parseHook(headers, payload)
+            .then(result => Promise.resolve(result !== null))
+            .catch(() => Promise.resolve(false));
+    }
 }
 
 module.exports = GitlabScm;

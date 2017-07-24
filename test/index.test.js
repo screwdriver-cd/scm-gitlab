@@ -1224,16 +1224,18 @@ describe('index', function () {
     describe('stats', () => {
         it('returns the correct stats', () => {
             assert.deepEqual(scm.stats(), {
-                requests: {
-                    total: 0,
-                    timeouts: 0,
-                    success: 0,
-                    failure: 0,
-                    concurrent: 0,
-                    averageTime: 0
-                },
-                breaker: {
-                    isClosed: true
+                'gitlab:gitlab.com': {
+                    requests: {
+                        total: 0,
+                        timeouts: 0,
+                        success: 0,
+                        failure: 0,
+                        concurrent: 0,
+                        averageTime: 0
+                    },
+                    breaker: {
+                        isClosed: true
+                    }
                 }
             });
         });

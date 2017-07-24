@@ -739,7 +739,13 @@ class GitlabScm extends Scm {
     * @param  {Response} Object          Object containing stats for the executor
     */
     stats() {
-        return this.breaker.stats();
+        const stats = this.breaker.stats();
+        const scmContexts = this._getScmContexts();
+        const scmContext = scmContexts[0];
+
+        return {
+            [scmContext]: stats
+        };
     }
 
     /**

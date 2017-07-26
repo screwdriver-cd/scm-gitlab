@@ -693,10 +693,14 @@ class GitlabScm extends Scm {
     _getBellConfiguration() {
         const scmContexts = this._getScmContexts();
         const scmContext = scmContexts[0];
+        const cookie = this.config.gitlabHost
+            ? `gitlab-${this.config.gitlabHost}`
+            : 'gitlab-gitlab.com';
         const bellConfig = {};
 
         bellConfig[scmContext] = {
             provider: 'gitlab',
+            cookie,
             clientId: this.config.oauthClientId,
             clientSecret: this.config.oauthClientSecret,
             isSecure: this.config.https,

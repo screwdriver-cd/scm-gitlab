@@ -1193,7 +1193,8 @@ describe('index', function () {
                         },
                         forceHttps: false,
                         isSecure: false,
-                        provider: 'gitlab'
+                        provider: 'gitlab',
+                        cookie: 'gitlab-gitlab.com'
                     }
                 });
             })
@@ -1215,7 +1216,8 @@ describe('index', function () {
                     },
                     forceHttps: false,
                     isSecure: false,
-                    provider: 'gitlab'
+                    provider: 'gitlab',
+                    cookie: 'gitlab-mygitlab.com'
                 }
             };
 

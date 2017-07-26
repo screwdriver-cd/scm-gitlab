@@ -35,6 +35,14 @@ const scm = new GitlabScm({
 
 ### Methods
 
+#### getScmContexts
+
+No parameters are required.
+
+##### Expected Outcome
+
+A single element array of ScmContext(ex: `['gitlab:gitlab.com']`(default), `['gitlab:mygitlab.com']`), which will be a unique identifier for the scm.
+
 For more information on the exposed methods please see the [scm-base-class].
 
 ## Testing

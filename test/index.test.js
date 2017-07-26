@@ -90,6 +90,7 @@ describe('index', function () {
 
     describe('parseUrl', () => {
         const apiUrl = 'https://gitlab.com/api/v3/projects/batman%2Ftest';
+        const scmContext = 'gitlab:gitlab.com';
         let fakeResponse;
         let expectedOptions;
 
@@ -126,7 +127,8 @@ describe('index', function () {
 
             return scm.parseUrl({
                 checkoutUrl: 'git@gitlab.com:batman/test.git#master',
-                token
+                token,
+                scmContext
             }).then((parsed) => {
                 assert.calledWith(requestMock, expectedOptions);
                 assert.equal(parsed, expected);
@@ -139,7 +141,8 @@ describe('index', function () {
 
             return scm.parseUrl({
                 checkoutUrl: 'https://batman@gitlab.com/batman/test.git#mynewbranch',
-                token
+                token,
+                scmContext
             }).then((parsed) => {
                 assert.calledWith(requestMock, expectedOptions);
                 assert.equal(parsed, expected);
@@ -153,7 +156,8 @@ describe('index', function () {
 
             return scm.parseUrl({
                 checkoutUrl: 'https://batman@gitlab.com/batman/test.git#mynewbranch',
-                token
+                token,
+                scmContext
             })
                 .then(() => assert.fail('Should not get here'))
                 .catch((error) => {
@@ -174,7 +178,8 @@ describe('index', function () {
 
             return scm.parseUrl({
                 checkoutUrl: 'https://batman@gitlab.com/batman/test.git#mynewbranch',
-                token
+                token,
+                scmContext
             })
                 .then(() => assert.fail('Should not get here'))
                 .catch((error) => {
@@ -196,7 +201,8 @@ describe('index', function () {
 
             return scm.parseUrl({
                 checkoutUrl: 'https://batman@gitlab.com/batman/test.git#mynewbranch',
-                token
+                token,
+                scmContext
             })
                 .then(() => assert.fail('Should not get here'))
                 .catch((error) => {
@@ -362,6 +368,7 @@ describe('index', function () {
 
             return scm.decorateAuthor({
                 username: 'batman',
+                scmContext: 'gitlab:gitlab.com',
                 token
             }).then((decorated) => {
                 assert.calledWith(requestMock, expectedOptions);
@@ -381,6 +388,7 @@ describe('index', function () {
 
             return scm.decorateAuthor({
                 username: 'batman',
+                scmContext: 'gitlab:gitlab.com',
                 token
             }).then(() => {
                 assert.fail('Should not get here');
@@ -398,6 +406,7 @@ describe('index', function () {
 
             return scm.decorateAuthor({
                 username: 'batman',
+                scmContext: 'gitlab:gitlab.com',
                 token
             }).then(() => {
                 assert.fail('Should not get here');
@@ -410,6 +419,7 @@ describe('index', function () {
 
     describe('decorateUrl', () => {
         const apiUrl = 'https://gitlab.com/api/v3/projects/repoId';
+        const scmContext = 'gitlab:gitlab.com';
         const repoOptions = {
             url: apiUrl,
             method: 'GET',
@@ -449,7 +459,8 @@ describe('index', function () {
 
             return scm.decorateUrl({
                 scmUri: 'hostName:repoId:branchName',
-                token
+                token,
+                scmContext
             }).then((decorated) => {
                 assert.calledWith(requestMock, expectedOptions);
                 assert.deepEqual(decorated, expected);
@@ -468,7 +479,8 @@ describe('index', function () {
 
             return scm.decorateUrl({
                 scmUri: 'hostName:repoId:branchName',
-                token
+                token,
+                scmContext
             }).then(() => {
                 assert.fail('Should not get here');
             }).catch((error) => {
@@ -485,7 +497,8 @@ describe('index', function () {
 
             return scm.decorateUrl({
                 scmUri: 'repoName:repoId:branchName',
-                token
+                token,
+                scmContext
             }).then(() => {
                 assert.fail('Should not get here');
             }).catch((error) => {
@@ -497,6 +510,7 @@ describe('index', function () {
 
     describe('decorateCommit', () => {
         const sha = '1111111111111111111111111111111111111111';
+        const scmContext = 'gitlab:gitlab.com';
         let lookupScmUri;
         let lookupScmUriResponse;
         let commitLookup;
@@ -584,7 +598,8 @@ describe('index', function () {
             return scm.decorateCommit({
                 sha,
                 scmUri: 'hostName:repoId:branchName',
-                token
+                token,
+                scmContext
             }).then((decorated) => {
                 assert.calledThrice(requestMock);
                 assert.deepEqual(decorated, expected);
@@ -605,7 +620,8 @@ describe('index', function () {
             return scm.decorateCommit({
                 sha,
                 scmUri: 'hostName:repoId:branchName',
-                token
+                token,
+                scmContext
             }).then(() => {
                 assert.fail('Should not get here');
             }).catch((error) => {
@@ -623,7 +639,8 @@ describe('index', function () {
             return scm.decorateCommit({
                 sha,
                 scmUri: 'hostName:repoId:branchName',
-                token
+                token,
+                scmContext
             }).then(() => {
                 assert.fail('Should not get here');
             }).catch((error) => {
@@ -637,6 +654,7 @@ describe('index', function () {
         const apiUrl = 'https://gitlab.com/api/v3/projects/repoId' +
                        '/repository/branches/branchName';
         const scmUri = 'hostName:repoId:branchName';
+        const scmContext = 'gitlab:gitlab.com';
         const expectedOptions = {
             url: apiUrl,
             method: 'GET',
@@ -662,7 +680,8 @@ describe('index', function () {
         it('resolves to correct commit sha', () =>
             scm.getCommitSha({
                 scmUri,
-                token
+                token,
+                scmContext
             }).then((sha) => {
                 assert.calledWith(requestMock, expectedOptions);
                 assert.deepEqual(sha, 'hashValue');
@@ -681,7 +700,8 @@ describe('index', function () {
 
             return scm.getCommitSha({
                 scmUri,
-                token
+                token,
+                scmContext
             }).then(() => {
                 assert.fail('Should not get here');
             }).catch((error) => {
@@ -698,7 +718,8 @@ describe('index', function () {
 
             return scm.getCommitSha({
                 scmUri,
-                token
+                token,
+                scmContext
             }).then(() => {
                 assert.fail('Should not get here');
             }).catch((error) => {
@@ -712,8 +733,10 @@ describe('index', function () {
         const apiUrl = 'https://gitlab.com/api/v3/projects/repoId' +
                        '/repository/files';
         const scmUri = 'hostName:repoId:branchName';
+        const scmContext = 'gitlab:gitlab.com';
         const params = {
             scmUri,
+            scmContext,
             token,
             path: 'path/to/file.txt'
         };
@@ -813,10 +836,12 @@ describe('index', function () {
 
         it('get correct permissions for level 50', () => {
             const scmUri = 'hostName:repoId:branchName';
+            const scmContext = 'gitlab:gitlab.com';
 
             return scm.getPermissions({
                 scmUri,
-                token
+                token,
+                scmContext
             }).then((permissions) => {
                 assert.calledOnce(requestMock);
                 assert.calledWith(requestMock, expectedOptions);
@@ -844,10 +869,12 @@ describe('index', function () {
                 .yieldsAsync(null, fakeResponse, fakeResponse.body);
 
             const scmUri = 'hostName:repoId:branchName';
+            const scmContext = 'gitlab:gitlab.com';
 
             return scm.getPermissions({
                 scmUri,
-                token
+                token,
+                scmContext
             }).then((permissions) => {
                 assert.calledOnce(requestMock);
                 assert.calledWith(requestMock, expectedOptions);
@@ -875,10 +902,12 @@ describe('index', function () {
                 .yieldsAsync(null, fakeResponse, fakeResponse.body);
 
             const scmUri = 'hostName:repoId:branchName';
+            const scmContext = 'gitlab:gitlab.com';
 
             return scm.getPermissions({
                 scmUri,
-                token
+                token,
+                scmContext
             }).then((permissions) => {
                 assert.calledOnce(requestMock);
                 assert.calledWith(requestMock, expectedOptions);
@@ -906,10 +935,12 @@ describe('index', function () {
                 .yieldsAsync(null, fakeResponse, fakeResponse.body);
 
             const scmUri = 'hostName:repoId:branchName';
+            const scmContext = 'gitlab:gitlab.com';
 
             return scm.getPermissions({
                 scmUri,
-                token
+                token,
+                scmContext
             }).then((permissions) => {
                 assert.calledOnce(requestMock);
                 assert.calledWith(requestMock, expectedOptions);
@@ -937,10 +968,12 @@ describe('index', function () {
                 .yieldsAsync(null, fakeResponse, fakeResponse.body);
 
             const scmUri = 'hostName:repoId:branchName';
+            const scmContext = 'gitlab:gitlab.com';
 
             return scm.getPermissions({
                 scmUri,
-                token
+                token,
+                scmContext
             }).then((permissions) => {
                 assert.calledOnce(requestMock);
                 assert.calledWith(requestMock, expectedOptions);
@@ -968,10 +1001,12 @@ describe('index', function () {
                 .yieldsAsync(null, fakeResponse, fakeResponse.body);
 
             const scmUri = 'hostName:repoId:branchName';
+            const scmContext = 'gitlab:gitlab.com';
 
             return scm.getPermissions({
                 scmUri,
-                token
+                token,
+                scmContext
             }).then((permissions) => {
                 assert.calledOnce(requestMock);
                 assert.calledWith(requestMock, expectedOptions);
@@ -993,10 +1028,12 @@ describe('index', function () {
                 .yieldsAsync(null, fakeResponse, fakeResponse.body);
 
             const scmUri = 'hostName:repoId:branchName';
+            const scmContext = 'gitlab:gitlab.com';
 
             return scm.getPermissions({
                 scmUri,
-                token
+                token,
+                scmContext
             }).then((permissions) => {
                 assert.calledOnce(requestMock);
                 assert.calledWith(requestMock, expectedOptions);
@@ -1010,6 +1047,7 @@ describe('index', function () {
 
         it('rejects if status code is not 200', () => {
             const scmUri = 'hostName:repoId:branchName';
+            const scmContext = 'gitlab:gitlab.com';
 
             fakeResponse = {
                 statusCode: 404,
@@ -1023,7 +1061,8 @@ describe('index', function () {
 
             return scm.getPermissions({
                 scmUri,
-                token
+                token,
+                scmContext
             }).then(() => {
                 assert.fail('Should not get here');
             }).catch((error) => {
@@ -1035,13 +1074,15 @@ describe('index', function () {
         it('rejects if fails', () => {
             const error = new Error('Gitlab API error');
             const scmUri = 'hostName:repoId:branchName';
+            const scmContext = 'gitlab:gitlab.com';
 
             requestMock.withArgs(expectedOptions)
                 .yieldsAsync(error);
 
             return scm.getPermissions({
                 scmUri,
-                token
+                token,
+                scmContext
             }).then(() => {
                 assert.fail('Should not get here');
             }).catch((err) => {
@@ -1059,6 +1100,7 @@ describe('index', function () {
         beforeEach(() => {
             config = {
                 scmUri: 'hostName:repoId:branchName',
+                scmContext: 'gitlab:gitlab.com',
                 sha: '1111111111111111111111111111111111111111',
                 buildStatus: 'SUCCESS',
                 token,
@@ -1189,7 +1231,8 @@ describe('index', function () {
             host: 'hostName',
             org: 'orgName',
             repo: 'repoName',
-            sha: 'shaValue'
+            sha: 'shaValue',
+            scmContext: 'gitlab:gitlab.com'
         };
 
         it('resolves checkout command without prRef', () =>

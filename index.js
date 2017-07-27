@@ -240,7 +240,7 @@ class GitlabScm extends Scm {
         });
     }
 
-    /** Extended from screwdriver-scm-base **/
+    /** Extended from screwdriver-scm-base */
 
     /**
      * Adds the Screwdriver webhook to the Gitlab repository
@@ -693,9 +693,7 @@ class GitlabScm extends Scm {
     _getBellConfiguration() {
         const scmContexts = this._getScmContexts();
         const scmContext = scmContexts[0];
-        const cookie = this.config.gitlabHost
-            ? `gitlab-${this.config.gitlabHost}`
-            : 'gitlab-gitlab.com';
+        const cookie = `gitlab-${this.config.gitlabHost}`;
         const bellConfig = {};
 
         bellConfig[scmContext] = {
@@ -771,11 +769,7 @@ class GitlabScm extends Scm {
      * @return {Array}
      */
     _getScmContexts() {
-        const contextName = this.config.gitlabHost
-            ? [`gitlab:${this.config.gitlabHost}`]
-            : ['gitlab:gitlab.com'];
-
-        return contextName;
+        return [`gitlab:${this.config.gitlabHost}`];
     }
 
     /**

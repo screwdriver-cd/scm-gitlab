@@ -278,6 +278,13 @@ class GitlabScm extends Scm {
     */
     _parseUrl(config) {
         const repoInfo = getRepoInfoByCheckoutUrl(config.checkoutUrl);
+        const myHost = this.config.gitlabHost || 'gitlab.com';
+
+        if (repoInfo.hostname !== myHost) {
+            const message = 'This checkoutUrl is not supported for your current login host.';
+
+            return Promise.reject(new Error(message));
+        }
 
         return this.breaker.runCommand({
             json: true,
@@ -769,7 +776,9 @@ class GitlabScm extends Scm {
      * @return {Array}
      */
     _getScmContexts() {
-        return [`gitlab:${this.config.gitlabHost}`];
+        return this.config.gitlabHost
+            ? [`gitlab:${this.config.gitlabHost}`]
+            : ['gitlab:gitlab.com'];
     }
 
     /**

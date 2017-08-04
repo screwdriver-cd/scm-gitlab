@@ -211,6 +211,20 @@ describe('index', function () {
                                                 'Caller "_parseUrl"');
                 });
         });
+
+        it('rejects when passed checkoutUrl of another host', () => {
+            const expectedError = 'This checkoutUrl is not supported for your current login host.';
+
+            return scm.parseUrl({
+                checkoutUrl: 'git@gitlab.corp.jp:batman/test.git#master',
+                scmContext,
+                token
+            }).then(() => {
+                assert.fail('Should not get here');
+            }, (error) => {
+                assert.match(error.message, expectedError);
+            });
+        });
     });
 
     describe('parseHook', () => {

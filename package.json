@@ -1,6 +1,6 @@
 {
   "name": "screwdriver-scm-gitlab",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "GitLab implementation for the scm-base class",
   "main": "index.js",
   "scripts": {
@@ -35,8 +35,8 @@
     "hoek": "^4.1.0",
     "joi": "^10.2.2",
     "request": "^2.80.0",
-    "screwdriver-data-schema": "^16.3.0",
-    "screwdriver-scm-base": "^2.6.0"
+    "screwdriver-data-schema": "^17.0.0",
+    "screwdriver-scm-base": "^3.0.0"
   },
   "release": {
     "debug": false,

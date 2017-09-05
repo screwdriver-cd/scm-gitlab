@@ -240,13 +240,14 @@ class GitlabScm extends Scm {
         });
     }
 
-    /** Extended from screwdriver-scm-base **/
+    /** Extended from screwdriver-scm-base */
 
     /**
      * Adds the Screwdriver webhook to the Gitlab repository
      * @method _addWebhook
      * @param  {Object}    config            Config object
      * @param  {String}    config.scmUri     The SCM URI to add the webhook to
+     * @param  {String}    config.scmContext The scm conntext to which user belongs
      * @param  {String}    config.token      Service token to authenticate with Gitlab
      * @param  {String}    config.webhookUrl The URL to use for the webhook notifications
      * @return {Promise}                     Resolve means operation completed without failure.
@@ -272,10 +273,18 @@ class GitlabScm extends Scm {
     * @param  {Object}     config              Config object
     * @param  {String}     config.checkoutUrl  The checkoutUrl to parse
     * @param  {String}     config.token        The token used to authenticate to the SCM service
+    * @param  {String}     config.scmContext   The scm context to which user belongs
     * @return {Promise}                        Resolves to an ID of 'serviceName:repoId:branchName'
     */
     _parseUrl(config) {
         const repoInfo = getRepoInfoByCheckoutUrl(config.checkoutUrl);
+        const myHost = this.config.gitlabHost || 'gitlab.com';
+
+        if (repoInfo.hostname !== myHost) {
+            const message = 'This checkoutUrl is not supported for your current login host.';
+
+            return Promise.reject(new Error(message));
+        }
 
         return this.breaker.runCommand({
             json: true,
@@ -305,9 +314,11 @@ class GitlabScm extends Scm {
      */
     _parseHook(payloadHeaders, webhookPayload) {
         const parsed = {};
+        const scmContexts = this._getScmContexts();
 
         // hookId is not in header or payload
         parsed.hookId = null;
+        parsed.scmContext = scmContexts[0];
 
         switch (webhookPayload.object_kind) {
         case 'push': {
@@ -363,6 +374,7 @@ class GitlabScm extends Scm {
     * @param  {String}    config.org           Scm org name
     * @param  {String}    config.repo          Scm repo name
     * @param  {String}    config.sha           Commit sha
+    * @param  {String}    config.scmContext    The scm context to which user belongs
     * @param  {String}    [config.prRef]       PR reference (can be a PR branch or reference)
     * @return {Promise}
     */
@@ -403,9 +415,11 @@ class GitlabScm extends Scm {
     * related information. If a branch suffix is not provided, it will default
     * to the master branch
     * @method _decorateUrl
-    * @param  {Config}    config        Configuration object
-    * @param  {String}    config.scmUri The SCM URI the commit belongs to
-    * @param  {String}    config.token  Service token to authenticate with Github
+    * @param  {Config}    config            Configuration object
+    * @param  {String}    config.scmUri     The SCM URI the commit belongs to
+    * @param  {String}    config.token      Service token to authenticate with Github
+    * @param  {Object}    config.sha        SHA to decorate data with
+    * @param  {String}    config.scmContext The scm context to which user belongs
     * @return {Promise}
     */
     _decorateUrl(config) {
@@ -426,13 +440,15 @@ class GitlabScm extends Scm {
     /**
     * Decorate the commit based on the repository
     * @method _decorateCommit
-    * @param  {Object}        config        Configuration object
-    * @param  {Object}        config.scmUri SCM URI the commit belongs to
-    * @param  {Object}        config.sha    SHA to decorate data with
-    * @param  {Object}        config.token  Service token to authenticate with Github
+    * @param  {Object}        config            Configuration object
+    * @param  {Object}        config.scmUri     SCM URI the commit belongs to
+    * @param  {Object}        config.sha        SHA to decorate data with
+    * @param  {Object}        config.token      Service token to authenticate with Github
+    * @param  {Object}        config.scmContext Context to which user belongs
     * @return {Promise}
     */
     _decorateCommit(config) {
+        const scmContext = config.scmContext;
         const commitLookup = this.lookupScmUri({
             scmUri: config.scmUri,
             token: config.token
@@ -463,7 +479,8 @@ class GitlabScm extends Scm {
 
             return this.decorateAuthor({
                 token: config.token,
-                username: commitData.commitInfo.author_name
+                username: commitData.commitInfo.author_name,
+                scmContext
             });
         });
 
@@ -484,9 +501,10 @@ class GitlabScm extends Scm {
     /**
     * Decorate the author based on the Gitlab service
     * @method _decorateAuthor
-    * @param  {Object}        config          Configuration object
-    * @param  {Object}        config.token    Service token to authenticate with Gitlab
-    * @param  {Object}        config.username Username to query more information for
+    * @param  {Object}        config            Configuration object
+    * @param  {Object}        config.token      Service token to authenticate with Gitlab
+    * @param  {Object}        config.username   Username to query more information for
+    * @param  {String}        config.scmContext The scm context to which user belongs
     * @return {Promise}
     */
     _decorateAuthor(config) {
@@ -528,6 +546,7 @@ class GitlabScm extends Scm {
     * @param  {Object}   config            Configuration
     * @param  {String}   config.scmUri     The scmUri to get permissions on
     * @param  {String}   config.token      The token used to authenticate to the SCM
+    * @param  {String}   config.scmContext The scm context to which user belongs
     * @return {Promise}
     */
     _getPermissions(config) {
@@ -583,6 +602,7 @@ class GitlabScm extends Scm {
     * @method getCommitSha
     * @param  {Object}   config            Configuration
     * @param  {String}   config.scmUri     The scmUri to get commit sha of
+    * @param  {String}   config.scmContext The scm context to which user belongs
     * @param  {String}   config.token      The token used to authenticate to the SCM
     * @return {Promise}
     */
@@ -615,6 +635,7 @@ class GitlabScm extends Scm {
     * @param  {String}   config.token        The token used to authenticate to the SCM
     * @param  {String}   [config.jobName]    Optional name of the job that finished
     * @param  {String}   config.url          Target url
+    * @param  {String}   config.scmContext   The scm context to which user belongs
     * @return {Promise}
     */
     _updateCommitStatus(config) {
@@ -648,6 +669,7 @@ class GitlabScm extends Scm {
     * @param  {String}   config.path         The file in the repo to fetch
     * @param  {String}   config.token        The token used to authenticate to the SCM
     * @param  {String}   config.ref          The reference to the SCM, either branch or sha
+    * @param  {String}   config.scmContext   The scm context to which user belongs
     * @return {Promise}
     */
     _getFile(config) {
@@ -678,8 +700,14 @@ class GitlabScm extends Scm {
      * @return {Promise}
      */
     _getBellConfiguration() {
-        const bellConfig = {
+        const scmContexts = this._getScmContexts();
+        const scmContext = scmContexts[0];
+        const cookie = `gitlab-${this.config.gitlabHost}`;
+        const bellConfig = {};
+
+        bellConfig[scmContext] = {
             provider: 'gitlab',
+            cookie,
             clientId: this.config.oauthClientId,
             clientSecret: this.config.oauthClientSecret,
             isSecure: this.config.https,
@@ -687,7 +715,7 @@ class GitlabScm extends Scm {
         };
 
         if (this.config.gitlabHost) {
-            bellConfig.config = {
+            bellConfig[scmContext].config = {
                 uri: `${this.config.gitlabProtocol}://${this.config.gitlabHost}`
             };
         }
@@ -735,9 +763,42 @@ class GitlabScm extends Scm {
     * @param  {Response} Object          Object containing stats for the executor
     */
     stats() {
-        return this.breaker.stats();
+        const stats = this.breaker.stats();
+        const scmContexts = this._getScmContexts();
+        const scmContext = scmContexts[0];
+
+        return {
+            [scmContext]: stats
+        };
     }
 
+    /**
+     * Get an array of scm context (e.g. gitlab.com)
+     * @method getScmContext
+     * @return {Array}
+     */
+    _getScmContexts() {
+        return this.config.gitlabHost
+            ? [`gitlab:${this.config.gitlabHost}`]
+            : ['gitlab:gitlab.com'];
+    }
+
+    /**
+     * Determin if a scm module can handle the received webhook
+     * @method canHandleWebhook
+     * @param {Object}    headers    The request headers associated with the webhook payload
+     * @param {Object}    payload    The webhook payload received from the SCM service
+     * @return {Promise}
+     */
+    _canHandleWebhook(headers, payload) {
+        if (!Object.keys(headers).includes('x-gitlab-event')) {
+            return Promise.resolve(false);
+        }
+
+        return this._parseHook(headers, payload)
+            .then(result => Promise.resolve(result !== null))
+            .catch(() => Promise.resolve(false));
+    }
 }
 
 module.exports = GitlabScm;

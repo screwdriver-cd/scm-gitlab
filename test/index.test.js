@@ -819,6 +819,17 @@ describe('index', function () {
         });
     });
 
+    describe('getChangedFiles', () => {
+        it('resolves null', () => {
+            scm.getChangedFiles({
+                type: 'pr',
+                payload: testPayloadOpen,
+                token: 'thisisatoken'
+            })
+                .then(result => assert.isNull(result));
+        });
+    });
+
     describe('getPermissions', () => {
         let expectedOptions;
         let fakeResponse;
@@ -1327,29 +1338,29 @@ describe('index', function () {
                 token,
                 webhookUrl: 'url'
             })
-            .then(() => {
-                assert.calledWith(requestMock, {
-                    json: true,
-                    method: 'GET',
-                    auth: {
-                        bearer: token
-                    },
-                    url: 'https://gitlab.com/api/v3/projects/repoId/hooks'
+                .then(() => {
+                    assert.calledWith(requestMock, {
+                        json: true,
+                        method: 'GET',
+                        auth: {
+                            bearer: token
+                        },
+                        url: 'https://gitlab.com/api/v3/projects/repoId/hooks'
+                    });
+                    assert.calledWith(requestMock, {
+                        json: true,
+                        method: 'POST',
+                        auth: {
+                            bearer: token
+                        },
+                        url: 'https://gitlab.com/api/v3/projects/repoId/hooks',
+                        qs: {
+                            url: 'url',
+                            push_events: true,
+                            merge_requests_events: true
+                        }
+                    });
                 });
-                assert.calledWith(requestMock, {
-                    json: true,
-                    method: 'POST',
-                    auth: {
-                        bearer: token
-                    },
-                    url: 'https://gitlab.com/api/v3/projects/repoId/hooks',
-                    qs: {
-                        url: 'url',
-                        push_events: true,
-                        merge_requests_events: true
-                    }
-                });
-            });
         });
 
         it('updates a pre-existing webhook', () => {
@@ -1565,19 +1576,19 @@ describe('index', function () {
                 scmUri,
                 token
             })
-            .then((response) => {
-                assert.calledWith(requestMock, expectedOptions);
-                assert.deepEqual(response, [
-                    {
-                        name: 'PR-2',
-                        ref: 'merge_requests/2'
-                    },
-                    {
-                        name: 'PR-3',
-                        ref: 'merge_requests/3'
-                    }
-                ]);
-            });
+                .then((response) => {
+                    assert.calledWith(requestMock, expectedOptions);
+                    assert.deepEqual(response, [
+                        {
+                            name: 'PR-2',
+                            ref: 'merge_requests/2'
+                        },
+                        {
+                            name: 'PR-3',
+                            ref: 'merge_requests/3'
+                        }
+                    ]);
+                });
         });
     });
 

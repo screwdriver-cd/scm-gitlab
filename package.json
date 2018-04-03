@@ -1,6 +1,6 @@
 {
   "name": "screwdriver-scm-gitlab",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "GitLab implementation for the scm-base class",
   "main": "index.js",
   "scripts": {
@@ -23,8 +23,8 @@
   "contributors": [],
   "devDependencies": {
     "chai": "^3.5.0",
-    "eslint": "^3.17.0",
-    "eslint-config-screwdriver": "^2.1.2",
+    "eslint": "^4.6.0",
+    "eslint-config-screwdriver": "^3.0.0",
     "jenkins-mocha": "^4.1.2",
     "mockery": "^2.0.0",
     "sinon": "^1.17.7",
@@ -32,11 +32,11 @@
   },
   "dependencies": {
     "circuit-fuses": "^2.2.1",
-    "hoek": "^4.1.0",
-    "joi": "^10.2.2",
+    "hoek": "^5.0.3",
+    "joi": "^13.0.0",
     "request": "^2.80.0",
-    "screwdriver-data-schema": "^17.0.0",
-    "screwdriver-scm-base": "^3.0.0"
+    "screwdriver-data-schema": "^18.13.5",
+    "screwdriver-scm-base": "^4.0.1"
   },
   "release": {
     "debug": false,

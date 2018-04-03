@@ -42,6 +42,21 @@
         "my_script.sh"
       ],
       "removed": []
+    },
+    {
+      "id": "76506776e7931f843206c54586266468aec1a92e",
+      "message": "lastcommitmessage",
+      "timestamp": "2017-03-11T08:46:29+00:00",
+      "url": "http://example.com/bdangit/quickstart-generic/commit/76506776e7931f843206c54586266468aec1a92e",
+      "author": {
+        "name": "bdangit",
+        "email": "dev-null@email.com"
+      },
+      "added": [],
+      "modified": [
+        "my_script.sh"
+      ],
+      "removed": []
     }
   ],
   "total_commits_count": 1,

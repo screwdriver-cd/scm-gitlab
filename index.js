@@ -389,10 +389,20 @@ class GitlabScm extends Scm {
         const checkoutRef = config.prRef ? config.branch : config.sha; // if PR, use pipeline branch
         const command = [];
 
+        command.push('echo Exporting environment variables');
+        command.push('if [ ! -z $SCM_CLONE_TYPE ] && [ $SCM_CLONE_TYPE = ssh ]; ' +
+            `then export SCM_URL=${sshCheckoutUrl}; ` +
+            'elif [ ! -z $SCM_USERNAME ] && [ ! -z $SCM_ACCESS_TOKEN ]; ' +
+            `then export SCM_URL=https://$SCM_USERNAME:$SCM_ACCESS_TOKEN@${checkoutUrl}; ` +
+            `else export SCM_URL=https://${checkoutUrl}; fi`);
+        command.push('export GIT_URL=$SCM_URL.git');
+        // git 1.7.1 doesn't support --no-edit with merge, this should do same thing
+        command.push('export GIT_MERGE_AUTOEDIT=no');
+
         // Git clone
         command.push(`echo Cloning ${checkoutUrl}, on branch ${config.branch}`);
         command.push(`git clone --quiet --progress --branch ${config.branch} `
-            + `${checkoutUrl} $SD_SOURCE_DIR`);
+            + `$SCM_URL $SD_SOURCE_DIR`);
         // Reset to SHA
         command.push(`echo Reset to SHA ${checkoutRef}`);
         command.push(`git reset --hard ${checkoutRef}`);

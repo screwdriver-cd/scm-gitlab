@@ -384,8 +384,8 @@ class GitlabScm extends Scm {
      */
     _getCheckoutCommand(config) {
         // TODO: this needs to be fixed to support private / internal repos.
-        const checkoutUrl = `${this.config.gitlabProtocol}://${config.host}` +
-                            `/${config.org}/${config.repo}`;
+        const checkoutUrl = `${config.host}/${config.org}/${config.repo}`; // URL for https
+        const sshCheckoutUrl = `git@${config.host}:${config.org}/${config.repo}`; // URL for ssh
         const checkoutRef = config.prRef ? config.branch : config.sha; // if PR, use pipeline branch
         const command = [];
 

@@ -48,6 +48,10 @@ const DESCRIPTION_MAP = {
  *                                                                 Rejects when status code is non-200
  */
 function checkResponseError(response, caller) {
+    if (caller === '_updateCommitStatus') {
+        return;
+    }
+
     if (response.statusCode >= 200 && response.statusCode < 300) {
         return;
     }
@@ -153,7 +157,7 @@ class GitlabScm extends Scm {
             auth: {
                 bearer: config.token
             },
-            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v3` +
+            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
                  `/projects/${scmInfo.repoId}`
         }).then((response) => {
             checkResponseError(response, 'lookupScmUri');
@@ -187,7 +191,7 @@ class GitlabScm extends Scm {
             auth: {
                 bearer: config.token
             },
-            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v3` +
+            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
                  `/projects/${repoInfo.repoId}/hooks`
         }).then((response) => {
             checkResponseError(response, '_findWebhook');
@@ -218,7 +222,7 @@ class GitlabScm extends Scm {
         };
         const action = {
             method: 'POST',
-            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v3` +
+            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
                  `/projects/${repoInfo.repoId}/hooks`
         };
 
@@ -292,7 +296,7 @@ class GitlabScm extends Scm {
             auth: {
                 bearer: config.token
             },
-            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v3` +
+            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
                  `/projects/${repoInfo.owner}%2F${repoInfo.reponame}`
         }).then((response) => {
             checkResponseError(response, '_parseUrl');
@@ -380,15 +384,25 @@ class GitlabScm extends Scm {
      */
     _getCheckoutCommand(config) {
         // TODO: this needs to be fixed to support private / internal repos.
-        const checkoutUrl = `${this.config.gitlabProtocol}://${config.host}` +
-                            `/${config.org}/${config.repo}`;
+        const checkoutUrl = `${config.host}/${config.org}/${config.repo}`; // URL for https
+        const sshCheckoutUrl = `git@${config.host}:${config.org}/${config.repo}`; // URL for ssh
         const checkoutRef = config.prRef ? config.branch : config.sha; // if PR, use pipeline branch
         const command = [];
+
+        command.push('echo Exporting environment variables');
+        command.push('if [ ! -z $SCM_CLONE_TYPE ] && [ $SCM_CLONE_TYPE = ssh ]; ' +
+            `then export SCM_URL=${sshCheckoutUrl}; ` +
+            'elif [ ! -z $SCM_USERNAME ] && [ ! -z $SCM_ACCESS_TOKEN ]; ' +
+            `then export SCM_URL=https://$SCM_USERNAME:$SCM_ACCESS_TOKEN@${checkoutUrl}; ` +
+            `else export SCM_URL=https://${checkoutUrl}; fi`);
+        command.push('export GIT_URL=$SCM_URL.git');
+        // git 1.7.1 doesn't support --no-edit with merge, this should do same thing
+        command.push('export GIT_MERGE_AUTOEDIT=no');
 
         // Git clone
         command.push(`echo Cloning ${checkoutUrl}, on branch ${config.branch}`);
         command.push(`git clone --quiet --progress --branch ${config.branch} `
-            + `${checkoutUrl} $SD_SOURCE_DIR`);
+            + `$SCM_URL $SD_SOURCE_DIR`);
         // Reset to SHA
         command.push(`echo Reset to SHA ${checkoutRef}`);
         command.push(`git reset --hard ${checkoutRef}`);
@@ -459,7 +473,7 @@ class GitlabScm extends Scm {
                 auth: {
                     bearer: config.token
                 },
-                url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v3` +
+                url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
                      `/projects/${scmInfo.owner}%2F${scmInfo.reponame}` +
                      `/repository/commits/${config.sha}`
             }).then((response) => {
@@ -514,7 +528,7 @@ class GitlabScm extends Scm {
             auth: {
                 bearer: config.token
             },
-            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v3` +
+            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
                  '/users',
             qs: {
                 username: config.username
@@ -558,7 +572,7 @@ class GitlabScm extends Scm {
             auth: {
                 bearer: config.token
             },
-            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v3` +
+            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
                  `/projects/${repoInfo.repoId}`
         }).then((response) => {
             checkResponseError(response, '_getPermissions');
@@ -615,7 +629,7 @@ class GitlabScm extends Scm {
             auth: {
                 bearer: config.token
             },
-            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v3` +
+            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
                  `/projects/${repoInfo.repoId}/repository` +
                  `/branches/${repoInfo.branch}`
         }).then((response) => {
@@ -648,7 +662,7 @@ class GitlabScm extends Scm {
             auth: {
                 bearer: config.token
             },
-            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v3` +
+            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
                  `/projects/${repoInfo.repoId}/statuses/${config.sha}`,
             qs: {
                 context,
@@ -681,10 +695,9 @@ class GitlabScm extends Scm {
             auth: {
                 bearer: config.token
             },
-            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v3` +
-                 `/projects/${repoInfo.repoId}/repository/files`,
+            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
+                 `/projects/${repoInfo.repoId}/repository/files/${config.path}`,
             qs: {
-                file_path: config.path,
                 ref: config.ref || repoInfo.branch
             }
         }).then((response) => {
@@ -758,7 +771,7 @@ class GitlabScm extends Scm {
             qs: {
                 state: 'opened'
             },
-            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v3` +
+            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
                  `/projects/${repoInfo.repoId}/merge_requests`
         }).then((response) => {
             checkResponseError(response, '_getOpenedPRs');

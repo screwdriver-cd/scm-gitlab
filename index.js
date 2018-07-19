@@ -337,7 +337,7 @@ class GitlabScm extends Scm {
             parsed.branch = webhookPayload.ref.split('/').slice(-1)[0];
             parsed.sha = webhookPayload.checkout_sha;
             parsed.lastCommitMessage = Hoek.reach(webhookPayload,
-                    'commits.-1.message', { default: '' });
+                'commits.-1.message', { default: '' });
 
             return Promise.resolve(parsed);
         }
@@ -402,7 +402,7 @@ class GitlabScm extends Scm {
         // Git clone
         command.push(`echo Cloning ${checkoutUrl}, on branch ${config.branch}`);
         command.push(`git clone --quiet --progress --branch ${config.branch} `
-            + `$SCM_URL $SD_SOURCE_DIR`);
+            + '$SCM_URL $SD_SOURCE_DIR');
         // Reset to SHA
         command.push(`echo Reset to SHA ${checkoutRef}`);
         command.push(`git reset --hard ${checkoutRef}`);

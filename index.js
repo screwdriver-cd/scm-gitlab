@@ -63,7 +63,10 @@ function checkResponseError(response, caller) {
         default: JSON.stringify(response.body)
     });
 
-    throw new Error(`${errorCode} Reason "${errorReason}" Caller "${caller}"`);
+    const error = new Error(`${errorCode} Reason "${errorReason}" Caller "${caller}"`);
+
+    error.code = errorCode;
+    throw error;
 }
 
 /**

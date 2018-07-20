@@ -238,7 +238,7 @@ describe('index', function () {
                 sha: '249b26f2278c39f9efc55986f845dd98ae011763',
                 prNum: 6,
                 prRef: 'merge_requests/6',
-                hookId: null,
+                hookId: '',
                 scmContext: 'gitlab:gitlab.com'
             };
             const headers = {
@@ -260,7 +260,7 @@ describe('index', function () {
                 sha: 'bc2b3a48a428ed23e15960e8d703bf7e3a8a4f54',
                 prNum: 2,
                 prRef: 'merge_requests/2',
-                hookId: null,
+                hookId: '',
                 scmContext: 'gitlab:gitlab.com'
             };
             const headers = {
@@ -282,7 +282,7 @@ describe('index', function () {
                 sha: 'bc2b3a48a428ed23e15960e8d703bf7e3a8a4f54',
                 prNum: 2,
                 prRef: 'merge_requests/2',
-                hookId: null,
+                hookId: '',
                 scmContext: 'gitlab:gitlab.com'
             };
             const headers = {
@@ -303,7 +303,7 @@ describe('index', function () {
                 branch: 'master',
                 sha: '76506776e7931f843206c54586266468aec1a92e',
                 lastCommitMessage: 'lastcommitmessage',
-                hookId: null,
+                hookId: '',
                 scmContext: 'gitlab:gitlab.com'
             };
             const headers = {

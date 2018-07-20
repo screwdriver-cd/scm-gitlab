@@ -324,7 +324,7 @@ class GitlabScm extends Scm {
         const scmContexts = this._getScmContexts();
 
         // hookId is not in header or payload
-        parsed.hookId = null;
+        parsed.hookId = '';
         parsed.scmContext = scmContexts[0];
 
         switch (webhookPayload.object_kind) {

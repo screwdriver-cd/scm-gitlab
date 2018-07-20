@@ -746,7 +746,7 @@ describe('index', function () {
 
     describe('getFile', () => {
         const apiUrl = 'https://gitlab.com/api/v4/projects/repoId' +
-                       '/repository/files';
+                       '/repository/files/path/to/file.txt';
         const scmUri = 'hostName:repoId:branchName';
         const scmContext = 'gitlab:gitlab.com';
         const params = {
@@ -763,7 +763,6 @@ describe('index', function () {
                 bearer: token
             },
             qs: {
-                file_path: 'path/to/file.txt',
                 ref: 'branchName'
             }
         };

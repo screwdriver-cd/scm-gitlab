@@ -47,11 +47,7 @@ const DESCRIPTION_MAP = {
  * @return {Promise}                                               Resolves when no error encountered.
  *                                                                 Rejects when status code is non-200
  */
-function checkResponseError(response, caller) {
-    if (caller === '_updateCommitStatus') {
-        return;
-    }
-
+function checkResponseError(response, caller) 
     if (response.statusCode >= 200 && response.statusCode < 300) {
         return;
     }
@@ -63,7 +59,10 @@ function checkResponseError(response, caller) {
         default: JSON.stringify(response.body)
     });
 
-    throw new Error(`${errorCode} Reason "${errorReason}" Caller "${caller}"`);
+    const error = new Error(`${errorCode} Reason "${errorReason}" Caller "${caller}"`);
+
+    error.code = errorCode;
+    throw error;
 }
 
 /**
@@ -321,7 +320,7 @@ class GitlabScm extends Scm {
         const scmContexts = this._getScmContexts();
 
         // hookId is not in header or payload
-        parsed.hookId = null;
+        parsed.hookId = '';
         parsed.scmContext = scmContexts[0];
 
         switch (webhookPayload.object_kind) {
@@ -337,7 +336,7 @@ class GitlabScm extends Scm {
             parsed.branch = webhookPayload.ref.split('/').slice(-1)[0];
             parsed.sha = webhookPayload.checkout_sha;
             parsed.lastCommitMessage = Hoek.reach(webhookPayload,
-                    'commits.-1.message', { default: '' });
+                'commits.-1.message', { default: '' });
 
             return Promise.resolve(parsed);
         }
@@ -402,7 +401,7 @@ class GitlabScm extends Scm {
         // Git clone
         command.push(`echo Cloning ${checkoutUrl}, on branch ${config.branch}`);
         command.push(`git clone --quiet --progress --branch ${config.branch} `
-            + `$SCM_URL $SD_SOURCE_DIR`);
+            + '$SCM_URL $SD_SOURCE_DIR');
         // Reset to SHA
         command.push(`echo Reset to SHA ${checkoutRef}`);
         command.push(`git reset --hard ${checkoutRef}`);

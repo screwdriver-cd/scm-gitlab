@@ -89,7 +89,7 @@ describe('index', function () {
     });
 
     describe('parseUrl', () => {
-        const apiUrl = 'https://gitlab.com/api/v3/projects/batman%2Ftest';
+        const apiUrl = 'https://gitlab.com/api/v4/projects/batman%2Ftest';
         const scmContext = 'gitlab:gitlab.com';
         let fakeResponse;
         let expectedOptions;
@@ -238,7 +238,7 @@ describe('index', function () {
                 sha: '249b26f2278c39f9efc55986f845dd98ae011763',
                 prNum: 6,
                 prRef: 'merge_requests/6',
-                hookId: null,
+                hookId: '',
                 scmContext: 'gitlab:gitlab.com'
             };
             const headers = {
@@ -260,7 +260,7 @@ describe('index', function () {
                 sha: 'bc2b3a48a428ed23e15960e8d703bf7e3a8a4f54',
                 prNum: 2,
                 prRef: 'merge_requests/2',
-                hookId: null,
+                hookId: '',
                 scmContext: 'gitlab:gitlab.com'
             };
             const headers = {
@@ -282,7 +282,7 @@ describe('index', function () {
                 sha: 'bc2b3a48a428ed23e15960e8d703bf7e3a8a4f54',
                 prNum: 2,
                 prRef: 'merge_requests/2',
-                hookId: null,
+                hookId: '',
                 scmContext: 'gitlab:gitlab.com'
             };
             const headers = {
@@ -303,7 +303,7 @@ describe('index', function () {
                 branch: 'master',
                 sha: '76506776e7931f843206c54586266468aec1a92e',
                 lastCommitMessage: 'lastcommitmessage',
-                hookId: null,
+                hookId: '',
                 scmContext: 'gitlab:gitlab.com'
             };
             const headers = {
@@ -344,7 +344,7 @@ describe('index', function () {
     });
 
     describe('decorateAuthor', () => {
-        const apiUrl = 'https://gitlab.com/api/v3/users';
+        const apiUrl = 'https://gitlab.com/api/v4/users';
         const expectedOptions = {
             url: apiUrl,
             method: 'GET',
@@ -433,7 +433,7 @@ describe('index', function () {
     });
 
     describe('decorateUrl', () => {
-        const apiUrl = 'https://gitlab.com/api/v3/projects/repoId';
+        const apiUrl = 'https://gitlab.com/api/v4/projects/repoId';
         const scmContext = 'gitlab:gitlab.com';
         const repoOptions = {
             url: apiUrl,
@@ -541,7 +541,7 @@ describe('index', function () {
                 auth: {
                     bearer: token
                 },
-                url: 'https://gitlab.com/api/v3/projects/repoId'
+                url: 'https://gitlab.com/api/v4/projects/repoId'
             };
             lookupScmUriResponse = {
                 statusCode: 200,
@@ -556,7 +556,7 @@ describe('index', function () {
                 auth: {
                     bearer: token
                 },
-                url: 'https://gitlab.com/api/v3/projects/owner%2FrepoName' +
+                url: 'https://gitlab.com/api/v4/projects/owner%2FrepoName' +
                      `/repository/commits/${sha}`
             };
             commitLookupResponse = {
@@ -573,7 +573,7 @@ describe('index', function () {
                 auth: {
                     bearer: token
                 },
-                url: 'https://gitlab.com/api/v3/users',
+                url: 'https://gitlab.com/api/v4/users',
                 qs: {
                     username: 'username'
                 }
@@ -666,7 +666,7 @@ describe('index', function () {
     });
 
     describe('getCommitSha', () => {
-        const apiUrl = 'https://gitlab.com/api/v3/projects/repoId' +
+        const apiUrl = 'https://gitlab.com/api/v4/projects/repoId' +
                        '/repository/branches/branchName';
         const scmUri = 'hostName:repoId:branchName';
         const scmContext = 'gitlab:gitlab.com';
@@ -745,8 +745,8 @@ describe('index', function () {
     });
 
     describe('getFile', () => {
-        const apiUrl = 'https://gitlab.com/api/v3/projects/repoId' +
-                       '/repository/files';
+        const apiUrl = 'https://gitlab.com/api/v4/projects/repoId' +
+                       '/repository/files/path/to/file.txt';
         const scmUri = 'hostName:repoId:branchName';
         const scmContext = 'gitlab:gitlab.com';
         const params = {
@@ -763,7 +763,6 @@ describe('index', function () {
                 bearer: token
             },
             qs: {
-                file_path: 'path/to/file.txt',
                 ref: 'branchName'
             }
         };
@@ -837,7 +836,7 @@ describe('index', function () {
 
         beforeEach(() => {
             expectedOptions = {
-                url: 'https://gitlab.com/api/v3/projects/repoId',
+                url: 'https://gitlab.com/api/v4/projects/repoId',
                 method: 'GET',
                 json: true,
                 auth: {
@@ -1133,7 +1132,7 @@ describe('index', function () {
                 url: 'http://valid.url',
                 jobName: 'main'
             };
-            apiUrl = 'https://gitlab.com/api/v3/projects/repoId/statuses/' +
+            apiUrl = 'https://gitlab.com/api/v4/projects/repoId/statuses/' +
                      `${config.sha}`;
             fakeResponse = {
                 statusCode: 201
@@ -1346,7 +1345,7 @@ describe('index', function () {
                         auth: {
                             bearer: token
                         },
-                        url: 'https://gitlab.com/api/v3/projects/repoId/hooks'
+                        url: 'https://gitlab.com/api/v4/projects/repoId/hooks'
                     });
                     assert.calledWith(requestMock, {
                         json: true,
@@ -1354,7 +1353,7 @@ describe('index', function () {
                         auth: {
                             bearer: token
                         },
-                        url: 'https://gitlab.com/api/v3/projects/repoId/hooks',
+                        url: 'https://gitlab.com/api/v4/projects/repoId/hooks',
                         qs: {
                             url: 'url',
                             push_events: true,
@@ -1401,7 +1400,7 @@ describe('index', function () {
                     auth: {
                         bearer: token
                     },
-                    url: 'https://gitlab.com/api/v3/projects/repoId/hooks'
+                    url: 'https://gitlab.com/api/v4/projects/repoId/hooks'
                 });
                 assert.calledWith(requestMock, {
                     json: true,
@@ -1409,7 +1408,7 @@ describe('index', function () {
                     auth: {
                         bearer: token
                     },
-                    url: `https://gitlab.com/api/v3/projects/repoId/hooks/${hookid}`,
+                    url: `https://gitlab.com/api/v4/projects/repoId/hooks/${hookid}`,
                     qs: {
                         url: 'url',
                         push_events: true,
@@ -1540,7 +1539,7 @@ describe('index', function () {
     describe('_getOpenedPRs', () => {
         const scmUri = 'hostName:repoId:branchName';
         const expectedOptions = {
-            url: 'https://gitlab.com/api/v3/projects/repoId/merge_requests',
+            url: 'https://gitlab.com/api/v4/projects/repoId/merge_requests',
             method: 'GET',
             json: true,
             auth: {

@@ -18,7 +18,7 @@
     "screwdriver",
     "gitlab"
   ],
-  "license": "MIT",
+  "license": "BSD-3-Clause",
   "author": "Ben Dang <me@bdang.it>",
   "contributors": [
     "Dao Lam <daolam112@gmail.com>",

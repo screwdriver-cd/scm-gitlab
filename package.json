@@ -1,6 +1,6 @@
 {
   "name": "screwdriver-scm-gitlab",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "description": "GitLab implementation for the scm-base class",
   "main": "index.js",
   "scripts": {
@@ -10,17 +10,27 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:bdangit/scm-gitlab.git"
+    "url": "git@github.com:screwdriver-cd/scm-gitlab.git"
   },
-  "homepage": "https://github.com/bdangit/scm-gitlab",
-  "bugs": "https://github.com/bdangit/scm-gitlab/issues",
+  "homepage": "https://github.com/screwdriver-cd/scm-gitlab",
+  "bugs": "https://github.com/screwdriver-cd/screwdriver/issues",
   "keywords": [
     "screwdriver",
     "gitlab"
   ],
   "license": "MIT",
   "author": "Ben Dang <me@bdang.it>",
-  "contributors": [],
+  "contributors": [
+    "Dao Lam <daolam112@gmail.com>",
+    "Dekus Lam <dekusdenial@hotmail.com>",
+    "Filbert Jahja <filidillidally@gmail.com>",
+    "Jithin Emmanuel <jithin1987@gmail.com>",
+    "Lakshminarasimhan Parthasarathy <laky@ymail.com>",
+    "Min Zhang <minzhangcmu@gmail.com>",
+    "Pranav Ravichandran <me@onloop.net>",
+    "St. John Johnson <st.john.johnson@gmail.com",
+    "Tiffany Kyi <tiffanykyi@gmail.com>"
+  ],
   "devDependencies": {
     "chai": "^3.5.0",
     "eslint": "^4.6.0",

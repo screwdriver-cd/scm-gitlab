@@ -47,7 +47,7 @@ const DESCRIPTION_MAP = {
  * @return {Promise}                                               Resolves when no error encountered.
  *                                                                 Rejects when status code is non-200
  */
-function checkResponseError(response, caller) 
+function checkResponseError(response, caller) {
     if (response.statusCode >= 200 && response.statusCode < 300) {
         return;
     }

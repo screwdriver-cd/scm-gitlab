@@ -3,23 +3,23 @@
   "user": {
     "name": "wooflab",
     "username": "wooflab",
-    "avatar_url": "http://www.gravatar.com/avatar/3aa7ca48582a80075023efdd29db3960?s=80&d=identicon"
+    "avatar_url": "https://www.gravatar.com/avatar/3aa7ca48582a80075023efdd29db3960?s=80&d=identicon"
   },
   "project": {
     "name": "quickstart-generic",
     "description": "",
-    "web_url": "http://192.168.7.30/bdangit/quickstart-generic",
+    "web_url": "https://192.168.7.30/bdangit/quickstart-generic",
     "avatar_url": null,
     "git_ssh_url": "git@192.168.7.30:bdangit/quickstart-generic.git",
-    "git_http_url": "http://192.168.7.30/bdangit/quickstart-generic.git",
+    "git_http_url": "https://192.168.7.30/bdangit/quickstart-generic.git",
     "namespace": "bdangit",
     "visibility_level": 20,
     "path_with_namespace": "bdangit/quickstart-generic",
     "default_branch": "master",
-    "homepage": "http://192.168.7.30/bdangit/quickstart-generic",
+    "homepage": "https://192.168.7.30/bdangit/quickstart-generic",
     "url": "git@192.168.7.30:bdangit/quickstart-generic.git",
     "ssh_url": "git@192.168.7.30:bdangit/quickstart-generic.git",
-    "http_url": "http://192.168.7.30/bdangit/quickstart-generic.git"
+    "http_url": "https://192.168.7.30/bdangit/quickstart-generic.git"
   },
   "object_attributes": {
     "id": 11,
@@ -54,53 +54,53 @@
     "source": {
       "name": "quickstart-generic",
       "description": "",
-      "web_url": "http://192.168.7.30/wooflab/quickstart-generic",
+      "web_url": "https://192.168.7.30/wooflab/quickstart-generic",
       "avatar_url": null,
       "git_ssh_url": "git@192.168.7.30:wooflab/quickstart-generic.git",
-      "git_http_url": "http://192.168.7.30/wooflab/quickstart-generic.git",
+      "git_http_url": "https://192.168.7.30/wooflab/quickstart-generic.git",
       "namespace": "wooflab",
       "visibility_level": 20,
       "path_with_namespace": "wooflab/quickstart-generic",
       "default_branch": "master",
-      "homepage": "http://192.168.7.30/wooflab/quickstart-generic",
+      "homepage": "https://192.168.7.30/wooflab/quickstart-generic",
       "url": "git@192.168.7.30:wooflab/quickstart-generic.git",
       "ssh_url": "git@192.168.7.30:wooflab/quickstart-generic.git",
-      "http_url": "http://192.168.7.30/wooflab/quickstart-generic.git"
+      "http_url": "https://192.168.7.30/wooflab/quickstart-generic.git"
     },
     "target": {
       "name": "quickstart-generic",
       "description": "",
-      "web_url": "http://192.168.7.30/bdangit/quickstart-generic",
+      "web_url": "https://192.168.7.30/bdangit/quickstart-generic",
       "avatar_url": null,
       "git_ssh_url": "git@192.168.7.30:bdangit/quickstart-generic.git",
-      "git_http_url": "http://192.168.7.30/bdangit/quickstart-generic.git",
+      "git_http_url": "https://192.168.7.30/bdangit/quickstart-generic.git",
       "namespace": "bdangit",
       "visibility_level": 20,
       "path_with_namespace": "bdangit/quickstart-generic",
       "default_branch": "master",
-      "homepage": "http://192.168.7.30/bdangit/quickstart-generic",
+      "homepage": "https://192.168.7.30/bdangit/quickstart-generic",
       "url": "git@192.168.7.30:bdangit/quickstart-generic.git",
       "ssh_url": "git@192.168.7.30:bdangit/quickstart-generic.git",
-      "http_url": "http://192.168.7.30/bdangit/quickstart-generic.git"
+      "http_url": "https://192.168.7.30/bdangit/quickstart-generic.git"
     },
     "last_commit": {
       "id": "9e7f71e836098f51921c8c3225a961ff7102ee48",
       "message": "Add new file",
       "timestamp": "2017-03-09T14:48:54+00:00",
-      "url": "http://192.168.7.30/bdangit/quickstart-generic/commit/9e7f71e836098f51921c8c3225a961ff7102ee48",
+      "url": "https://192.168.7.30/bdangit/quickstart-generic/commit/9e7f71e836098f51921c8c3225a961ff7102ee48",
       "author": {
         "name": "wooflab",
         "email": "bendang@gmail.com"
       }
     },
     "work_in_progress": false,
-    "url": "http://192.168.7.30/bdangit/quickstart-generic/merge_requests/7",
+    "url": "https://192.168.7.30/bdangit/quickstart-generic/merge_requests/7",
     "action": "open"
   },
   "repository": {
     "name": "quickstart-generic",
     "url": "git@192.168.7.30:bdangit/quickstart-generic.git",
     "description": "",
-    "homepage": "http://192.168.7.30/bdangit/quickstart-generic"
+    "homepage": "https://192.168.7.30/bdangit/quickstart-generic"
   }
 }

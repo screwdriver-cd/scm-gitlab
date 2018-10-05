@@ -1,5 +1,5 @@
 # scm-gitlab
-[[![Version][npm-image]][npm-url] ![Downloads][downloads-image] [![Build Status][status-image]][status-url] [![Open Issues][issues-image]][issues-url] [![Dependency Status][daviddm-image]][daviddm-url] ![License][license-image]
+[![Version][npm-image]][npm-url] ![Downloads][downloads-image] [![Build Status][status-image]][status-url] [![Open Issues][issues-image]][issues-url] [![Dependency Status][daviddm-image]][daviddm-url] ![License][license-image]
 
 > This scm plugin extends the [scm-base], and provides methods to fetch and update data in Gitlab.
 
@@ -41,9 +41,9 @@ No parameters are required.
 
 ##### Expected Outcome
 
-A single element array of ScmContext(ex: `['gitlab:gitlab.com']`(default), `['gitlab:mygitlab.com']`), which will be a unique identifier for the scm.
+A single element array of ScmContext (ex: `['gitlab:gitlab.com']`(default), `['gitlab:mygitlab.com']`), which will be a unique identifier for the scm.
 
-For more information on the exposed methods please see the [scm-base-class].
+For more information on the exposed methods please see the [scm-base] class.
 
 ## Testing
 

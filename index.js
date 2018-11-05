@@ -400,8 +400,11 @@ class GitlabScm extends Scm {
 
         // Git clone
         command.push(`echo Cloning ${checkoutUrl}, on branch ${config.branch}`);
-        command.push(`git clone --quiet --progress --branch ${config.branch} `
-            + '$SCM_URL $SD_SOURCE_DIR');
+        command.push('if [ ! -z $GIT_SHALLOW_CLONE ] && [ $GIT_SHALLOW_CLONE = false ]; '
+              + `then git clone --recursive --quiet --progress --branch ${config.branch} `
+              + '$SCM_URL $SD_SOURCE_DIR; '
+              + 'else git clone --depth=50 --recursive --quiet --progress --branch '
+              + `${config.branch} $SCM_URL $SD_SOURCE_DIR; fi`);
         // Reset to SHA
         command.push(`echo Reset to SHA ${checkoutRef}`);
         command.push(`git reset --hard ${checkoutRef}`);

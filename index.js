@@ -403,8 +403,8 @@ class GitlabScm extends Scm {
         command.push('if [ ! -z $GIT_SHALLOW_CLONE ] && [ $GIT_SHALLOW_CLONE = false ]; '
               + `then git clone --recursive --quiet --progress --branch ${config.branch} `
               + '$SCM_URL $SD_SOURCE_DIR; '
-              + 'else git clone --depth=50 --recursive --quiet --progress --branch '
-              + `${config.branch} $SCM_URL $SD_SOURCE_DIR; fi`);
+              + 'else git clone --depth=50 --no-single-branch --recursive --quiet --progress '
+              + `--branch ${config.branch} $SCM_URL $SD_SOURCE_DIR; fi`);
         // Reset to SHA
         command.push(`echo Reset to SHA ${checkoutRef}`);
         command.push(`git reset --hard ${checkoutRef}`);

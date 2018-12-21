@@ -642,6 +642,42 @@ class GitlabScm extends Scm {
     }
 
     /**
+     * Add merge request note
+     * @method addPrComment
+     * @param  {Object}   config            Configuration
+     * @param  {String}   config.comment    The PR comment
+     * @param  {Integer}  config.prNum      The PR number
+     * @param  {String}   config.scmUri     The scmUri to get commit sha of
+     * @param  {String}   config.scmContext The scm context to which user belongs
+     * @param  {String}   config.token      The token used to authenticate to the SCM
+     * @return {Promise}
+     */
+    _addPrComment({ comment, prNum, scmUri, token }) {
+        const repoInfo = getScmUriParts(scmUri);
+
+        return this.breaker.runCommand({
+            json: true,
+            method: 'POST',
+            auth: {
+                bearer: token
+            },
+            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
+                 `/projects/${repoInfo.repoId}/merge_requests/${prNum}/notes`,
+            qs: {
+                body: comment
+            }
+        }).then((response) => {
+            checkResponseError(response, '_addPrComment');
+
+            return {
+                commentId: response.body.id,
+                createTime: response.body.created_at,
+                username: response.body.author.username
+            };
+        });
+    }
+
+    /**
      * Update the commit status for a given repo and sha
      * @method updateCommitStatus
      * @param  {Object}   config              Configuration

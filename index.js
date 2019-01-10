@@ -818,7 +818,10 @@ class GitlabScm extends Scm {
 
             return prList.map(pr => ({
                 name: `PR-${pr.iid}`,
-                ref: `merge_requests/${pr.iid}`
+                ref: `merge_requests/${pr.iid}`,
+                username: pr.author.username,
+                title: pr.title,
+                createTime: pr.created_at
             }));
         });
     }

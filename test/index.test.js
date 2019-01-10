@@ -1615,14 +1615,20 @@ describe('index', function () {
                         iid: 2,
                         target_branch: 'master',
                         source_branch: 'test1',
-                        project_id: 3
+                        project_id: 3,
+                        title: 'test 1',
+                        created_at: '2011-01-26T19:01:12Z',
+                        author: { username: 'collab1' }
                     },
                     {
                         id: 2,
                         iid: 3,
                         target_branch: 'master',
                         source_branch: 'test2',
-                        project_id: 3
+                        project_id: 3,
+                        title: 'test 2',
+                        created_at: '2011-01-26T19:01:12Z',
+                        author: { username: 'collab2' }
                     }
                 ]
             });
@@ -1637,11 +1643,17 @@ describe('index', function () {
                     assert.deepEqual(response, [
                         {
                             name: 'PR-2',
-                            ref: 'merge_requests/2'
+                            ref: 'merge_requests/2',
+                            username: 'collab1',
+                            title: 'test 1',
+                            createTime: '2011-01-26T19:01:12Z'
                         },
                         {
                             name: 'PR-3',
-                            ref: 'merge_requests/3'
+                            ref: 'merge_requests/3',
+                            username: 'collab2',
+                            title: 'test 2',
+                            createTime: '2011-01-26T19:01:12Z'
                         }
                     ]);
                 });

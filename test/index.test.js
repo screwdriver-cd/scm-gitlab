@@ -1618,7 +1618,8 @@ describe('index', function () {
                         project_id: 3,
                         title: 'test 1',
                         created_at: '2011-01-26T19:01:12Z',
-                        author: { username: 'collab1' }
+                        author: { username: 'collab1', web_url: '/collab1' },
+                        web_url: '/merge_requests/1'
                     },
                     {
                         id: 2,
@@ -1628,7 +1629,8 @@ describe('index', function () {
                         project_id: 3,
                         title: 'test 2',
                         created_at: '2011-01-26T19:01:12Z',
-                        author: { username: 'collab2' }
+                        author: { username: 'collab2', web_url: '/collab2' },
+                        web_url: '/merge_requests/2'
                     }
                 ]
             });
@@ -1646,14 +1648,18 @@ describe('index', function () {
                             ref: 'merge_requests/2',
                             username: 'collab1',
                             title: 'test 1',
-                            createTime: '2011-01-26T19:01:12Z'
+                            createTime: '2011-01-26T19:01:12Z',
+                            url: '/merge_requests/1',
+                            userProfile: '/collab1'
                         },
                         {
                             name: 'PR-3',
                             ref: 'merge_requests/3',
                             username: 'collab2',
                             title: 'test 2',
-                            createTime: '2011-01-26T19:01:12Z'
+                            createTime: '2011-01-26T19:01:12Z',
+                            url: '/merge_requests/2',
+                            userProfile: '/collab2'
                         }
                     ]);
                 });

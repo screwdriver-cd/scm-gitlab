@@ -821,7 +821,9 @@ class GitlabScm extends Scm {
                 ref: `merge_requests/${pr.iid}`,
                 username: pr.author.username,
                 title: pr.title,
-                createTime: pr.created_at
+                createTime: pr.created_at,
+                url: pr.web_url,
+                userProfile: pr.author.web_url
             }));
         });
     }

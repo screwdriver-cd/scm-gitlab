@@ -2,7 +2,7 @@
 
 'use strict';
 
-const Breaker = require('circuit-fuses');
+const Breaker = require('circuit-fuses').breaker;
 const Request = require('request');
 const Hoek = require('hoek');
 const Joi = require('joi');

@@ -41,7 +41,7 @@
     "sinon-as-promised": "^4.0.2"
   },
   "dependencies": {
-    "circuit-fuses": "^2.2.1",
+    "circuit-fuses": "^4.0.4",
     "hoek": "^5.0.3",
     "joi": "^13.0.0",
     "request": "^2.80.0",

@@ -399,15 +399,15 @@ class GitlabScm extends Scm {
         command.push('export GIT_MERGE_AUTOEDIT=no');
 
         // Git clone
-        command.push(`echo Cloning ${checkoutUrl}, on branch ${config.branch}`);
+        command.push(`echo 'Cloning ${checkoutUrl}, on branch ${config.branch}'`);
         command.push('if [ ! -z $GIT_SHALLOW_CLONE ] && [ $GIT_SHALLOW_CLONE = false ]; '
-              + `then git clone --recursive --quiet --progress --branch ${config.branch} `
+              + `then git clone --recursive --quiet --progress --branch '${config.branch}' `
               + '$SCM_URL $SD_SOURCE_DIR; '
               + 'else git clone --depth=50 --no-single-branch --recursive --quiet --progress '
-              + `--branch ${config.branch} $SCM_URL $SD_SOURCE_DIR; fi`);
+              + `--branch '${config.branch}' $SCM_URL $SD_SOURCE_DIR; fi`);
         // Reset to SHA
-        command.push(`echo Reset to SHA ${checkoutRef}`);
-        command.push(`git reset --hard ${checkoutRef}`);
+        command.push(`echo 'Reset to SHA ${checkoutRef}'`);
+        command.push(`git reset --hard '${checkoutRef}'`);
         // Set config
         command.push('echo Setting user name and user email');
         command.push(`git config user.name ${this.config.username}`);
@@ -415,7 +415,7 @@ class GitlabScm extends Scm {
 
         // For pull requests
         if (config.prRef) {
-            command.push(`echo Fetching PR and merging with ${config.branch}`);
+            command.push(`echo 'Fetching PR and merging with ${config.branch}'`);
             command.push(`git fetch origin ${config.prRef}`);
             command.push(`git merge ${config.sha}`);
         }

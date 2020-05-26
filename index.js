@@ -870,6 +870,23 @@ class GitlabScm extends Scm {
             .then(result => Promise.resolve(result !== null))
             .catch(() => Promise.resolve(false));
     }
+
+    /**
+    * Gitlab doesn't have an equivalent endpoint to open pull request,
+    * so returning null for now
+    * @method _openPr
+    * @param  {Object}     config                  Configuration
+    * @param  {String}     config.checkoutUrl      Checkout url to the repo
+    * @param  {String}     config.token            Service token to authenticate with the SCM service
+    * @param  {String}     config.files            Files to open pull request with
+    * @param  {String}     config.title            Pull request title
+    * @param  {String}     config.message          Pull request message
+    * @param  {String}     [config.scmContext]     The scm context name
+    * @return {Promise}                            Resolves when operation completed without failure
+    */
+    async _openPr() {
+        return Promise.resolve(null);
+    }
 }
 
 module.exports = GitlabScm;

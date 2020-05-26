@@ -1765,4 +1765,20 @@ describe('index', function () {
                 });
         });
     });
+
+    describe('openPr', () => {
+        it('resolves null', () => {
+            scm.openPr({
+                checkoutUrl: 'https://hostName/username/repoName/tree/branchName',
+                token: 'thisisatoken',
+                files: [{
+                    name: 'file.txt',
+                    content: 'content'
+                }],
+                title: 'update file',
+                message: 'update file'
+            })
+                .then(result => assert.isNull(result));
+        });
+    });
 });

@@ -1,11 +1,11 @@
 {
   "name": "screwdriver-scm-gitlab",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "GitLab implementation for the scm-base class",
   "main": "index.js",
   "scripts": {
     "pretest": "eslint .",
-    "test": "jenkins-mocha --recursive",
+    "test": "mocha --recursive",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
   "repository": {
@@ -35,18 +35,18 @@
     "chai": "^3.5.0",
     "eslint": "^4.6.0",
     "eslint-config-screwdriver": "^3.0.0",
-    "jenkins-mocha": "^6.0.0",
+    "mocha": "^8.1.1",
     "mockery": "^2.0.0",
     "sinon": "^1.17.7",
     "sinon-as-promised": "^4.0.2"
   },
   "dependencies": {
+    "@hapi/hoek": "^9.0.4",
     "circuit-fuses": "^4.0.4",
-    "hoek": "^5.0.3",
-    "joi": "^13.0.0",
+    "joi": "^17.2.0",
     "request": "^2.80.0",
-    "screwdriver-data-schema": "^19.1.1",
-    "screwdriver-scm-base": "^6.0.0"
+    "screwdriver-data-schema": "git://github.com/screwdriver-cd/data-schema.git#hapi-v19",
+    "screwdriver-scm-base": "git://github.com/screwdriver-cd/scm-base.git#hapi-v19"
   },
   "release": {
     "debug": false,

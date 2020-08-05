@@ -4,7 +4,7 @@
 
 const Breaker = require('circuit-fuses').breaker;
 const Request = require('request');
-const Hoek = require('hoek');
+const Hoek = require('@hapi/hoek');
 const Joi = require('joi');
 const Schema = require('screwdriver-data-schema');
 const Scm = require('screwdriver-scm-base');

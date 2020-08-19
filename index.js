@@ -78,7 +78,7 @@ function getRepoInfoByCheckoutUrl(checkoutUrl) {
     return {
         hostname: matched[MATCH_COMPONENT_HOSTNAME],
         reponame: matched[MATCH_COMPONENT_REPONAME],
-        branch: matched[MATCH_COMPONENT_BRANCH].slice(1),
+        branch: matched[MATCH_COMPONENT_BRANCH] ? matched[MATCH_COMPONENT_BRANCH].slice(1) : null,
         owner: matched[MATCH_COMPONENT_OWNER]
     };
 }
@@ -300,7 +300,9 @@ class GitlabScm extends Scm {
         }).then((response) => {
             checkResponseError(response, '_parseUrl');
 
-            return `${repoInfo.hostname}:${response.body.id}:${repoInfo.branch}`;
+            const branch = repoInfo.branch || response.body.default_branch;
+
+            return `${repoInfo.hostname}:${response.body.id}:${branch}`;
         });
     }
 
@@ -429,7 +431,7 @@ class GitlabScm extends Scm {
     /**
      * Decorate a given SCM URI with additional data to better display
      * related information. If a branch suffix is not provided, it will default
-     * to the master branch
+     * to the default_branch
      * @method _decorateUrl
      * @param  {Config}    config            Configuration object
      * @param  {String}    config.scmUri     The SCM URI the commit belongs to

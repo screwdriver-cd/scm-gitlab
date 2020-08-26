@@ -100,7 +100,8 @@ describe('index', function () {
             fakeResponse = {
                 statusCode: 200,
                 body: {
-                    id: '12345'
+                    id: '12345',
+                    default_branch: 'main'
                 }
             };
             expectedOptions = {
@@ -129,6 +130,29 @@ describe('index', function () {
 
             return scm.parseUrl({
                 checkoutUrl: 'git@gitlab.com:batman/test.git#master',
+                token,
+                scmContext
+            }).then((parsed) => {
+                assert.calledWith(requestMock, expectedOptions);
+                assert.equal(parsed, expected);
+            });
+        });
+
+        it('resolves to the correct parsed url for ssh with default branch', () => {
+            const expected =
+                'gitlab.com:12345:main';
+
+            expectedOptions = {
+                url: apiUrl,
+                method: 'GET',
+                json: true,
+                auth: {
+                    bearer: token
+                }
+            };
+
+            return scm.parseUrl({
+                checkoutUrl: 'git@gitlab.com:batman/test.git',
                 token,
                 scmContext
             }).then((parsed) => {

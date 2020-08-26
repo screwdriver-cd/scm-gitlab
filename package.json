@@ -45,8 +45,8 @@
     "circuit-fuses": "^4.0.4",
     "joi": "^17.2.0",
     "request": "^2.80.0",
-    "screwdriver-data-schema": "git://github.com/screwdriver-cd/data-schema.git#hapi-v19",
-    "screwdriver-scm-base": "git://github.com/screwdriver-cd/scm-base.git#hapi-v19"
+    "screwdriver-data-schema": "^20.0.0",
+    "screwdriver-scm-base": "^7.0.0"
   },
   "release": {
     "debug": false,

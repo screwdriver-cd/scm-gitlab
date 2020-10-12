@@ -173,6 +173,18 @@ class GitlabScm extends Scm {
     }
 
     /**
+     * Get the webhook events mapping of screwdriver events and scm events
+     * @async _getWebhookEventsMapping
+     * @return {Object}     Returns a mapping of the events
+     */
+    async _getWebhookEventsMapping() {
+        return {
+            '~pr': 'merge_requests_events',
+            '~commit': 'push_events'
+        };
+    }
+
+    /**
      * Look up a webhook from a repo
      * @method _findWebhook
      * @param  {Object}     config
@@ -210,14 +222,17 @@ class GitlabScm extends Scm {
      * @param  {Object}     config.scmUri       Information about the repo
      * @param  {String}     config.token        admin token for repo
      * @param  {String}     config.url          url for webhook notifications
+     * @param  {String}     config.actions      Actions for the webhook events
      * @return {Promise}                        resolves when complete
      */
     _createWebhook(config) {
         const repoInfo = getScmUriParts(config.scmUri);
         const params = {
             url: config.url,
-            push_events: true,
-            merge_requests_events: true
+            push_events: config.actions.length === 0 ?
+                true : config.actions.includes('push_events'),
+            merge_requests_events: config.actions.length === 0 ?
+                true : config.actions.includes('merge_requests_events')
         };
         const action = {
             method: 'POST',
@@ -253,6 +268,7 @@ class GitlabScm extends Scm {
      * @param  {String}    config.scmContext The scm conntext to which user belongs
      * @param  {String}    config.token      Service token to authenticate with Gitlab
      * @param  {String}    config.webhookUrl The URL to use for the webhook notifications
+     * @param  {String}       config.actions      Actions for the webhook events
      * @return {Promise}                     Resolve means operation completed without failure.
      */
     _addWebhook(config) {
@@ -265,7 +281,8 @@ class GitlabScm extends Scm {
                 hookInfo,
                 scmUri: config.scmUri,
                 token: config.token,
-                url: config.webhookUrl
+                url: config.webhookUrl,
+                actions: config.actions
             })
         );
     }

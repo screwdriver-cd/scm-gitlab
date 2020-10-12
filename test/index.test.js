@@ -1417,7 +1417,11 @@ describe('index', function () {
             /* eslint-enable no-underscore-dangle */
                 scmUri,
                 token,
-                webhookUrl: 'url'
+                webhookUrl: 'url',
+                actions: [
+                    'merge_requests_events',
+                    'push_events'
+                ]
             })
                 .then(() => {
                     assert.calledWith(requestMock, {
@@ -1473,7 +1477,11 @@ describe('index', function () {
             /* eslint-enable no-underscore-dangle */
                 scmUri,
                 token,
-                webhookUrl: 'url'
+                webhookUrl: 'url',
+                actions: [
+                    'merge_requests_events',
+                    'push_events'
+                ]
             }).then(() => {
                 assert.calledWith(requestMock, {
                     json: true,
@@ -1514,7 +1522,11 @@ describe('index', function () {
             /* eslint-enable no-underscore-dangle */
                 scmUri,
                 token,
-                webhookUrl: 'url'
+                webhookUrl: 'url',
+                actions: [
+                    'merge_requests_events',
+                    'push_events'
+                ]
             }).then(assert.fail, (error) => {
                 assert.match(error.message, '403 Reason "Your credentials lack one or more ' +
                                             'required privilege scopes." ' +
@@ -1537,7 +1549,11 @@ describe('index', function () {
             /* eslint-enable no-underscore-dangle */
                 scmUri,
                 token,
-                url: 'url'
+                url: 'url',
+                actions: [
+                    'merge_requests_events',
+                    'push_events'
+                ]
             }).then(assert.fail, (error) => {
                 assert.match(error.message, '500 Reason "{"blah":"undefined"}" ' +
                                             'Caller "_findWebhook"');
@@ -1564,7 +1580,11 @@ describe('index', function () {
             /* eslint-enable no-underscore-dangle */
                 scmUri,
                 token,
-                url: 'url'
+                url: 'url',
+                actions: [
+                    'merge_requests_events',
+                    'push_events'
+                ]
             }).then(assert.fail, (error) => {
                 assert.match(error.message, '403 Reason "Your credentials lack one or more ' +
                                             'required privilege scopes." ' +
@@ -1608,7 +1628,11 @@ describe('index', function () {
             /* eslint-enable no-underscore-dangle */
                 scmUri,
                 token,
-                url: 'url'
+                url: 'url',
+                actions: [
+                    'merge_requests_events',
+                    'push_events'
+                ]
             }).then(assert.fail, (err) => {
                 assert.strictEqual(err.message, '403 Reason "Your credentials lack one or more ' +
                                                 'required privilege scopes." ' +

@@ -179,8 +179,8 @@ class GitlabScm extends Scm {
      */
     _getWebhookEventsMapping() {
         return {
-            'pr': 'merge_requests_events',
-            'commit': 'push_events'
+            pr: 'merge_requests_events',
+            commit: 'push_events'
         };
     }
 

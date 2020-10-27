@@ -174,13 +174,13 @@ class GitlabScm extends Scm {
 
     /**
      * Get the webhook events mapping of screwdriver events and scm events
-     * @async _getWebhookEventsMapping
+     * @method _getWebhookEventsMapping
      * @return {Object}     Returns a mapping of the events
      */
-    async _getWebhookEventsMapping() {
+    _getWebhookEventsMapping() {
         return {
-            '~pr': 'merge_requests_events',
-            '~commit': 'push_events'
+            pr: 'merge_requests_events',
+            commit: 'push_events'
         };
     }
 

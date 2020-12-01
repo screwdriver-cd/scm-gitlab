@@ -4,7 +4,7 @@ shared:
 jobs:
     main:
         environment:
-            SD_SONAR_OPTS: "-Dsonar.sources=index.js -Dsonar.javascript.lcov.reportPath=artifacts/coverage/lcov.info"
+            SD_SONAR_OPTS: "-Dsonar.sources=index.js -Dsonar.tests=test -Dsonar.javascript.lcov.reportPaths=artifacts/coverage/lcov.info -Dsonar.testExecutionReportPaths=artifacts/report/test.xml"
         requires: [~pr, ~commit]
         steps:
             - install: npm install

@@ -1644,8 +1644,8 @@ describe('index', function () {
                     'merge_requests_events',
                     'push_events'
                 ]
-            }).then(assert.fail, (err) => {
-                assert.strictEqual(err.message, '403 Reason "Your credentials lack one or more ' +
+            }).then(assert.fail, (error) => {
+                assert.strictEqual(error.message, '403 Reason "Your credentials lack one or more ' +
                                                 'required privilege scopes." ' +
                                                 'Caller "_createWebhook"');
                 assert.match(error.status, 403);

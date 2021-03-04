@@ -61,7 +61,7 @@ function checkResponseError(response, caller) {
 
     const error = new Error(`${errorCode} Reason "${errorReason}" Caller "${caller}"`);
 
-    error.code = errorCode;
+    error.status = errorCode;
     throw error;
 }
 

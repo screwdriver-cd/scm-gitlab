@@ -4,7 +4,7 @@
 
 const Breaker = require('circuit-fuses').breaker;
 const Request = require('request');
-const Hoek = require('hoek');
+const Hoek = require('@hapi/hoek');
 const Joi = require('joi');
 const Schema = require('screwdriver-data-schema');
 const Scm = require('screwdriver-scm-base');
@@ -78,7 +78,7 @@ function getRepoInfoByCheckoutUrl(checkoutUrl) {
     return {
         hostname: matched[MATCH_COMPONENT_HOSTNAME],
         reponame: matched[MATCH_COMPONENT_REPONAME],
-        branch: matched[MATCH_COMPONENT_BRANCH].slice(1),
+        branch: matched[MATCH_COMPONENT_BRANCH] ? matched[MATCH_COMPONENT_BRANCH].slice(1) : null,
         owner: matched[MATCH_COMPONENT_OWNER]
     };
 }
@@ -173,6 +173,18 @@ class GitlabScm extends Scm {
     }
 
     /**
+     * Get the webhook events mapping of screwdriver events and scm events
+     * @method _getWebhookEventsMapping
+     * @return {Object}     Returns a mapping of the events
+     */
+    _getWebhookEventsMapping() {
+        return {
+            pr: 'merge_requests_events',
+            commit: 'push_events'
+        };
+    }
+
+    /**
      * Look up a webhook from a repo
      * @method _findWebhook
      * @param  {Object}     config
@@ -210,14 +222,17 @@ class GitlabScm extends Scm {
      * @param  {Object}     config.scmUri       Information about the repo
      * @param  {String}     config.token        admin token for repo
      * @param  {String}     config.url          url for webhook notifications
+     * @param  {String}     config.actions      Actions for the webhook events
      * @return {Promise}                        resolves when complete
      */
     _createWebhook(config) {
         const repoInfo = getScmUriParts(config.scmUri);
         const params = {
             url: config.url,
-            push_events: true,
-            merge_requests_events: true
+            push_events: config.actions.length === 0 ?
+                true : config.actions.includes('push_events'),
+            merge_requests_events: config.actions.length === 0 ?
+                true : config.actions.includes('merge_requests_events')
         };
         const action = {
             method: 'POST',
@@ -253,6 +268,7 @@ class GitlabScm extends Scm {
      * @param  {String}    config.scmContext The scm conntext to which user belongs
      * @param  {String}    config.token      Service token to authenticate with Gitlab
      * @param  {String}    config.webhookUrl The URL to use for the webhook notifications
+     * @param  {String}       config.actions      Actions for the webhook events
      * @return {Promise}                     Resolve means operation completed without failure.
      */
     _addWebhook(config) {
@@ -265,7 +281,8 @@ class GitlabScm extends Scm {
                 hookInfo,
                 scmUri: config.scmUri,
                 token: config.token,
-                url: config.webhookUrl
+                url: config.webhookUrl,
+                actions: config.actions
             })
         );
     }
@@ -300,7 +317,9 @@ class GitlabScm extends Scm {
         }).then((response) => {
             checkResponseError(response, '_parseUrl');
 
-            return `${repoInfo.hostname}:${response.body.id}:${repoInfo.branch}`;
+            const branch = repoInfo.branch || response.body.default_branch;
+
+            return `${repoInfo.hostname}:${response.body.id}:${branch}`;
         });
     }
 
@@ -399,15 +418,15 @@ class GitlabScm extends Scm {
         command.push('export GIT_MERGE_AUTOEDIT=no');
 
         // Git clone
-        command.push(`echo Cloning ${checkoutUrl}, on branch ${config.branch}`);
+        command.push(`echo 'Cloning ${checkoutUrl}, on branch ${config.branch}'`);
         command.push('if [ ! -z $GIT_SHALLOW_CLONE ] && [ $GIT_SHALLOW_CLONE = false ]; '
-              + `then git clone --recursive --quiet --progress --branch ${config.branch} `
+              + `then git clone --recursive --quiet --progress --branch '${config.branch}' `
               + '$SCM_URL $SD_SOURCE_DIR; '
               + 'else git clone --depth=50 --no-single-branch --recursive --quiet --progress '
-              + `--branch ${config.branch} $SCM_URL $SD_SOURCE_DIR; fi`);
+              + `--branch '${config.branch}' $SCM_URL $SD_SOURCE_DIR; fi`);
         // Reset to SHA
-        command.push(`echo Reset to SHA ${checkoutRef}`);
-        command.push(`git reset --hard ${checkoutRef}`);
+        command.push(`echo 'Reset to SHA ${checkoutRef}'`);
+        command.push(`git reset --hard '${checkoutRef}'`);
         // Set config
         command.push('echo Setting user name and user email');
         command.push(`git config user.name ${this.config.username}`);
@@ -415,7 +434,7 @@ class GitlabScm extends Scm {
 
         // For pull requests
         if (config.prRef) {
-            command.push(`echo Fetching PR and merging with ${config.branch}`);
+            command.push(`echo 'Fetching PR and merging with ${config.branch}'`);
             command.push(`git fetch origin ${config.prRef}`);
             command.push(`git merge ${config.sha}`);
         }
@@ -429,7 +448,7 @@ class GitlabScm extends Scm {
     /**
      * Decorate a given SCM URI with additional data to better display
      * related information. If a branch suffix is not provided, it will default
-     * to the master branch
+     * to the default_branch
      * @method _decorateUrl
      * @param  {Config}    config            Configuration object
      * @param  {String}    config.scmUri     The SCM URI the commit belongs to
@@ -869,6 +888,23 @@ class GitlabScm extends Scm {
         return this._parseHook(headers, payload)
             .then(result => Promise.resolve(result !== null))
             .catch(() => Promise.resolve(false));
+    }
+
+    /**
+    * Gitlab doesn't have an equivalent endpoint to open pull request,
+    * so returning null for now
+    * @method _openPr
+    * @param  {Object}     config                  Configuration
+    * @param  {String}     config.checkoutUrl      Checkout url to the repo
+    * @param  {String}     config.token            Service token to authenticate with the SCM service
+    * @param  {String}     config.files            Files to open pull request with
+    * @param  {String}     config.title            Pull request title
+    * @param  {String}     config.message          Pull request message
+    * @param  {String}     [config.scmContext]     The scm context name
+    * @return {Promise}                            Resolves when operation completed without failure
+    */
+    async _openPr() {
+        return Promise.resolve(null);
     }
 }
 

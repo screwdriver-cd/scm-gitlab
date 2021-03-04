@@ -100,7 +100,8 @@ describe('index', function () {
             fakeResponse = {
                 statusCode: 200,
                 body: {
-                    id: '12345'
+                    id: '12345',
+                    default_branch: 'main'
                 }
             };
             expectedOptions = {
@@ -129,6 +130,29 @@ describe('index', function () {
 
             return scm.parseUrl({
                 checkoutUrl: 'git@gitlab.com:batman/test.git#master',
+                token,
+                scmContext
+            }).then((parsed) => {
+                assert.calledWith(requestMock, expectedOptions);
+                assert.equal(parsed, expected);
+            });
+        });
+
+        it('resolves to the correct parsed url for ssh with default branch', () => {
+            const expected =
+                'gitlab.com:12345:main';
+
+            expectedOptions = {
+                url: apiUrl,
+                method: 'GET',
+                json: true,
+                auth: {
+                    bearer: token
+                }
+            };
+
+            return scm.parseUrl({
+                checkoutUrl: 'git@gitlab.com:batman/test.git',
                 token,
                 scmContext
             }).then((parsed) => {
@@ -1401,7 +1425,11 @@ describe('index', function () {
             /* eslint-enable no-underscore-dangle */
                 scmUri,
                 token,
-                webhookUrl: 'url'
+                webhookUrl: 'url',
+                actions: [
+                    'merge_requests_events',
+                    'push_events'
+                ]
             })
                 .then(() => {
                     assert.calledWith(requestMock, {
@@ -1457,7 +1485,11 @@ describe('index', function () {
             /* eslint-enable no-underscore-dangle */
                 scmUri,
                 token,
-                webhookUrl: 'url'
+                webhookUrl: 'url',
+                actions: [
+                    'merge_requests_events',
+                    'push_events'
+                ]
             }).then(() => {
                 assert.calledWith(requestMock, {
                     json: true,
@@ -1498,7 +1530,11 @@ describe('index', function () {
             /* eslint-enable no-underscore-dangle */
                 scmUri,
                 token,
-                webhookUrl: 'url'
+                webhookUrl: 'url',
+                actions: [
+                    'merge_requests_events',
+                    'push_events'
+                ]
             }).then(assert.fail, (error) => {
                 assert.match(error.message, '403 Reason "Your credentials lack one or more ' +
                                             'required privilege scopes." ' +
@@ -1522,7 +1558,11 @@ describe('index', function () {
             /* eslint-enable no-underscore-dangle */
                 scmUri,
                 token,
-                url: 'url'
+                url: 'url',
+                actions: [
+                    'merge_requests_events',
+                    'push_events'
+                ]
             }).then(assert.fail, (error) => {
                 assert.match(error.message, '500 Reason "{"blah":"undefined"}" ' +
                                             'Caller "_findWebhook"');
@@ -1550,7 +1590,11 @@ describe('index', function () {
             /* eslint-enable no-underscore-dangle */
                 scmUri,
                 token,
-                url: 'url'
+                url: 'url',
+                actions: [
+                    'merge_requests_events',
+                    'push_events'
+                ]
             }).then(assert.fail, (error) => {
                 assert.match(error.message, '403 Reason "Your credentials lack one or more ' +
                                             'required privilege scopes." ' +
@@ -1595,9 +1639,13 @@ describe('index', function () {
             /* eslint-enable no-underscore-dangle */
                 scmUri,
                 token,
-                url: 'url'
-            }).then(assert.fail, (error) => {
-                assert.strictEqual(error.message, '403 Reason "Your credentials lack one or more ' +
+                url: 'url',
+                actions: [
+                    'merge_requests_events',
+                    'push_events'
+                ]
+            }).then(assert.fail, (err) => {
+                assert.strictEqual(err.message, '403 Reason "Your credentials lack one or more ' +
                                                 'required privilege scopes." ' +
                                                 'Caller "_createWebhook"');
                 assert.match(error.status, 403);
@@ -1775,6 +1823,22 @@ describe('index', function () {
                 .then((result) => {
                     assert.strictEqual(result, false);
                 });
+        });
+    });
+
+    describe('openPr', () => {
+        it('resolves null', () => {
+            scm.openPr({
+                checkoutUrl: 'https://hostName/username/repoName/tree/branchName',
+                token: 'thisisatoken',
+                files: [{
+                    name: 'file.txt',
+                    content: 'content'
+                }],
+                title: 'update file',
+                message: 'update file'
+            })
+                .then(result => assert.isNull(result));
         });
     });
 });

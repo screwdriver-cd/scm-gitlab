@@ -212,6 +212,7 @@ describe('index', function () {
                     assert.calledWith(requestMock, expectedOptions);
                     assert.match(error.message, '404 Reason "404 Project Not Found" ' +
                                                 'Caller "_parseUrl"');
+                    assert.match(error.status, 404);
                 });
         });
 
@@ -235,6 +236,7 @@ describe('index', function () {
                     assert.calledWith(requestMock, expectedOptions);
                     assert.match(error.message, '500 Reason "Internal Server Error" ' +
                                                 'Caller "_parseUrl"');
+                    assert.match(error.status, 500);
                 });
         });
 

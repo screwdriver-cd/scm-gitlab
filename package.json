@@ -38,8 +38,8 @@
     "mocha": "^8.2.1",
     "mocha-multi-reporters": "^1.5.1",
     "mocha-sonarqube-reporter": "^1.0.2",
-    "nyc": "^15.0.0",
     "mockery": "^2.0.0",
+    "nyc": "^15.0.0",
     "sinon": "^1.17.7",
     "sinon-as-promised": "^4.0.2"
   },

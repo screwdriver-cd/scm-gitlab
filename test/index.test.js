@@ -212,6 +212,7 @@ describe('index', function () {
                     assert.calledWith(requestMock, expectedOptions);
                     assert.match(error.message, '404 Reason "404 Project Not Found" ' +
                                                 'Caller "_parseUrl"');
+                    assert.match(error.status, 404);
                 });
         });
 
@@ -235,6 +236,7 @@ describe('index', function () {
                     assert.calledWith(requestMock, expectedOptions);
                     assert.match(error.message, '500 Reason "Internal Server Error" ' +
                                                 'Caller "_parseUrl"');
+                    assert.match(error.status, 500);
                 });
         });
 
@@ -437,6 +439,7 @@ describe('index', function () {
                 assert.calledWith(requestMock, expectedOptions);
                 assert.match(error.message, '404 Reason "Resource not found" ' +
                                             'Caller "_decorateAuthor"');
+                assert.match(error.status, 404);
             });
         });
 
@@ -527,6 +530,7 @@ describe('index', function () {
                 assert.calledWith(requestMock, expectedOptions);
                 assert.match(error.message, '404 Reason "Resource not found" ' +
                                             'Caller "lookupScmUri"');
+                assert.match(error.status, 404);
             });
         });
 
@@ -667,6 +671,7 @@ describe('index', function () {
                 assert.calledTwice(requestMock);
                 assert.match(error.message, '404 Reason "Resource not found" ' +
                                             'Caller "_decorateCommit: commitLookup"');
+                assert.match(error.status, 404);
             });
         });
 
@@ -745,6 +750,7 @@ describe('index', function () {
                 assert.calledWith(requestMock, expectedOptions);
                 assert.match(error.message, '404 Reason "Resource not found" ' +
                                             'Caller "_getCommitSha"');
+                assert.match(error.status, 404);
             });
         });
 
@@ -831,6 +837,7 @@ describe('index', function () {
                 assert.calledWith(requestMock, expectedOptions);
                 assert.match(error.message, '404 Reason "Resource not found" ' +
                                             'Caller "_addPrComment"');
+                assert.match(error.status, 404);
             });
         });
 
@@ -910,6 +917,7 @@ describe('index', function () {
                 assert.calledWith(requestMock, expectedOptions);
                 assert.match(error.message, '404 Reason "Resource not found" ' +
                                             'Caller "_getFile"');
+                assert.match(error.status, 404);
             });
         });
 
@@ -1177,6 +1185,7 @@ describe('index', function () {
             }).catch((error) => {
                 assert.match(error.message, '404 Reason "Resource not found" ' +
                                             'Caller "_getPermissions"');
+                assert.match(error.status, 404);
             });
         });
 
@@ -1271,6 +1280,7 @@ describe('index', function () {
                 assert.calledWith(requestMock, expectedOptions);
                 assert.match(error.message, '401 Reason "Access token expired" ' +
                                             'Caller "_updateCommitStatus"');
+                assert.match(error.status, 401);
             });
         });
 
@@ -1531,6 +1541,7 @@ describe('index', function () {
                 assert.match(error.message, '403 Reason "Your credentials lack one or more ' +
                                             'required privilege scopes." ' +
                                             'Caller "_findWebhook"');
+                assert.match(error.status, 403);
             });
         });
 
@@ -1557,6 +1568,7 @@ describe('index', function () {
             }).then(assert.fail, (error) => {
                 assert.match(error.message, '500 Reason "{"blah":"undefined"}" ' +
                                             'Caller "_findWebhook"');
+                assert.match(error.status, 500);
             });
         });
 
@@ -1589,6 +1601,7 @@ describe('index', function () {
                 assert.match(error.message, '403 Reason "Your credentials lack one or more ' +
                                             'required privilege scopes." ' +
                                             'Caller "_createWebhook"');
+                assert.match(error.status, 403);
             });
         });
 
@@ -1633,10 +1646,11 @@ describe('index', function () {
                     'merge_requests_events',
                     'push_events'
                 ]
-            }).then(assert.fail, (err) => {
-                assert.strictEqual(err.message, '403 Reason "Your credentials lack one or more ' +
+            }).then(assert.fail, (error) => {
+                assert.strictEqual(error.message, '403 Reason "Your credentials lack one or more ' +
                                                 'required privilege scopes." ' +
                                                 'Caller "_createWebhook"');
+                assert.match(error.status, 403);
             });
         });
     });

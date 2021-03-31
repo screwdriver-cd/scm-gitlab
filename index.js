@@ -6,6 +6,7 @@ const Breaker = require('circuit-fuses').breaker;
 const Request = require('request');
 const Hoek = require('@hapi/hoek');
 const Joi = require('joi');
+const Path = require('path');
 const Schema = require('screwdriver-data-schema');
 const Scm = require('screwdriver-scm-base');
 
@@ -20,6 +21,7 @@ const MATCH_COMPONENT_HOSTNAME = 1;
 const MATCH_COMPONENT_OWNER = 2;
 const MATCH_COMPONENT_REPONAME = 3;
 const MATCH_COMPONENT_BRANCH = 4;
+const MATCH_COMPONENT_ROOTDIR = 5;
 
 const STATE_MAP = {
     SUCCESS: 'success',
@@ -69,22 +71,27 @@ function checkResponseError(response, caller) {
  * Get repo information
  * @method getRepoInfoByCheckoutUrl
  * @param  {String}  checkoutUrl      The url to check out repo
- * @return {Object}                   An object with the hostname, repo, branch, and owner
+ * @param  {String}  [rootDir]        Root dir
+ * @return {Object}                   An object with the hostname, repo, branch, owner, and rootDir
  */
-function getRepoInfoByCheckoutUrl(checkoutUrl) {
+function getRepoInfoByCheckoutUrl(checkoutUrl, rootDir) {
     const regex = Schema.config.regex.CHECKOUT_URL;
     const matched = regex.exec(checkoutUrl);
+
+    const sourceDir = matched[MATCH_COMPONENT_ROOTDIR] ?
+        matched[MATCH_COMPONENT_ROOTDIR].slice(1) : null;
 
     return {
         hostname: matched[MATCH_COMPONENT_HOSTNAME],
         reponame: matched[MATCH_COMPONENT_REPONAME],
         branch: matched[MATCH_COMPONENT_BRANCH] ? matched[MATCH_COMPONENT_BRANCH].slice(1) : null,
-        owner: matched[MATCH_COMPONENT_OWNER]
+        owner: matched[MATCH_COMPONENT_OWNER],
+        rootDir: rootDir || sourceDir
     };
 }
 
 /**
- * Get hostname, repoId, and branch from scmUri
+ * Get hostname, repoId, branch, and rootDir from scmUri
  * @method getScmUriParts
  * @param  {String}     scmUri
  * @return {Object}
@@ -92,7 +99,7 @@ function getRepoInfoByCheckoutUrl(checkoutUrl) {
 function getScmUriParts(scmUri) {
     const scm = {};
 
-    [scm.hostname, scm.repoId, scm.branch] = scmUri.split(':');
+    [scm.hostname, scm.repoId, scm.branch, scm.rootDir] = scmUri.split(':');
 
     return scm;
 }
@@ -147,14 +154,14 @@ class GitlabScm extends Scm {
      * @return {Promise}                  Resolves to an object containing
      *                                    repository-related information
      */
-    lookupScmUri(config) {
-        const scmInfo = getScmUriParts(config.scmUri);
+    lookupScmUri({ scmUri, token }) {
+        const scmInfo = getScmUriParts(scmUri);
 
         return this.breaker.runCommand({
             json: true,
             method: 'GET',
             auth: {
-                bearer: config.token
+                bearer: token
             },
             url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
                  `/projects/${scmInfo.repoId}`
@@ -167,7 +174,8 @@ class GitlabScm extends Scm {
                 branch: scmInfo.branch,
                 hostname: scmInfo.hostname,
                 reponame,
-                owner
+                owner,
+                rootDir: scmInfo.rootDir
             };
         });
     }
@@ -193,14 +201,14 @@ class GitlabScm extends Scm {
      * @param  {String}     config.url          url for webhook notifications
      * @return {Promise}                        Resolves a list of hooks
      */
-    _findWebhook(config) {
-        const repoInfo = getScmUriParts(config.scmUri);
+    _findWebhook({ scmUri, token, url }) {
+        const repoInfo = getScmUriParts(scmUri);
 
         return this.breaker.runCommand({
             json: true,
             method: 'GET',
             auth: {
-                bearer: config.token
+                bearer: token
             },
             url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
                  `/projects/${repoInfo.repoId}/hooks`
@@ -208,7 +216,7 @@ class GitlabScm extends Scm {
             checkResponseError(response, '_findWebhook');
 
             const hooks = response.body;
-            const result = hooks.find(hook => hook.url === config.url);
+            const result = hooks.find(hook => hook.url === url);
 
             return result;
         });
@@ -225,14 +233,14 @@ class GitlabScm extends Scm {
      * @param  {String}     config.actions      Actions for the webhook events
      * @return {Promise}                        resolves when complete
      */
-    _createWebhook(config) {
-        const repoInfo = getScmUriParts(config.scmUri);
+    _createWebhook({ hookInfo, scmUri, token, url, actions }) {
+        const repoInfo = getScmUriParts(scmUri);
         const params = {
-            url: config.url,
-            push_events: config.actions.length === 0 ?
-                true : config.actions.includes('push_events'),
-            merge_requests_events: config.actions.length === 0 ?
-                true : config.actions.includes('merge_requests_events')
+            url,
+            push_events: actions.length === 0 ?
+                true : actions.includes('push_events'),
+            merge_requests_events: actions.length === 0 ?
+                true : actions.includes('merge_requests_events')
         };
         const action = {
             method: 'POST',
@@ -240,16 +248,16 @@ class GitlabScm extends Scm {
                  `/projects/${repoInfo.repoId}/hooks`
         };
 
-        if (config.hookInfo) {
+        if (hookInfo) {
             action.method = 'PUT';
-            action.url += `/${config.hookInfo.id}`;
+            action.url += `/${hookInfo.id}`;
         }
 
         return this.breaker.runCommand({
             json: true,
             method: action.method,
             auth: {
-                bearer: config.token
+                bearer: token
             },
             url: action.url,
             qs: params
@@ -268,21 +276,21 @@ class GitlabScm extends Scm {
      * @param  {String}    config.scmContext The scm conntext to which user belongs
      * @param  {String}    config.token      Service token to authenticate with Gitlab
      * @param  {String}    config.webhookUrl The URL to use for the webhook notifications
-     * @param  {String}       config.actions      Actions for the webhook events
+     * @param  {String}    config.actions    Actions for the webhook events
      * @return {Promise}                     Resolve means operation completed without failure.
      */
-    _addWebhook(config) {
+    _addWebhook({ scmUri, token, webhookUrl, actions }) {
         return this._findWebhook({
-            scmUri: config.scmUri,
-            url: config.webhookUrl,
-            token: config.token
+            scmUri,
+            url: webhookUrl,
+            token
         }).then(hookInfo =>
             this._createWebhook({
                 hookInfo,
-                scmUri: config.scmUri,
-                token: config.token,
-                url: config.webhookUrl,
-                actions: config.actions
+                scmUri,
+                token,
+                url: webhookUrl,
+                actions
             })
         );
     }
@@ -293,14 +301,16 @@ class GitlabScm extends Scm {
      * @param  {Object}     config              Config object
      * @param  {String}     config.checkoutUrl  The checkoutUrl to parse
      * @param  {String}     config.token        The token used to authenticate to the SCM service
+     * @param  {String}     [config.rootDir]    The root directory
      * @param  {String}     config.scmContext   The scm context to which user belongs
-     * @return {Promise}                        Resolves to an ID of 'serviceName:repoId:branchName'
+     * @return {Promise}                        Resolves to an ID of 'serviceName:repoId:branchName:rootDir'
      */
-    _parseUrl(config) {
-        const repoInfo = getRepoInfoByCheckoutUrl(config.checkoutUrl);
+    _parseUrl({ checkoutUrl, rootDir, token }) {
+        const { hostname, owner, reponame, branch, rootDir: sourceDir } =
+            getRepoInfoByCheckoutUrl(checkoutUrl, rootDir);
         const myHost = this.config.gitlabHost || 'gitlab.com';
 
-        if (repoInfo.hostname !== myHost) {
+        if (hostname !== myHost) {
             const message = 'This checkoutUrl is not supported for your current login host.';
 
             return Promise.reject(new Error(message));
@@ -310,16 +320,17 @@ class GitlabScm extends Scm {
             json: true,
             method: 'GET',
             auth: {
-                bearer: config.token
+                bearer: token
             },
             url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
-                 `/projects/${repoInfo.owner}%2F${repoInfo.reponame}`
+                 `/projects/${owner}%2F${reponame}`
         }).then((response) => {
             checkResponseError(response, '_parseUrl');
 
-            const branch = repoInfo.branch || response.body.default_branch;
+            const scmUri = `${hostname}:${response.body.id}:` +
+                `${branch || response.body.default_branch}`;
 
-            return `${repoInfo.hostname}:${response.body.id}:${branch}`;
+            return sourceDir ? `${scmUri}:${sourceDir}` : scmUri;
         });
     }
 
@@ -394,17 +405,18 @@ class GitlabScm extends Scm {
      * @param  {String}    config.branch        Pipeline branch
      * @param  {String}    config.host          Scm host to checkout source code from
      * @param  {String}    config.org           Scm org name
+     * @param  {String}    [config.prRef]       PR reference (can be a PR branch or reference)
      * @param  {String}    config.repo          Scm repo name
+     * @param  {String}    [config.rootDir]     Root directory
      * @param  {String}    config.sha           Commit sha
      * @param  {String}    config.scmContext    The scm context to which user belongs
-     * @param  {String}    [config.prRef]       PR reference (can be a PR branch or reference)
      * @return {Promise}
      */
-    _getCheckoutCommand(config) {
+    _getCheckoutCommand({ branch, host, org, prRef, repo, rootDir, sha }) {
         // TODO: this needs to be fixed to support private / internal repos.
-        const checkoutUrl = `${config.host}/${config.org}/${config.repo}`; // URL for https
-        const sshCheckoutUrl = `git@${config.host}:${config.org}/${config.repo}`; // URL for ssh
-        const checkoutRef = config.prRef ? config.branch : config.sha; // if PR, use pipeline branch
+        const checkoutUrl = `${host}/${org}/${repo}`; // URL for https
+        const sshCheckoutUrl = `git@${host}:${org}/${repo}`; // URL for ssh
+        const checkoutRef = prRef ? branch : sha; // if PR, use pipeline branch
         const command = [];
 
         command.push('echo Exporting environment variables');
@@ -418,12 +430,12 @@ class GitlabScm extends Scm {
         command.push('export GIT_MERGE_AUTOEDIT=no');
 
         // Git clone
-        command.push(`echo 'Cloning ${checkoutUrl}, on branch ${config.branch}'`);
+        command.push(`echo 'Cloning ${checkoutUrl}, on branch ${branch}'`);
         command.push('if [ ! -z $GIT_SHALLOW_CLONE ] && [ $GIT_SHALLOW_CLONE = false ]; '
-              + `then git clone --recursive --quiet --progress --branch '${config.branch}' `
+              + `then git clone --recursive --quiet --progress --branch '${branch}' `
               + '$SCM_URL $SD_SOURCE_DIR; '
               + 'else git clone --depth=50 --no-single-branch --recursive --quiet --progress '
-              + `--branch '${config.branch}' $SCM_URL $SD_SOURCE_DIR; fi`);
+              + `--branch '${branch}' $SCM_URL $SD_SOURCE_DIR; fi`);
         // Reset to SHA
         command.push(`echo 'Reset to SHA ${checkoutRef}'`);
         command.push(`git reset --hard '${checkoutRef}'`);
@@ -432,11 +444,16 @@ class GitlabScm extends Scm {
         command.push(`git config user.name ${this.config.username}`);
         command.push(`git config user.email ${this.config.email}`);
 
+        // cd into rootDir after cloning
+        if (rootDir) {
+            command.push(`cd ${rootDir}`);
+        }
+
         // For pull requests
-        if (config.prRef) {
-            command.push(`echo 'Fetching PR and merging with ${config.branch}'`);
-            command.push(`git fetch origin ${config.prRef}`);
-            command.push(`git merge ${config.sha}`);
+        if (prRef) {
+            command.push(`echo 'Fetching PR and merging with ${branch}'`);
+            command.push(`git fetch origin ${prRef}`);
+            command.push(`git merge ${sha}`);
         }
 
         return Promise.resolve({
@@ -453,21 +470,22 @@ class GitlabScm extends Scm {
      * @param  {Config}    config            Configuration object
      * @param  {String}    config.scmUri     The SCM URI the commit belongs to
      * @param  {String}    config.token      Service token to authenticate with Github
-     * @param  {Object}    config.sha        SHA to decorate data with
      * @param  {String}    config.scmContext The scm context to which user belongs
      * @return {Promise}
      */
-    _decorateUrl(config) {
+    _decorateUrl({ scmUri, token }) {
         return this.lookupScmUri({
-            scmUri: config.scmUri,
-            token: config.token
-        }).then((scmInfo) => {
-            const baseUrl = `${scmInfo.hostname}/${scmInfo.owner}/${scmInfo.reponame}`;
+            scmUri,
+            token
+        }).then(({ hostname, owner, reponame, branch, rootDir }) => {
+            const baseUrl = `${hostname}/${owner}/${reponame}/-/tree/${branch}`;
 
             return {
-                branch: scmInfo.branch,
-                name: `${scmInfo.owner}/${scmInfo.reponame}`,
-                url: `${this.config.gitlabProtocol}://${baseUrl}/tree/${scmInfo.branch}`
+                branch,
+                name: `${owner}/${reponame}`,
+                url: `${this.config.gitlabProtocol}://` +
+                    `${rootDir ? Path.join(baseUrl, rootDir) : baseUrl}`,
+                rootDir: rootDir || ''
             };
         });
     }
@@ -482,21 +500,20 @@ class GitlabScm extends Scm {
      * @param  {Object}        config.scmContext Context to which user belongs
      * @return {Promise}
      */
-    _decorateCommit(config) {
-        const scmContext = config.scmContext;
+    _decorateCommit({ scmUri, sha, token, scmContext }) {
         const commitLookup = this.lookupScmUri({
-            scmUri: config.scmUri,
-            token: config.token
+            scmUri,
+            token
         }).then(scmInfo =>
             this.breaker.runCommand({
                 json: true,
                 method: 'GET',
                 auth: {
-                    bearer: config.token
+                    bearer: token
                 },
                 url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
                      `/projects/${scmInfo.owner}%2F${scmInfo.reponame}` +
-                     `/repository/commits/${config.sha}`
+                     `/repository/commits/${sha}`
             }).then((response) => {
                 checkResponseError(response, '_decorateCommit: commitLookup');
 
@@ -513,7 +530,7 @@ class GitlabScm extends Scm {
             }
 
             return this.decorateAuthor({
-                token: config.token,
+                token,
                 username: commitData.commitInfo.author_name,
                 scmContext
             });
@@ -528,7 +545,7 @@ class GitlabScm extends Scm {
                 message: commitData.commitInfo.message,
                 url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}` +
                      `/${commitData.scmInfo.owner}/${commitData.scmInfo.reponame}` +
-                     `/tree/${config.sha}`
+                     `/tree/${sha}`
             })
         );
     }
@@ -542,17 +559,17 @@ class GitlabScm extends Scm {
      * @param  {String}        config.scmContext The scm context to which user belongs
      * @return {Promise}
      */
-    _decorateAuthor(config) {
+    _decorateAuthor({ token, username }) {
         return this.breaker.runCommand({
             json: true,
             method: 'GET',
             auth: {
-                bearer: config.token
+                bearer: token
             },
             url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
                  '/users',
             qs: {
-                username: config.username
+                username
             }
         }).then((response) => {
             checkResponseError(response, '_decorateAuthor');
@@ -584,14 +601,14 @@ class GitlabScm extends Scm {
      * @param  {String}   config.scmContext The scm context to which user belongs
      * @return {Promise}
      */
-    _getPermissions(config) {
-        const repoInfo = getScmUriParts(config.scmUri);
+    _getPermissions({ scmUri, token }) {
+        const repoInfo = getScmUriParts(scmUri);
 
         return this.breaker.runCommand({
             json: true,
             method: 'GET',
             auth: {
-                bearer: config.token
+                bearer: token
             },
             url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
                  `/projects/${repoInfo.repoId}`
@@ -641,14 +658,14 @@ class GitlabScm extends Scm {
      * @param  {String}   config.token      The token used to authenticate to the SCM
      * @return {Promise}
      */
-    _getCommitSha(config) {
-        const repoInfo = getScmUriParts(config.scmUri);
+    _getCommitSha({ scmUri, token }) {
+        const repoInfo = getScmUriParts(scmUri);
 
         return this.breaker.runCommand({
             json: true,
             method: 'GET',
             auth: {
-                bearer: config.token
+                bearer: token
             },
             url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
                  `/projects/${repoInfo.repoId}/repository` +
@@ -709,23 +726,23 @@ class GitlabScm extends Scm {
      * @param  {String}   config.scmContext   The scm context to which user belongs
      * @return {Promise}
      */
-    _updateCommitStatus(config) {
-        const repoInfo = getScmUriParts(config.scmUri);
-        const context = config.jobName ? `Screwdriver/${config.jobName}` : 'Screwdriver';
+    _updateCommitStatus({ scmUri, jobName, token, sha, buildStatus, url }) {
+        const repoInfo = getScmUriParts(scmUri);
+        const context = jobName ? `Screwdriver/${jobName}` : 'Screwdriver';
 
         return this.breaker.runCommand({
             json: true,
             method: 'POST',
             auth: {
-                bearer: config.token
+                bearer: token
             },
             url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
-                 `/projects/${repoInfo.repoId}/statuses/${config.sha}`,
+                 `/projects/${repoInfo.repoId}/statuses/${sha}`,
             qs: {
                 context,
-                description: DESCRIPTION_MAP[config.buildStatus],
-                state: STATE_MAP[config.buildStatus] || 'failure',
-                target_url: config.url
+                description: DESCRIPTION_MAP[buildStatus],
+                state: STATE_MAP[buildStatus] || 'failure',
+                target_url: url
             }
         }).then((response) => {
             checkResponseError(response, '_updateCommitStatus');
@@ -743,19 +760,20 @@ class GitlabScm extends Scm {
      * @param  {String}   config.scmContext   The scm context to which user belongs
      * @return {Promise}
      */
-    _getFile(config) {
-        const repoInfo = getScmUriParts(config.scmUri);
+    _getFile({ scmUri, path, token, ref }) {
+        const { repoId, branch, rootDir } = getScmUriParts(scmUri);
+        const fullPath = rootDir ? Path.join(rootDir, path) : path;
 
         return this.breaker.runCommand({
             json: true,
             method: 'GET',
             auth: {
-                bearer: config.token
+                bearer: token
             },
             url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
-                 `/projects/${repoInfo.repoId}/repository/files/${config.path}`,
+                 `/projects/${repoId}/repository/files/${fullPath}`,
             qs: {
-                ref: config.ref || repoInfo.branch
+                ref: ref || branch
             }
         }).then((response) => {
             checkResponseError(response, '_getFile');
@@ -816,14 +834,14 @@ class GitlabScm extends Scm {
      * @param  {String}   config.token        The token used to authenticate to the SCM
      * @return {Promise}
      */
-    _getOpenedPRs(config) {
-        const repoInfo = getScmUriParts(config.scmUri);
+    _getOpenedPRs({ scmUri, token }) {
+        const repoInfo = getScmUriParts(scmUri);
 
         return this.breaker.runCommand({
             method: 'GET',
             json: true,
             auth: {
-                bearer: config.token
+                bearer: token
             },
             qs: {
                 state: 'opened'

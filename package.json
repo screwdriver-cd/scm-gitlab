@@ -45,7 +45,7 @@
   },
   "dependencies": {
     "@hapi/hoek": "^9.0.4",
-    "circuit-fuses": "^4.0.4",
+    "circuit-fuses": "^4.0.5",
     "joi": "^17.2.0",
     "request": "^2.80.0",
     "screwdriver-data-schema": "^21.0.0",

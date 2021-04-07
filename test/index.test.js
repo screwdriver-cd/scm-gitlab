@@ -9,6 +9,7 @@ const testCommands = require('./data/commands.json');
 const testPrCommands = require('./data/prCommands.json');
 const testPrComment = require('./data/gitlab.merge_request.comment.json');
 const testCustomPrCommands = require('./data/customPrCommands.json');
+const testRootDirCommands = require('./data/rootDirCommands.json');
 const testPayloadOpen = require('./data/gitlab.merge_request.opened.json');
 const testPayloadClose = require('./data/gitlab.merge_request.closed.json');
 const testPayloadPush = require('./data/gitlab.push.json');
@@ -95,6 +96,7 @@ describe('index', function () {
         const apiUrl = 'https://gitlab.com/api/v4/projects/batman%2Ftest';
         let fakeResponse;
         let expectedOptions;
+        let expected;
 
         beforeEach(() => {
             fakeResponse = {
@@ -112,44 +114,22 @@ describe('index', function () {
                     bearer: token
                 }
             };
+            expected = 'gitlab.com:12345:master';
             requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
         });
 
-        it('resolves to the correct parsed url for ssh', () => {
-            const expected =
-                'gitlab.com:12345:master';
-
-            expectedOptions = {
-                url: apiUrl,
-                method: 'GET',
-                json: true,
-                auth: {
-                    bearer: token
-                }
-            };
-
-            return scm.parseUrl({
+        it('resolves to the correct parsed url for ssh', () =>
+            scm.parseUrl({
                 checkoutUrl: 'git@gitlab.com:batman/test.git#master',
                 token,
                 scmContext
             }).then((parsed) => {
                 assert.calledWith(requestMock, expectedOptions);
                 assert.equal(parsed, expected);
-            });
-        });
+            }));
 
         it('resolves to the correct parsed url for ssh with default branch', () => {
-            const expected =
-                'gitlab.com:12345:main';
-
-            expectedOptions = {
-                url: apiUrl,
-                method: 'GET',
-                json: true,
-                auth: {
-                    bearer: token
-                }
-            };
+            expected = 'gitlab.com:12345:main';
 
             return scm.parseUrl({
                 checkoutUrl: 'git@gitlab.com:batman/test.git',
@@ -161,9 +141,21 @@ describe('index', function () {
             });
         });
 
+        it('resolves to the correct parsed url for rootDir', () => {
+            expected = 'gitlab.com:12345:branch:path/to/source';
+
+            return scm.parseUrl({
+                checkoutUrl: 'git@gitlab.com:batman/test.git#branch:path/to/source',
+                token,
+                scmContext
+            }).then((parsed) => {
+                assert.calledWith(requestMock, expectedOptions);
+                assert.equal(parsed, expected);
+            });
+        });
+
         it('resolves to the correct parsed url for https', () => {
-            const expected =
-                'gitlab.com:12345:mynewbranch';
+            expected = 'gitlab.com:12345:mynewbranch';
 
             return scm.parseUrl({
                 checkoutUrl: 'https://batman@gitlab.com/batman/test.git#mynewbranch',
@@ -495,13 +487,32 @@ describe('index', function () {
 
         it('resolves to correct decorated url object', () => {
             const expected = {
-                url: 'https://hostName/username/repoName/tree/branchName',
+                url: 'https://hostName/username/repoName/-/tree/branchName',
                 name: 'username/repoName',
-                branch: 'branchName'
+                branch: 'branchName',
+                rootDir: ''
             };
 
             return scm.decorateUrl({
                 scmUri,
+                token,
+                scmContext
+            }).then((decorated) => {
+                assert.calledWith(requestMock, expectedOptions);
+                assert.deepEqual(decorated, expected);
+            });
+        });
+
+        it('resolves to correct decorated url object with rootDir', () => {
+            const expected = {
+                url: 'https://hostName/username/repoName/-/tree/branchName/path/to/source',
+                name: 'username/repoName',
+                branch: 'branchName',
+                rootDir: 'path/to/source'
+            };
+
+            return scm.decorateUrl({
+                scmUri: 'hostName:repoId:branchName:path/to/source',
                 token,
                 scmContext
             }).then((decorated) => {
@@ -864,32 +875,34 @@ describe('index', function () {
     describe('getFile', () => {
         const apiUrl = 'https://gitlab.com/api/v4/projects/repoId' +
                        '/repository/files/path/to/file.txt';
-        const params = {
-            scmUri,
-            scmContext,
-            token,
-            path: 'path/to/file.txt'
-        };
-        const expectedOptions = {
-            url: apiUrl,
-            method: 'GET',
-            json: true,
-            auth: {
-                bearer: token
-            },
-            qs: {
-                ref: 'branchName'
-            }
-        };
+        let expectedOptions;
         let fakeResponse;
+        let params;
 
         beforeEach(() => {
+            expectedOptions = {
+                url: apiUrl,
+                method: 'GET',
+                json: true,
+                auth: {
+                    bearer: token
+                },
+                qs: {
+                    ref: 'branchName'
+                }
+            };
             fakeResponse = {
                 statusCode: 200,
                 body: {
                     encoding: 'ascii',
                     content: 'dataValue'
                 }
+            };
+            params = {
+                scmUri,
+                scmContext,
+                token,
+                path: 'path/to/file.txt'
             };
             requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
         });
@@ -900,6 +913,17 @@ describe('index', function () {
                 assert.deepEqual(content, 'dataValue');
             })
         );
+
+        it('resolves to correct commit sha when rootDir is passed in', () => {
+            params.scmUri = 'hostName:repoId:branchName:path/to/source';
+            expectedOptions.url = 'https://gitlab.com/api/v4/projects/repoId' +
+                           '/repository/files/path/to/source/path/to/file.txt';
+
+            return scm.getFile(params).then((content) => {
+                assert.calledWith(requestMock, expectedOptions);
+                assert.deepEqual(content, 'dataValue');
+            });
+        });
 
         it('rejects if status code is not 200', () => {
             fakeResponse = {
@@ -1345,14 +1369,18 @@ describe('index', function () {
     });
 
     describe('getCheckoutCommand', () => {
-        const config = {
-            branch: 'branchName',
-            host: 'hostName',
-            org: 'orgName',
-            repo: 'repoName',
-            sha: 'shaValue',
-            scmContext
-        };
+        let config;
+
+        beforeEach(() => {
+            config = {
+                branch: 'branchName',
+                host: 'hostName',
+                org: 'orgName',
+                repo: 'repoName',
+                sha: 'shaValue',
+                scmContext
+            };
+        });
 
         it('resolves checkout command without prRef', () =>
             scm.getCheckoutCommand(config).then((command) => {
@@ -1369,6 +1397,7 @@ describe('index', function () {
         });
 
         it('resolves checkout command with custom username and email', () => {
+            config.prRef = 'prBranch';
             scm = new GitlabScm({
                 oauthClientId: 'myclientid',
                 oauthClientSecret: 'myclientsecret',
@@ -1379,6 +1408,21 @@ describe('index', function () {
             return scm.getCheckoutCommand(config)
                 .then((command) => {
                     assert.deepEqual(command, testCustomPrCommands);
+                });
+        });
+
+        it('resolves checkout command with rootDir', () => {
+            config.rootDir = 'path/to/source';
+            scm = new GitlabScm({
+                oauthClientId: 'myclientid',
+                oauthClientSecret: 'myclientsecret',
+                username: 'abcd',
+                email: 'dev-null@my.email.com'
+            });
+
+            return scm.getCheckoutCommand(config)
+                .then((command) => {
+                    assert.deepEqual(command, testRootDirCommands);
                 });
         });
     });

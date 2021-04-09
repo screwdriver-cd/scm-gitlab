@@ -771,7 +771,7 @@ class GitlabScm extends Scm {
                 bearer: token
             },
             url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
-                 `/projects/${repoId}/repository/files/${fullPath}`,
+                 `/projects/${repoId}/repository/files/${encodeURIComponent(fullPath)}`,
             qs: {
                 ref: ref || branch
             }

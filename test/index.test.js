@@ -874,7 +874,7 @@ describe('index', function () {
 
     describe('getFile', () => {
         const apiUrl = 'https://gitlab.com/api/v4/projects/repoId' +
-                       '/repository/files/path/to/file.txt';
+                       '/repository/files/path%2Fto%2Ffile.txt';
         let expectedOptions;
         let fakeResponse;
         let params;
@@ -917,7 +917,7 @@ describe('index', function () {
         it('resolves to correct commit sha when rootDir is passed in', () => {
             params.scmUri = 'hostName:repoId:branchName:path/to/source';
             expectedOptions.url = 'https://gitlab.com/api/v4/projects/repoId' +
-                           '/repository/files/path/to/source/path/to/file.txt';
+                           '/repository/files/path%2Fto%2Fsource%2Fpath%2Fto%2Ffile.txt';
 
             return scm.getFile(params).then((content) => {
                 assert.calledWith(requestMock, expectedOptions);

@@ -148,7 +148,7 @@ class GitlabScm extends Scm {
 
     /**
      * Look up a repo by SCM URI
-     * @method lookupScmUri
+     * @async lookupScmUri
      * @param  {Object}     config Config object
      * @param  {Object}     config.scmUri The SCM URI to look up relevant info
      * @param  {Object}     config.token  Service token to authenticate with Gitlab
@@ -298,7 +298,7 @@ class GitlabScm extends Scm {
 
     /**
      * Parses a SCM URL into a screwdriver-representable ID
-     * @method _parseUrl
+     * @async _parseUrl
      * @param  {Object}     config              Config object
      * @param  {String}     config.checkoutUrl  The checkoutUrl to parse
      * @param  {String}     config.token        The token used to authenticate to the SCM service
@@ -565,7 +565,7 @@ class GitlabScm extends Scm {
      * Decorate a given SCM URI with additional data to better display
      * related information. If a branch suffix is not provided, it will default
      * to the default_branch
-     * @method _decorateUrl
+     * @async _decorateUrl
      * @param  {Config}    config            Configuration object
      * @param  {String}    config.scmUri     The SCM URI the commit belongs to
      * @param  {String}    config.token      Service token to authenticate with Github
@@ -590,7 +590,7 @@ class GitlabScm extends Scm {
 
     /**
      * Decorate the commit based on the repository
-     * @method _decorateCommit
+     * @async _decorateCommit
      * @param  {Object}        config            Configuration object
      * @param  {Object}        config.scmUri     SCM URI the commit belongs to
      * @param  {Object}        config.sha        SHA to decorate data with
@@ -604,6 +604,7 @@ class GitlabScm extends Scm {
             token
         });
 
+        // There's no username provided, so skipping decorateAuthor
         const commit = await this.breaker.runCommand({
             json: true,
             method: 'GET',
@@ -640,7 +641,7 @@ class GitlabScm extends Scm {
 
     /**
      * Decorate the author based on the Gitlab service
-     * @method _decorateAuthor
+     * @async _decorateAuthor
      * @param  {Object}        config            Configuration object
      * @param  {Object}        config.token      Service token to authenticate with Gitlab
      * @param  {Object}        config.username   Username to query more information for
@@ -996,7 +997,7 @@ class GitlabScm extends Scm {
 
     /**
      * Return a valid Bell configuration (for OAuth)
-     * @method _getBellConfiguration
+     * @async _getBellConfiguration
      * @return {Promise}
      */
     async _getBellConfiguration() {
@@ -1090,7 +1091,7 @@ class GitlabScm extends Scm {
 
     /**
      * Determine if a scm module can handle the received webhook
-     * @method canHandleWebhook
+     * @async canHandleWebhook
      * @param {Object}    headers    The request headers associated with the webhook payload
      * @param {Object}    payload    The webhook payload received from the SCM service
      * @return {Promise}
@@ -1116,7 +1117,7 @@ class GitlabScm extends Scm {
     /**
     * Gitlab doesn't have an equivalent endpoint to open pull request,
     * so returning null for now
-    * @method _openPr
+    * @async _openPr
     * @param  {Object}     config                  Configuration
     * @param  {String}     config.checkoutUrl      Checkout url to the repo
     * @param  {String}     config.token            Service token to authenticate with the SCM service

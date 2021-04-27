@@ -10,6 +10,7 @@ const testPrCommands = require('./data/prCommands.json');
 const testPrComment = require('./data/gitlab.merge_request.comment.json');
 const testCustomPrCommands = require('./data/customPrCommands.json');
 const testRootDirCommands = require('./data/rootDirCommands.json');
+const testChildCommands = require('./data/childCommands.json');
 const testPayloadOpen = require('./data/gitlab.merge_request.opened.json');
 const testPayloadClose = require('./data/gitlab.merge_request.closed.json');
 const testPayloadPush = require('./data/gitlab.push.json');
@@ -1546,6 +1547,21 @@ describe('index', function () {
             return scm.getCheckoutCommand(config)
                 .then((command) => {
                     assert.deepEqual(command, testRootDirCommands);
+                });
+        });
+
+        it('promises to get the checkout command for a child pipeline', () => {
+            config.parentConfig = {
+                branch: 'master',
+                host: 'github.com',
+                org: 'screwdriver-cd',
+                repo: 'parent-to-guide',
+                sha: '54321'
+            };
+
+            return scm.getCheckoutCommand(config)
+                .then((command) => {
+                    assert.deepEqual(command, testChildCommands);
                 });
         });
     });

@@ -26,7 +26,7 @@ const MATCH_COMPONENT_ROOTDIR = 5;
 
 const STATE_MAP = {
     SUCCESS: 'success',
-    RUNNING: 'pending',
+    RUNNING: 'running',
     QUEUED: 'pending'
 };
 const DESCRIPTION_MAP = {

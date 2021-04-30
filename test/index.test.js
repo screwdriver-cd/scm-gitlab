@@ -10,9 +10,14 @@ const testPrCommands = require('./data/prCommands.json');
 const testPrComment = require('./data/gitlab.merge_request.comment.json');
 const testCustomPrCommands = require('./data/customPrCommands.json');
 const testRootDirCommands = require('./data/rootDirCommands.json');
+const testChildCommands = require('./data/childCommands.json');
 const testPayloadOpen = require('./data/gitlab.merge_request.opened.json');
 const testPayloadClose = require('./data/gitlab.merge_request.closed.json');
 const testPayloadPush = require('./data/gitlab.push.json');
+const testCommit = require('./data/gitlab.commit.json');
+const testChangedFiles = require('./data/gitlab.merge_request.changedFiles.json');
+const testPayloadPushBadHead = require('./data/gitlab.push.bad.json');
+const testMergeRequest = require('./data/gitlab.merge_request.json');
 const token = 'myAccessToken';
 
 require('sinon-as-promised');
@@ -248,16 +253,21 @@ describe('index', function () {
     });
 
     describe('parseHook', () => {
+        const checkoutUrl = 'git@example.com:bdangit/quickstart-generic.git';
+
         it('resolves the correct parsed config for opened PR', () => {
             const expected = {
                 type: 'pr',
                 action: 'opened',
                 username: 'bdangit',
-                checkoutUrl: 'https://example.com/bdangit/quickstart-generic.git',
+                checkoutUrl,
                 branch: 'master',
                 sha: '249b26f2278c39f9efc55986f845dd98ae011763',
                 prNum: 6,
                 prRef: 'merge_requests/6',
+                prSource: 'branch',
+                prTitle: 'fix tabby cat',
+                ref: 'pull/6/merge',
                 hookId: '',
                 scmContext
             };
@@ -275,11 +285,14 @@ describe('index', function () {
                 type: 'pr',
                 action: 'closed',
                 username: 'bdangit',
-                checkoutUrl: 'https://example.com/bdangit/quickstart-generic.git',
+                checkoutUrl,
                 branch: 'master',
                 sha: 'bc2b3a48a428ed23e15960e8d703bf7e3a8a4f54',
                 prNum: 2,
                 prRef: 'merge_requests/2',
+                prSource: 'branch',
+                prTitle: 'Fix this stuff',
+                ref: 'pull/2/merge',
                 hookId: '',
                 scmContext
             };
@@ -297,11 +310,14 @@ describe('index', function () {
                 type: 'pr',
                 action: 'closed',
                 username: 'bdangit',
-                checkoutUrl: 'https://example.com/bdangit/quickstart-generic.git',
+                checkoutUrl,
                 branch: 'master',
                 sha: 'bc2b3a48a428ed23e15960e8d703bf7e3a8a4f54',
                 prNum: 2,
                 prRef: 'merge_requests/2',
+                prSource: 'branch',
+                prTitle: 'Fix this stuff',
+                ref: 'pull/2/merge',
                 hookId: '',
                 scmContext
             };
@@ -318,11 +334,13 @@ describe('index', function () {
             const expected = {
                 type: 'repo',
                 action: 'push',
-                username: 'bdangit',
-                checkoutUrl: 'https://example.com/bdangit/quickstart-generic.git',
+                username: 'jsmith',
+                checkoutUrl: 'git@example.com:mike/diaspora.git',
+                commitAuthors: ['Jordi Mallach', 'GitLab dev user'],
                 branch: 'master',
-                sha: '76506776e7931f843206c54586266468aec1a92e',
-                lastCommitMessage: 'lastcommitmessage',
+                lastCommitMessage: 'fixed readme',
+                ref: 'refs/heads/master',
+                sha: 'da1560886d4f094c3e6c9ef40349f7d38b5d27d7',
                 hookId: '',
                 scmContext
             };
@@ -360,6 +378,16 @@ describe('index', function () {
 
             return scm.parseHook(issueCreated, {})
                 .then(result => assert.deepEqual(result, null));
+        });
+
+        it('resolves null for a pull request payload with an unsupported action', () => {
+            const testHeaders = {
+                'x-gitlab-event': 'Push Hook',
+                action: 'locked'
+            };
+
+            return scm.parseHook(testHeaders, { object_kind: 'merge_request' })
+                .then(result => assert.isNull(result));
         });
     });
 
@@ -569,8 +597,6 @@ describe('index', function () {
         let lookupScmUriResponse;
         let commitLookup;
         let commitLookupResponse;
-        let authorLookup;
-        let authorLookupResponse;
         let fakeResponse;
 
         beforeEach(() => {
@@ -588,7 +614,6 @@ describe('index', function () {
                     path_with_namespace: 'owner/repoName'
                 }
             };
-
             commitLookup = {
                 json: true,
                 method: 'GET',
@@ -600,53 +625,32 @@ describe('index', function () {
             };
             commitLookupResponse = {
                 statusCode: 200,
-                body: {
-                    author_name: 'username',
-                    message: 'testing'
-                }
-            };
-
-            authorLookup = {
-                json: true,
-                method: 'GET',
-                auth: {
-                    bearer: token
-                },
-                url: 'https://gitlab.com/api/v4/users',
-                qs: {
-                    username: 'username'
-                }
-            };
-            authorLookupResponse = {
-                statusCode: 200,
-                body: [{
-                    username: 'username',
-                    name: 'displayName',
-                    id: 12345,
-                    state: 'active',
-                    avatar_url: 'https://gitlab.com/uploads/user/avatar/12345/avatar.png',
-                    web_url: 'https://gitlab.com/username'
-                }]
+                body: testCommit
             };
 
             requestMock.withArgs(lookupScmUri)
                 .yieldsAsync(null, lookupScmUriResponse, lookupScmUriResponse.body);
             requestMock.withArgs(commitLookup)
                 .yieldsAsync(null, commitLookupResponse, commitLookupResponse.body);
-            requestMock.withArgs(authorLookup)
-                .yieldsAsync(null, authorLookupResponse, authorLookupResponse.body);
         });
 
         it('resolves to correct decorated object', () => {
             const expected = {
-                message: 'testing',
                 author: {
-                    url: 'https://gitlab.com/username',
-                    name: 'displayName',
-                    username: 'username',
-                    avatar: 'https://gitlab.com/uploads/user/avatar/12345/avatar.png'
+                    url: 'https://cd.screwdriver.cd/',
+                    name: 'randx',
+                    username: 'n/a',
+                    avatar: 'https://cd.screwdriver.cd/assets/unknown_user.png'
                 },
-                url: `https://gitlab.com/owner/repoName/tree/${sha}`
+                committer: {
+                    avatar: 'https://cd.screwdriver.cd/assets/unknown_user.png',
+                    name: 'Dmitriy',
+                    url: 'https://cd.screwdriver.cd/',
+                    username: 'n/a'
+                },
+                message: 'Sanitize for network graph',
+                // eslint-disable-next-line
+                url: 'https://gitlab.example.com/thedude/gitlab-foss/-/commit/6104942438c14ec7bd21c6cd5bd995272b3faff6'
             };
 
             return scm.decorateCommit({
@@ -655,7 +659,7 @@ describe('index', function () {
                 token,
                 scmContext
             }).then((decorated) => {
-                assert.calledThrice(requestMock);
+                assert.calledTwice(requestMock);
                 assert.deepEqual(decorated, expected);
             });
         });
@@ -959,17 +963,6 @@ describe('index', function () {
         });
     });
 
-    describe('getChangedFiles', () => {
-        it('resolves null', () => {
-            scm.getChangedFiles({
-                type: 'pr',
-                payload: testPayloadOpen,
-                token: 'thisisatoken'
-            })
-                .then(result => assert.isNull(result));
-        });
-    });
-
     describe('getPermissions', () => {
         let expectedOptions;
         let fakeResponse;
@@ -1245,7 +1238,8 @@ describe('index', function () {
                 buildStatus: 'SUCCESS',
                 token,
                 url: 'http://valid.url',
-                jobName: 'main'
+                jobName: 'main',
+                pipelineId: 675
             };
             apiUrl = 'https://gitlab.com/api/v4/projects/repoId/statuses/' +
                      `${config.sha}`;
@@ -1257,7 +1251,7 @@ describe('index', function () {
                 method: 'POST',
                 json: true,
                 qs: {
-                    context: 'Screwdriver/main',
+                    context: 'Screwdriver/675/main',
                     target_url: config.url,
                     state: 'success',
                     description: 'Everything looks good!'
@@ -1277,9 +1271,7 @@ describe('index', function () {
 
         it('successfully update status with correct values', () => {
             config.buildStatus = 'ABORTED';
-            delete config.jobName;
-
-            expectedOptions.qs.context = 'Screwdriver';
+            expectedOptions.qs.context = 'Screwdriver/675/main';
             expectedOptions.qs.state = 'failure';
             expectedOptions.qs.description = 'Aborted mid-flight';
 
@@ -1368,6 +1360,138 @@ describe('index', function () {
         });
     });
 
+    describe('getChangedFiles', () => {
+        let type;
+        let expectedOptions;
+        let fakeResponse;
+
+        beforeEach(() => {
+            fakeResponse = {
+                statusCode: 200,
+                body: testChangedFiles
+            };
+            expectedOptions = {
+                url: 'https://gitlab.com/api/v4/projects/28476/merge_requests/1/changes',
+                method: 'GET',
+                json: true,
+                auth: {
+                    bearer: token
+                }
+            };
+            requestMock.withArgs(expectedOptions)
+                .yieldsAsync(null, fakeResponse, fakeResponse.body);
+        });
+
+        it('returns changed files for a push event payload', () => {
+            type = 'repo';
+
+            return scm.getChangedFiles({
+                type,
+                token,
+                payload: testPayloadPush
+            })
+                .then((result) => {
+                    assert.deepEqual(result, [
+                        'CHANGELOG',
+                        'app/controller/application.rb'
+                    ]);
+                });
+        });
+
+        it('returns changed files for any given pr', () =>
+            scm.getChangedFiles({
+                type: 'pr',
+                token,
+                payload: null,
+                scmUri: 'github.com:28476:master',
+                prNum: 1
+            }).then((result) => {
+                assert.deepEqual(result, [
+                    'test/screwdriver.yaml',
+                    'README.md',
+                    'screwdriver.yaml'
+                ]);
+            })
+        );
+
+        it('returns empty array for an event payload that is not type repo or pr', () => {
+            type = 'ping';
+
+            return scm.getChangedFiles({
+                type,
+                token,
+                payload: testPayloadOpen
+            })
+                .then((result) => {
+                    assert.deepEqual(result, []);
+                });
+        });
+
+        it('returns empty array for an event payload which does not have changed files', () => {
+            type = 'repo';
+
+            return scm.getChangedFiles({
+                type,
+                token,
+                payload: testPayloadPushBadHead
+            })
+                .then((result) => {
+                    assert.deepEqual(result, []);
+                });
+        });
+    });
+
+    describe('getPrInfo', () => {
+        const config = {
+            scmUri,
+            token: 'token',
+            prNum: 1
+        };
+        const sha = '8888888888888888888888888888888888888888';
+        // let expectedOptions;
+        let fakeResponse;
+
+        beforeEach(() => {
+            fakeResponse = {
+                statusCode: 200,
+                body: testMergeRequest
+            };
+            requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
+        });
+
+        it('returns a pull request with the given prNum', () =>
+            scm._getPrInfo(config).then((data) => {
+                assert.deepEqual(data,
+                    {
+                        name: 'PR-1',
+                        ref: 'pull/1/merge',
+                        sha,
+                        url: 'http://gitlab.example.com/my-group/my-project/merge_requests/1',
+                        username: 'admin',
+                        title: 'test1',
+                        createTime: '2017-04-29T08:46:00Z',
+                        userProfile: 'https://gitlab.example.com/admin',
+                        prBranchName: 'test1',
+                        baseBranch: 'test1',
+                        mergeable: false,
+                        prSource: 'fork'
+                    }
+                );
+            })
+        );
+
+        it('rejects when failing to lookup the SCM URI information', () => {
+            const testError = new Error('testError');
+
+            requestMock.yieldsAsync(testError);
+
+            return scm._getPrInfo(config).then(assert.fail, (err) => {
+                assert.instanceOf(err, Error);
+                assert.strictEqual(testError.message, err.message);
+            });
+        });
+    });
+
     describe('getCheckoutCommand', () => {
         let config;
 
@@ -1423,6 +1547,21 @@ describe('index', function () {
             return scm.getCheckoutCommand(config)
                 .then((command) => {
                     assert.deepEqual(command, testRootDirCommands);
+                });
+        });
+
+        it('promises to get the checkout command for a child pipeline', () => {
+            config.parentConfig = {
+                branch: 'master',
+                host: 'github.com',
+                org: 'screwdriver-cd',
+                repo: 'parent-to-guide',
+                sha: '54321'
+            };
+
+            return scm.getCheckoutCommand(config)
+                .then((command) => {
+                    assert.deepEqual(command, testChildCommands);
                 });
         });
     });

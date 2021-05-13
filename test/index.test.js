@@ -19,6 +19,7 @@ const testChangedFiles = require('./data/gitlab.merge_request.changedFiles.json'
 const testPayloadPushBadHead = require('./data/gitlab.push.bad.json');
 const testMergeRequest = require('./data/gitlab.merge_request.json');
 const token = 'myAccessToken';
+const commentUserToken = 'commentUserToken';
 
 require('sinon-as-promised');
 sinon.assert.expose(assert, { prefix: '' });
@@ -53,7 +54,8 @@ describe('index', function () {
                 }
             },
             oauthClientId: 'myclientid',
-            oauthClientSecret: 'myclientsecret'
+            oauthClientSecret: 'myclientsecret',
+            commentUserToken
         });
     });
 
@@ -92,6 +94,7 @@ describe('index', function () {
                 gitlabHost: 'gitlab.com',
                 gitlabProtocol: 'https',
                 fusebox: {},
+                readOnly: false,
                 https: false
             });
         });
@@ -797,7 +800,7 @@ describe('index', function () {
             method: 'POST',
             json: true,
             auth: {
-                bearer: token
+                bearer: commentUserToken
             },
             qs: {
                 body: comment

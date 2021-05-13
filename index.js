@@ -114,6 +114,8 @@ class GitlabScm extends Scm {
      * @param  {String}  [options.gitlabProtocol=https]  If using Gitlab, the protocol to use
      * @param  {String}  [options.username=sd-buildbot]           Gitlab username for checkout
      * @param  {String}  [options.email=dev-null@screwdriver.cd]  Gitlab user email for checkout
+     * @param  {String}  [options.commentUserToken]      Token with public repo permission
+     * @param  {Boolean} [options.readOnly=false]        Read-only SCM instance flag
      * @param  {Boolean} [options.https=false]           Is the Screwdriver API running over HTTPS
      * @param  {String}  options.oauthClientId           OAuth Client ID provided by Gitlab application
      * @param  {String}  options.oauthClientSecret       OAuth Client Secret provided by Gitlab application
@@ -129,6 +131,8 @@ class GitlabScm extends Scm {
             gitlabHost: Joi.string().optional().default('gitlab.com'),
             username: Joi.string().optional().default('sd-buildbot'),
             email: Joi.string().optional().default('dev-null@screwdriver.cd'),
+            commentUserToken: Joi.string().optional().description('Token for PR comments'),
+            readOnly: Joi.boolean().optional().default(false),
             https: Joi.boolean().optional().default(false),
             oauthClientId: Joi.string().required(),
             oauthClientSecret: Joi.string().required(),
@@ -790,14 +794,14 @@ class GitlabScm extends Scm {
      * @param  {String}   config.token      The token used to authenticate to the SCM
      * @return {Promise}
      */
-    async _addPrComment({ comment, prNum, scmUri, token }) {
+    async _addPrComment({ comment, prNum, scmUri }) {
         const { repoId } = getScmUriParts(scmUri);
 
         return this.breaker.runCommand({
             json: true,
             method: 'POST',
             auth: {
-                bearer: token
+                bearer: this.config.commentUserToken // need to use a token with public_repo permissions
             },
             url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
                  `/projects/${repoId}/merge_requests/${prNum}/notes`,

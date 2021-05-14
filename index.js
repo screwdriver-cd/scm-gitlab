@@ -784,6 +784,67 @@ class GitlabScm extends Scm {
     }
 
     /**
+     * Get all the comments of a particular Pull Request
+     * @async  prComments
+     * @param  {Object}   repoId            The repo ID
+     * @param  {Integer}  prNum             The PR number used to fetch the PR
+     * @return {Promise}                    Resolves to object containing the list of comments of this PR
+     */
+    async prComments(repoId, prNum) {
+        let prComments;
+
+        try {
+            prComments = await this.breaker.runCommand({
+                json: true,
+                method: 'GET',
+                auth: {
+                    bearer: this.config.commentUserToken
+                },
+                url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
+                     `/projects/${repoId}/merge_requests/${prNum}/notes`
+            });
+
+            return { comments: prComments.body };
+        } catch (err) {
+            logger.warn('Failed to fetch PR comments: ', prComments.body.message
+                || prComments.body);
+
+            return null;
+        }
+    }
+
+    /**
+     * Edit a particular comment in the PR
+     * @async  editPrComment
+     * @param  {Integer}  commentId         The id of the particular comment to be edited
+     * @param  {Object}   scmInfo           The information regarding SCM like repo, owner
+     * @param  {String}   comment           The new comment body
+     * @return {Promise}                    Resolves to object containing PR comment info
+     */
+    async editPrComment(commentId, repoId, prNum, comment) {
+        try {
+            const pullRequestComment = await this.breaker.runCommand({
+                json: true,
+                method: 'PUT',
+                auth: {
+                    bearer: this.config.commentUserToken // need to use a token with public_repo permissions
+                },
+                url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
+                     `/projects/${repoId}/merge_requests/${prNum}/notes/${commentId}`,
+                qs: {
+                    body: comment
+                }
+            });
+
+            return pullRequestComment;
+        } catch (err) {
+            logger.warn('Failed to edit PR comment: ', err);
+
+            return null;
+        }
+    }
+
+    /**
      * Add merge request note
      * @async addPrComment
      * @param  {Object}   config            Configuration
@@ -797,26 +858,54 @@ class GitlabScm extends Scm {
     async _addPrComment({ comment, prNum, scmUri }) {
         const { repoId } = getScmUriParts(scmUri);
 
-        return this.breaker.runCommand({
-            json: true,
-            method: 'POST',
-            auth: {
-                bearer: this.config.commentUserToken // need to use a token with public_repo permissions
-            },
-            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
-                 `/projects/${repoId}/merge_requests/${prNum}/notes`,
-            qs: {
-                body: comment
+        const prComments = await this.prComments(repoId, prNum);
+
+        if (prComments) {
+            const botComment = prComments.comments.find(commentObj =>
+                commentObj.author.username === this.config.username);
+
+            if (botComment) {
+                try {
+                    const pullRequestComment = await this.editPrComment(
+                        botComment.id, repoId, prNum, comment);
+
+                    return {
+                        commentId: `${pullRequestComment.body.id}`,
+                        createTime: `${pullRequestComment.body.created_at}`,
+                        username: pullRequestComment.body.author.username
+                    };
+                } catch (err) {
+                    logger.error('Failed to addPRComment: ', err);
+
+                    return null;
+                }
             }
-        }).then((response) => {
-            checkResponseError(response, '_addPrComment');
+        }
+
+        try {
+            const pullRequestComment = await this.breaker.runCommand({
+                json: true,
+                method: 'POST',
+                auth: {
+                    bearer: this.config.commentUserToken
+                },
+                url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
+                     `/projects/${repoId}/merge_requests/${prNum}/notes`,
+                qs: {
+                    body: comment
+                }
+            });
 
             return {
-                commentId: response.body.id,
-                createTime: response.body.created_at,
-                username: response.body.author.username
+                commentId: pullRequestComment.body.id,
+                createTime: pullRequestComment.body.created_at,
+                username: pullRequestComment.body.author.username
             };
-        });
+        } catch (err) {
+            logger.error('Failed to addPRComment: ', err);
+
+            return null;
+        }
     }
 
     /**

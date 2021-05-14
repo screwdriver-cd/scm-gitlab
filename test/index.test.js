@@ -8,6 +8,7 @@ const scmUri = 'hostName:repoId:branchName';
 const testCommands = require('./data/commands.json');
 const testPrCommands = require('./data/prCommands.json');
 const testPrComment = require('./data/gitlab.merge_request.comment.json');
+const testPrComments = require('./data/gitlab.merge_request.comments.json');
 const testCustomPrCommands = require('./data/customPrCommands.json');
 const testRootDirCommands = require('./data/rootDirCommands.json');
 const testChildCommands = require('./data/childCommands.json');
@@ -807,13 +808,22 @@ describe('index', function () {
             }
         };
         let fakeResponse;
+        let fakeCommentsResponse;
 
         beforeEach(() => {
             fakeResponse = {
                 statusCode: 200,
                 body: testPrComment
             };
-            requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
+            fakeCommentsResponse = {
+                statusCode: 200,
+                body: testPrComments
+            };
+            requestMock.onFirstCall().yieldsAsync(null, {
+                statusCode: 200,
+                body: []
+            }, []);
+            requestMock.onSecondCall().yieldsAsync(null, fakeResponse, fakeResponse.body);
         });
 
         it('resolves to correct PR metadata', () =>
@@ -824,7 +834,7 @@ describe('index', function () {
                 token,
                 scmContext
             }).then((result) => {
-                assert.calledWith(requestMock, expectedOptions);
+                assert.calledWith(requestMock.secondCall, expectedOptions);
                 assert.deepEqual(result, {
                     commentId: 126861726,
                     createTime: '2018-12-21T20:33:33.157Z',
@@ -833,15 +843,10 @@ describe('index', function () {
             })
         );
 
-        it('rejects if status code is not 200', () => {
-            fakeResponse = {
-                statusCode: 404,
-                body: {
-                    message: 'Resource not found'
-                }
-            };
-
-            requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
+        it('resolves to correct PR metadata for edited comment', () => {
+            requestMock.onFirstCall().yieldsAsync(null, fakeCommentsResponse,
+                fakeCommentsResponse.body);
+            requestMock.onSecondCall().yieldsAsync(null, fakeResponse, fakeResponse.body);
 
             return scm.addPrComment({
                 comment,
@@ -849,8 +854,52 @@ describe('index', function () {
                 scmUri,
                 token,
                 scmContext
-            }).then(() => {
-                assert.fail('Should not get here');
+            }).then((result) => {
+                assert.calledWith(requestMock.firstCall, {
+                    json: true,
+                    method: 'GET',
+                    auth: {
+                        bearer: commentUserToken
+                    },
+                    url: apiUrl
+                });
+                assert.calledWith(requestMock.secondCall, {
+                    json: true,
+                    method: 'PUT',
+                    auth: {
+                        bearer: commentUserToken
+                    },
+                    url: `${apiUrl}/575311268`,
+                    qs: {
+                        body: 'this is a merge request comment'
+                    }
+                });
+                assert.deepEqual(result, {
+                    commentId: '126861726',
+                    createTime: '2018-12-21T20:33:33.157Z',
+                    username: 'tkyi'
+                });
+            });
+        });
+
+        it('resolves null if status code is not 200', () => {
+            fakeResponse = {
+                statusCode: 404,
+                body: {
+                    message: 'Resource not found'
+                }
+            };
+
+            requestMock.onSecondCall().yieldsAsync(null, fakeResponse, fakeResponse.body);
+
+            return scm.addPrComment({
+                comment,
+                prNum,
+                scmUri,
+                token,
+                scmContext
+            }).then((data) => {
+                assert.isNull(data);
             }).catch((error) => {
                 assert.calledWith(requestMock, expectedOptions);
                 assert.match(error.message, '404 Reason "Resource not found" ' +
@@ -859,10 +908,16 @@ describe('index', function () {
             });
         });
 
-        it('rejects if fails', () => {
-            const err = new Error('Gitlab API error');
-
-            requestMock.yieldsAsync(err);
+        it('resolves null if status code is not 200 for edited comment', () => {
+            fakeResponse = {
+                statusCode: 404,
+                body: {
+                    message: 'Resource not found'
+                }
+            };
+            requestMock.onFirstCall().yieldsAsync(null, fakeCommentsResponse,
+                fakeCommentsResponse.body);
+            requestMock.onSecondCall().yieldsAsync(null, fakeResponse, fakeResponse.body);
 
             return scm.addPrComment({
                 comment,
@@ -870,11 +925,13 @@ describe('index', function () {
                 scmUri,
                 token,
                 scmContext
-            }).then(() => {
-                assert.fail('Should not get here');
+            }).then((data) => {
+                assert.isNull(data);
             }).catch((error) => {
                 assert.calledWith(requestMock, expectedOptions);
-                assert.equal(error, err);
+                assert.match(error.message, '404 Reason "Resource not found" ' +
+                                            'Caller "_addPrComment"');
+                assert.match(error.status, 404);
             });
         });
     });

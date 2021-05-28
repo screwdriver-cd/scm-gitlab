@@ -132,7 +132,11 @@ class GitlabScm extends Scm {
             username: Joi.string().optional().default('sd-buildbot'),
             email: Joi.string().optional().default('dev-null@screwdriver.cd'),
             commentUserToken: Joi.string().optional().description('Token for PR comments'),
-            readOnly: Joi.boolean().optional().default(false),
+            readOnly: Joi.object().keys({
+                enabled: Joi.boolean().optional(),
+                username: Joi.string().optional(),
+                accessToken: Joi.string().optional()
+            }).optional().default({}),
             https: Joi.boolean().optional().default(false),
             oauthClientId: Joi.string().required(),
             oauthClientSecret: Joi.string().required(),

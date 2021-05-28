@@ -95,7 +95,7 @@ describe('index', function () {
                 gitlabHost: 'gitlab.com',
                 gitlabProtocol: 'https',
                 fusebox: {},
-                readOnly: false,
+                readOnly: {},
                 https: false
             });
         });

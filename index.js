@@ -488,6 +488,8 @@ class GitlabScm extends Scm {
 
         // Checkout config pipeline if this is a child pipeline
         if (parentConfig) {
+            const parentUsername = parentConfig.username || '$SCM_USERNAME';
+            const parentAccessToken = parentConfig.accessToken || '$SCM_ACCESS_TOKEN';
             const parentCheckoutUrl = `${parentConfig.host}/${parentConfig.org}/`
                 + `${parentConfig.repo}`; // URL for https
             const parentSshCheckoutUrl = `git@${parentConfig.host}:`
@@ -497,8 +499,8 @@ class GitlabScm extends Scm {
 
             command.push('if [ ! -z $SCM_CLONE_TYPE ] && [ $SCM_CLONE_TYPE = ssh ]; ' +
                 `then export CONFIG_URL=${parentSshCheckoutUrl}; ` +
-                'elif [ ! -z $SCM_USERNAME ] && [ ! -z $SCM_ACCESS_TOKEN ]; ' +
-                'then export CONFIG_URL=https://$SCM_USERNAME:$SCM_ACCESS_TOKEN@'
+                `elif [ ! -z ${parentUsername} ] && [ ! -z ${parentAccessToken} ]; ` +
+                `then export CONFIG_URL=https://${parentUsername}:${parentAccessToken}@`
                     + `${parentCheckoutUrl}; ` +
                 `else export CONFIG_URL=https://${parentCheckoutUrl}; fi`);
             command.push(`export SD_CONFIG_DIR=${externalConfigDir}`);

@@ -135,7 +135,8 @@ class GitlabScm extends Scm {
             readOnly: Joi.object().keys({
                 enabled: Joi.boolean().optional(),
                 username: Joi.string().optional(),
-                accessToken: Joi.string().optional()
+                accessToken: Joi.string().optional(),
+                cloneType: Joi.string().valid('https', 'ssh').optional().default('https')
             }).optional().default({}),
             https: Joi.boolean().optional().default(false),
             oauthClientId: Joi.string().required(),
@@ -459,11 +460,22 @@ class GitlabScm extends Scm {
 
         // Export environment variables
         command.push('echo Exporting environment variables');
-        command.push('if [ ! -z $SCM_CLONE_TYPE ] && [ $SCM_CLONE_TYPE = ssh ]; ' +
-            `then export SCM_URL=${sshCheckoutUrl}; ` +
-            'elif [ ! -z $SCM_USERNAME ] && [ ! -z $SCM_ACCESS_TOKEN ]; ' +
-            `then export SCM_URL=https://$SCM_USERNAME:$SCM_ACCESS_TOKEN@${checkoutUrl}; ` +
-            `else export SCM_URL=https://${checkoutUrl}; fi`);
+
+        if (Hoek.reach(this.config, 'readOnly.enabled')) {
+            if (Hoek.reach(this.config, 'readOnly.cloneType') === 'ssh') {
+                command.push(`export SCM_URL=${sshCheckoutUrl}; `);
+            } else {
+                command.push('if [ ! -z $SCM_USERNAME ] && [ ! -z $SCM_ACCESS_TOKEN ]; ' +
+                    `then export SCM_URL=https://$SCM_USERNAME:$SCM_ACCESS_TOKEN@${checkoutUrl}; ` +
+                    `else export SCM_URL=https://${checkoutUrl}; fi`);
+            }
+        } else {
+            command.push('if [ ! -z $SCM_CLONE_TYPE ] && [ $SCM_CLONE_TYPE = ssh ]; ' +
+                `then export SCM_URL=${sshCheckoutUrl}; ` +
+                'elif [ ! -z $SCM_USERNAME ] && [ ! -z $SCM_ACCESS_TOKEN ]; ' +
+                `then export SCM_URL=https://$SCM_USERNAME:$SCM_ACCESS_TOKEN@${checkoutUrl}; ` +
+                `else export SCM_URL=https://${checkoutUrl}; fi`);
+        }
         command.push('export GIT_URL=$SCM_URL.git');
         // git 1.7.1 doesn't support --no-edit with merge, this should do same thing
         command.push('export GIT_MERGE_AUTOEDIT=no');
@@ -492,8 +504,6 @@ class GitlabScm extends Scm {
 
         // Checkout config pipeline if this is a child pipeline
         if (parentConfig) {
-            const parentUsername = parentConfig.username || '$SCM_USERNAME';
-            const parentAccessToken = parentConfig.accessToken || '$SCM_ACCESS_TOKEN';
             const parentCheckoutUrl = `${parentConfig.host}/${parentConfig.org}/`
                 + `${parentConfig.repo}`; // URL for https
             const parentSshCheckoutUrl = `git@${parentConfig.host}:`
@@ -503,8 +513,8 @@ class GitlabScm extends Scm {
 
             command.push('if [ ! -z $SCM_CLONE_TYPE ] && [ $SCM_CLONE_TYPE = ssh ]; ' +
                 `then export CONFIG_URL=${parentSshCheckoutUrl}; ` +
-                `elif [ ! -z ${parentUsername} ] && [ ! -z ${parentAccessToken} ]; ` +
-                `then export CONFIG_URL=https://${parentUsername}:${parentAccessToken}@`
+                'elif [ ! -z $SCM_USERNAME ] && [ ! -z $SCM_ACCESS_TOKEN ]; ' +
+                'then export CONFIG_URL=https://$SCM_USERNAME:$SCM_ACCESS_TOKEN@'
                     + `${parentCheckoutUrl}; ` +
                 `else export CONFIG_URL=https://${parentCheckoutUrl}; fi`);
             command.push(`export SD_CONFIG_DIR=${externalConfigDir}`);

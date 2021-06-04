@@ -115,7 +115,7 @@ class GitlabScm extends Scm {
      * @param  {String}  [options.username=sd-buildbot]           Gitlab username for checkout
      * @param  {String}  [options.email=dev-null@screwdriver.cd]  Gitlab user email for checkout
      * @param  {String}  [options.commentUserToken]      Token with public repo permission
-     * @param  {Boolean} [options.readOnly=false]        Read-only SCM instance flag
+     * @param  {Object}  [options.readOnly={}]           Read-only SCM instance config with: enabled, username, accessToken, cloneType
      * @param  {Boolean} [options.https=false]           Is the Screwdriver API running over HTTPS
      * @param  {String}  options.oauthClientId           OAuth Client ID provided by Gitlab application
      * @param  {String}  options.oauthClientSecret       OAuth Client Secret provided by Gitlab application

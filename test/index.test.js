@@ -875,7 +875,7 @@ describe('index', function () {
                     }
                 });
                 assert.deepEqual(result, {
-                    commentId: '126861726',
+                    commentId: 126861726,
                     createTime: '2018-12-21T20:33:33.157Z',
                     username: 'tkyi'
                 });
@@ -889,7 +889,6 @@ describe('index', function () {
                     message: 'Resource not found'
                 }
             };
-
             requestMock.onSecondCall().yieldsAsync(null, fakeResponse, fakeResponse.body);
 
             return scm.addPrComment({

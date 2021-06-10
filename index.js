@@ -822,8 +822,7 @@ class GitlabScm extends Scm {
 
             return { comments: prComments.body };
         } catch (err) {
-            logger.warn('Failed to fetch PR comments: ', prComments.body.message
-                || prComments.body);
+            logger.warn(`Failed to fetch PR comments for repo ${repoId}, PR ${prNum}: `, err);
 
             return null;
         }
@@ -833,7 +832,8 @@ class GitlabScm extends Scm {
      * Edit a particular comment in the PR
      * @async  editPrComment
      * @param  {Integer}  commentId         The id of the particular comment to be edited
-     * @param  {Object}   scmInfo           The information regarding SCM like repo, owner
+     * @param  {Object}   repoId            The information regarding SCM like repo, owner
+     * @param  {Integer}  prNum             The PR number used to fetch the PR
      * @param  {String}   comment           The new comment body
      * @return {Promise}                    Resolves to object containing PR comment info
      */
@@ -867,8 +867,6 @@ class GitlabScm extends Scm {
      * @param  {String}   config.comment    The PR comment
      * @param  {Integer}  config.prNum      The PR number
      * @param  {String}   config.scmUri     The scmUri to get commit sha of
-     * @param  {String}   config.scmContext The scm context to which user belongs
-     * @param  {String}   config.token      The token used to authenticate to the SCM
      * @return {Promise}
      */
     async _addPrComment({ comment, prNum, scmUri }) {
@@ -885,10 +883,14 @@ class GitlabScm extends Scm {
                     const pullRequestComment = await this.editPrComment(
                         botComment.id, repoId, prNum, comment);
 
+                    if (pullRequestComment.statusCode !== 200) {
+                        throw pullRequestComment;
+                    }
+
                     return {
-                        commentId: `${pullRequestComment.body.id}`,
-                        createTime: `${pullRequestComment.body.created_at}`,
-                        username: pullRequestComment.body.author.username
+                        commentId: Hoek.reach(pullRequestComment, 'body.id'),
+                        createTime: Hoek.reach(pullRequestComment, 'body.created_at'),
+                        username: Hoek.reach(pullRequestComment, 'body.author.username')
                     };
                 } catch (err) {
                     logger.error('Failed to addPRComment: ', err);
@@ -912,10 +914,14 @@ class GitlabScm extends Scm {
                 }
             });
 
+            if (pullRequestComment.statusCode !== 200) {
+                throw pullRequestComment;
+            }
+
             return {
-                commentId: pullRequestComment.body.id,
-                createTime: pullRequestComment.body.created_at,
-                username: pullRequestComment.body.author.username
+                commentId: Hoek.reach(pullRequestComment, 'body.id'),
+                createTime: Hoek.reach(pullRequestComment, 'body.created_at'),
+                username: Hoek.reach(pullRequestComment, 'body.author.username')
             };
         } catch (err) {
             logger.error('Failed to addPRComment: ', err);

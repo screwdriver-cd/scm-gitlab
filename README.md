@@ -23,6 +23,7 @@ The class has a variety of knobs to tweak when interacting with GitLab.
 | config.https (false) | Boolean | Is the Screwdriver API running over HTTPS |
 | config.oauthClientId | String | OAuth Client ID provided by GitLab application |
 | config.oauthClientSecret | String | OAuth Client Secret provided by GitLab application |
+| config.readOnly ({}) | Object | Config with readOnly info: enabled, username, accessToken, cloneType |
 | config.fusebox ({}) | Object | [Circuit Breaker configuration][circuitbreaker] |
 
 ```js

@@ -114,6 +114,8 @@ class GitlabScm extends Scm {
      * @param  {String}  [options.gitlabProtocol=https]  If using Gitlab, the protocol to use
      * @param  {String}  [options.username=sd-buildbot]           Gitlab username for checkout
      * @param  {String}  [options.email=dev-null@screwdriver.cd]  Gitlab user email for checkout
+     * @param  {String}  [options.commentUserToken]      Token with public repo permission
+     * @param  {Object}  [options.readOnly={}]           Read-only SCM instance config with: enabled, username, accessToken, cloneType
      * @param  {Boolean} [options.https=false]           Is the Screwdriver API running over HTTPS
      * @param  {String}  options.oauthClientId           OAuth Client ID provided by Gitlab application
      * @param  {String}  options.oauthClientSecret       OAuth Client Secret provided by Gitlab application
@@ -129,6 +131,13 @@ class GitlabScm extends Scm {
             gitlabHost: Joi.string().optional().default('gitlab.com'),
             username: Joi.string().optional().default('sd-buildbot'),
             email: Joi.string().optional().default('dev-null@screwdriver.cd'),
+            commentUserToken: Joi.string().optional().description('Token for PR comments'),
+            readOnly: Joi.object().keys({
+                enabled: Joi.boolean().optional(),
+                username: Joi.string().optional(),
+                accessToken: Joi.string().optional(),
+                cloneType: Joi.string().valid('https', 'ssh').optional().default('https')
+            }).optional().default({}),
             https: Joi.boolean().optional().default(false),
             oauthClientId: Joi.string().required(),
             oauthClientSecret: Joi.string().required(),
@@ -451,11 +460,22 @@ class GitlabScm extends Scm {
 
         // Export environment variables
         command.push('echo Exporting environment variables');
-        command.push('if [ ! -z $SCM_CLONE_TYPE ] && [ $SCM_CLONE_TYPE = ssh ]; ' +
-            `then export SCM_URL=${sshCheckoutUrl}; ` +
-            'elif [ ! -z $SCM_USERNAME ] && [ ! -z $SCM_ACCESS_TOKEN ]; ' +
-            `then export SCM_URL=https://$SCM_USERNAME:$SCM_ACCESS_TOKEN@${checkoutUrl}; ` +
-            `else export SCM_URL=https://${checkoutUrl}; fi`);
+
+        if (Hoek.reach(this.config, 'readOnly.enabled')) {
+            if (Hoek.reach(this.config, 'readOnly.cloneType') === 'ssh') {
+                command.push(`export SCM_URL=${sshCheckoutUrl}; `);
+            } else {
+                command.push('if [ ! -z $SCM_USERNAME ] && [ ! -z $SCM_ACCESS_TOKEN ]; ' +
+                    `then export SCM_URL=https://$SCM_USERNAME:$SCM_ACCESS_TOKEN@${checkoutUrl}; ` +
+                    `else export SCM_URL=https://${checkoutUrl}; fi`);
+            }
+        } else {
+            command.push('if [ ! -z $SCM_CLONE_TYPE ] && [ $SCM_CLONE_TYPE = ssh ]; ' +
+                `then export SCM_URL=${sshCheckoutUrl}; ` +
+                'elif [ ! -z $SCM_USERNAME ] && [ ! -z $SCM_ACCESS_TOKEN ]; ' +
+                `then export SCM_URL=https://$SCM_USERNAME:$SCM_ACCESS_TOKEN@${checkoutUrl}; ` +
+                `else export SCM_URL=https://${checkoutUrl}; fi`);
+        }
         command.push('export GIT_URL=$SCM_URL.git');
         // git 1.7.1 doesn't support --no-edit with merge, this should do same thing
         command.push('export GIT_MERGE_AUTOEDIT=no');
@@ -780,39 +800,134 @@ class GitlabScm extends Scm {
     }
 
     /**
+     * Get all the comments of a particular Pull Request
+     * @async  prComments
+     * @param  {Object}   repoId            The repo ID
+     * @param  {Integer}  prNum             The PR number used to fetch the PR
+     * @return {Promise}                    Resolves to object containing the list of comments of this PR
+     */
+    async prComments(repoId, prNum) {
+        let prComments;
+
+        try {
+            prComments = await this.breaker.runCommand({
+                json: true,
+                method: 'GET',
+                auth: {
+                    bearer: this.config.commentUserToken
+                },
+                url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
+                     `/projects/${repoId}/merge_requests/${prNum}/notes`
+            });
+
+            return { comments: prComments.body };
+        } catch (err) {
+            logger.warn(`Failed to fetch PR comments for repo ${repoId}, PR ${prNum}: `, err);
+
+            return null;
+        }
+    }
+
+    /**
+     * Edit a particular comment in the PR
+     * @async  editPrComment
+     * @param  {Integer}  commentId         The id of the particular comment to be edited
+     * @param  {Object}   repoId            The information regarding SCM like repo, owner
+     * @param  {Integer}  prNum             The PR number used to fetch the PR
+     * @param  {String}   comment           The new comment body
+     * @return {Promise}                    Resolves to object containing PR comment info
+     */
+    async editPrComment(commentId, repoId, prNum, comment) {
+        try {
+            const pullRequestComment = await this.breaker.runCommand({
+                json: true,
+                method: 'PUT',
+                auth: {
+                    bearer: this.config.commentUserToken // need to use a token with public_repo permissions
+                },
+                url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
+                     `/projects/${repoId}/merge_requests/${prNum}/notes/${commentId}`,
+                qs: {
+                    body: comment
+                }
+            });
+
+            return pullRequestComment;
+        } catch (err) {
+            logger.warn('Failed to edit PR comment: ', err);
+
+            return null;
+        }
+    }
+
+    /**
      * Add merge request note
      * @async addPrComment
      * @param  {Object}   config            Configuration
      * @param  {String}   config.comment    The PR comment
      * @param  {Integer}  config.prNum      The PR number
      * @param  {String}   config.scmUri     The scmUri to get commit sha of
-     * @param  {String}   config.scmContext The scm context to which user belongs
-     * @param  {String}   config.token      The token used to authenticate to the SCM
      * @return {Promise}
      */
-    async _addPrComment({ comment, prNum, scmUri, token }) {
+    async _addPrComment({ comment, prNum, scmUri }) {
         const { repoId } = getScmUriParts(scmUri);
 
-        return this.breaker.runCommand({
-            json: true,
-            method: 'POST',
-            auth: {
-                bearer: token
-            },
-            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
-                 `/projects/${repoId}/merge_requests/${prNum}/notes`,
-            qs: {
-                body: comment
+        const prComments = await this.prComments(repoId, prNum);
+
+        if (prComments) {
+            const botComment = prComments.comments.find(commentObj =>
+                commentObj.author.username === this.config.username);
+
+            if (botComment) {
+                try {
+                    const pullRequestComment = await this.editPrComment(
+                        botComment.id, repoId, prNum, comment);
+
+                    if (pullRequestComment.statusCode !== 200) {
+                        throw pullRequestComment;
+                    }
+
+                    return {
+                        commentId: Hoek.reach(pullRequestComment, 'body.id'),
+                        createTime: Hoek.reach(pullRequestComment, 'body.created_at'),
+                        username: Hoek.reach(pullRequestComment, 'body.author.username')
+                    };
+                } catch (err) {
+                    logger.error('Failed to addPRComment: ', err);
+
+                    return null;
+                }
             }
-        }).then((response) => {
-            checkResponseError(response, '_addPrComment');
+        }
+
+        try {
+            const pullRequestComment = await this.breaker.runCommand({
+                json: true,
+                method: 'POST',
+                auth: {
+                    bearer: this.config.commentUserToken
+                },
+                url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
+                     `/projects/${repoId}/merge_requests/${prNum}/notes`,
+                qs: {
+                    body: comment
+                }
+            });
+
+            if (pullRequestComment.statusCode !== 200) {
+                throw pullRequestComment;
+            }
 
             return {
-                commentId: response.body.id,
-                createTime: response.body.created_at,
-                username: response.body.author.username
+                commentId: Hoek.reach(pullRequestComment, 'body.id'),
+                createTime: Hoek.reach(pullRequestComment, 'body.created_at'),
+                username: Hoek.reach(pullRequestComment, 'body.author.username')
             };
-        });
+        } catch (err) {
+            logger.error('Failed to addPRComment: ', err);
+
+            return null;
+        }
     }
 
     /**

@@ -463,7 +463,7 @@ class GitlabScm extends Scm {
 
         if (Hoek.reach(this.config, 'readOnly.enabled')) {
             if (Hoek.reach(this.config, 'readOnly.cloneType') === 'ssh') {
-                command.push(`export SCM_URL=${sshCheckoutUrl}; `);
+                command.push(`export SCM_URL=${sshCheckoutUrl}`);
             } else {
                 command.push('if [ ! -z $SCM_USERNAME ] && [ ! -z $SCM_ACCESS_TOKEN ]; ' +
                     `then export SCM_URL=https://$SCM_USERNAME:$SCM_ACCESS_TOKEN@${checkoutUrl}; ` +

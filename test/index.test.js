@@ -1331,7 +1331,7 @@ describe('index', function () {
         it('successfully update status with correct values', () => {
             config.buildStatus = 'ABORTED';
             expectedOptions.qs.context = 'Screwdriver/675/main';
-            expectedOptions.qs.state = 'failure';
+            expectedOptions.qs.state = 'failed';
             expectedOptions.qs.description = 'Aborted mid-flight';
 
             return scm.updateCommitStatus(config).then(() => {

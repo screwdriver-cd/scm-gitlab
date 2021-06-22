@@ -1329,10 +1329,10 @@ describe('index', function () {
         );
 
         it('successfully update status with correct values', () => {
-            config.buildStatus = 'ABORTED';
+            config.buildStatus = 'FAILURE';
             expectedOptions.qs.context = 'Screwdriver/675/main';
             expectedOptions.qs.state = 'failed';
-            expectedOptions.qs.description = 'Aborted mid-flight';
+            expectedOptions.qs.description = 'Did not work as expected.';
 
             return scm.updateCommitStatus(config).then(() => {
                 assert.calledWith(requestMock, expectedOptions);

@@ -26,17 +26,12 @@ const MATCH_COMPONENT_ROOTDIR = 5;
 
 const STATE_MAP = {
     SUCCESS: 'success',
-    RUNNING: 'running',
-    QUEUED: 'pending',
     PENDING: 'pending',
     FAILURE: 'failed'
 };
 const DESCRIPTION_MAP = {
     SUCCESS: 'Everything looks good!',
     FAILURE: 'Did not work as expected.',
-    ABORTED: 'Aborted mid-flight',
-    RUNNING: 'Testing your code...',
-    QUEUED: 'Looking for a place to park...',
     PENDING: 'Parked it as Pending...'
 };
 

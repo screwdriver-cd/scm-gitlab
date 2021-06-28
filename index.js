@@ -26,15 +26,13 @@ const MATCH_COMPONENT_ROOTDIR = 5;
 
 const STATE_MAP = {
     SUCCESS: 'success',
-    RUNNING: 'running',
-    QUEUED: 'pending'
+    PENDING: 'pending',
+    FAILURE: 'failed'
 };
 const DESCRIPTION_MAP = {
     SUCCESS: 'Everything looks good!',
     FAILURE: 'Did not work as expected.',
-    ABORTED: 'Aborted mid-flight',
-    RUNNING: 'Testing your code...',
-    QUEUED: 'Looking for a place to park...'
+    PENDING: 'Parked it as Pending...'
 };
 
 /**
@@ -977,7 +975,7 @@ class GitlabScm extends Scm {
             qs: {
                 context: statusTitle,
                 description: description || DESCRIPTION_MAP[buildStatus],
-                state: STATE_MAP[buildStatus] || 'failure',
+                state: STATE_MAP[buildStatus] || 'failed',
                 target_url: url
             }
         }).then((response) => {

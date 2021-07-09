@@ -1,6 +1,6 @@
 'use strict';
 
-const assert = require('chai').assert;
+const { assert } = require('chai');
 const mockery = require('mockery');
 const sinon = require('sinon');
 const scmContext = 'gitlab:gitlab.com';
@@ -22,10 +22,9 @@ const testMergeRequest = require('./data/gitlab.merge_request.json');
 const token = 'myAccessToken';
 const commentUserToken = 'commentUserToken';
 
-require('sinon-as-promised');
 sinon.assert.expose(assert, { prefix: '' });
 
-describe('index', function () {
+describe('index', function() {
     // Time not important. Only life important.
     this.timeout(5000);
 
@@ -128,52 +127,60 @@ describe('index', function () {
         });
 
         it('resolves to the correct parsed url for ssh', () =>
-            scm.parseUrl({
-                checkoutUrl: 'git@gitlab.com:batman/test.git#master',
-                token,
-                scmContext
-            }).then((parsed) => {
-                assert.calledWith(requestMock, expectedOptions);
-                assert.equal(parsed, expected);
-            }));
+            scm
+                .parseUrl({
+                    checkoutUrl: 'git@gitlab.com:batman/test.git#master',
+                    token,
+                    scmContext
+                })
+                .then(parsed => {
+                    assert.calledWith(requestMock, expectedOptions);
+                    assert.equal(parsed, expected);
+                }));
 
         it('resolves to the correct parsed url for ssh with default branch', () => {
             expected = 'gitlab.com:12345:main';
 
-            return scm.parseUrl({
-                checkoutUrl: 'git@gitlab.com:batman/test.git',
-                token,
-                scmContext
-            }).then((parsed) => {
-                assert.calledWith(requestMock, expectedOptions);
-                assert.equal(parsed, expected);
-            });
+            return scm
+                .parseUrl({
+                    checkoutUrl: 'git@gitlab.com:batman/test.git',
+                    token,
+                    scmContext
+                })
+                .then(parsed => {
+                    assert.calledWith(requestMock, expectedOptions);
+                    assert.equal(parsed, expected);
+                });
         });
 
         it('resolves to the correct parsed url for rootDir', () => {
             expected = 'gitlab.com:12345:branch:path/to/source';
 
-            return scm.parseUrl({
-                checkoutUrl: 'git@gitlab.com:batman/test.git#branch:path/to/source',
-                token,
-                scmContext
-            }).then((parsed) => {
-                assert.calledWith(requestMock, expectedOptions);
-                assert.equal(parsed, expected);
-            });
+            return scm
+                .parseUrl({
+                    checkoutUrl: 'git@gitlab.com:batman/test.git#branch:path/to/source',
+                    token,
+                    scmContext
+                })
+                .then(parsed => {
+                    assert.calledWith(requestMock, expectedOptions);
+                    assert.equal(parsed, expected);
+                });
         });
 
         it('resolves to the correct parsed url for https', () => {
             expected = 'gitlab.com:12345:mynewbranch';
 
-            return scm.parseUrl({
-                checkoutUrl: 'https://batman@gitlab.com/batman/test.git#mynewbranch',
-                token,
-                scmContext
-            }).then((parsed) => {
-                assert.calledWith(requestMock, expectedOptions);
-                assert.equal(parsed, expected);
-            });
+            return scm
+                .parseUrl({
+                    checkoutUrl: 'https://batman@gitlab.com/batman/test.git#mynewbranch',
+                    token,
+                    scmContext
+                })
+                .then(parsed => {
+                    assert.calledWith(requestMock, expectedOptions);
+                    assert.equal(parsed, expected);
+                });
         });
 
         it('rejects if request fails', () => {
@@ -181,13 +188,14 @@ describe('index', function () {
 
             requestMock.yieldsAsync(err);
 
-            return scm.parseUrl({
-                checkoutUrl: 'https://batman@gitlab.com/batman/test.git#mynewbranch',
-                token,
-                scmContext
-            })
+            return scm
+                .parseUrl({
+                    checkoutUrl: 'https://batman@gitlab.com/batman/test.git#mynewbranch',
+                    token,
+                    scmContext
+                })
                 .then(() => assert.fail('Should not get here'))
-                .catch((error) => {
+                .catch(error => {
                     assert.calledWith(requestMock, expectedOptions);
                     assert.deepEqual(error, err);
                 });
@@ -203,16 +211,16 @@ describe('index', function () {
 
             requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
 
-            return scm.parseUrl({
-                checkoutUrl: 'https://batman@gitlab.com/batman/test.git#mynewbranch',
-                token,
-                scmContext
-            })
+            return scm
+                .parseUrl({
+                    checkoutUrl: 'https://batman@gitlab.com/batman/test.git#mynewbranch',
+                    token,
+                    scmContext
+                })
                 .then(() => assert.fail('Should not get here'))
-                .catch((error) => {
+                .catch(error => {
                     assert.calledWith(requestMock, expectedOptions);
-                    assert.match(error.message, '404 Reason "404 Project Not Found" ' +
-                                                'Caller "_parseUrl"');
+                    assert.match(error.message, '404 Reason "404 Project Not Found" Caller "_parseUrl"');
                     assert.match(error.status, 404);
                 });
         });
@@ -227,16 +235,16 @@ describe('index', function () {
 
             requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
 
-            return scm.parseUrl({
-                checkoutUrl: 'https://batman@gitlab.com/batman/test.git#mynewbranch',
-                token,
-                scmContext
-            })
+            return scm
+                .parseUrl({
+                    checkoutUrl: 'https://batman@gitlab.com/batman/test.git#mynewbranch',
+                    token,
+                    scmContext
+                })
                 .then(() => assert.fail('Should not get here'))
-                .catch((error) => {
+                .catch(error => {
                     assert.calledWith(requestMock, expectedOptions);
-                    assert.match(error.message, '500 Reason "Internal Server Error" ' +
-                                                'Caller "_parseUrl"');
+                    assert.match(error.message, '500 Reason "Internal Server Error" Caller "_parseUrl"');
                     assert.match(error.status, 500);
                 });
         });
@@ -244,15 +252,20 @@ describe('index', function () {
         it('rejects when passed checkoutUrl of another host', () => {
             const expectedError = 'This checkoutUrl is not supported for your current login host.';
 
-            return scm.parseUrl({
-                checkoutUrl: 'git@gitlab.corp.jp:batman/test.git#master',
-                scmContext,
-                token
-            }).then(() => {
-                assert.fail('Should not get here');
-            }, (error) => {
-                assert.match(error.message, expectedError);
-            });
+            return scm
+                .parseUrl({
+                    checkoutUrl: 'git@gitlab.corp.jp:batman/test.git#master',
+                    scmContext,
+                    token
+                })
+                .then(
+                    () => {
+                        assert.fail('Should not get here');
+                    },
+                    error => {
+                        assert.match(error.message, expectedError);
+                    }
+                );
         });
     });
 
@@ -280,8 +293,7 @@ describe('index', function () {
                 'x-gitlab-event': 'Merge Request Hook'
             };
 
-            return scm.parseHook(headers, testPayloadOpen)
-                .then(result => assert.deepEqual(result, expected));
+            return scm.parseHook(headers, testPayloadOpen).then(result => assert.deepEqual(result, expected));
         });
 
         it('resolves the correct parsed config for closed PR after merged', () => {
@@ -305,8 +317,7 @@ describe('index', function () {
                 'x-gitlab-event': 'Merge Request Hook'
             };
 
-            return scm.parseHook(headers, testPayloadClose)
-                .then(result => assert.deepEqual(result, expected));
+            return scm.parseHook(headers, testPayloadClose).then(result => assert.deepEqual(result, expected));
         });
 
         it('resolves the correct parsed config for closed PR after declined', () => {
@@ -330,8 +341,7 @@ describe('index', function () {
                 'x-gitlab-event': 'Merge Request Hook'
             };
 
-            return scm.parseHook(headers, testPayloadClose)
-                .then(result => assert.deepEqual(result, expected));
+            return scm.parseHook(headers, testPayloadClose).then(result => assert.deepEqual(result, expected));
         });
 
         it('resolves the correct parsed config for push to repo event', () => {
@@ -353,8 +363,7 @@ describe('index', function () {
                 'x-gitlab-event': 'Push Hook'
             };
 
-            return scm.parseHook(headers, testPayloadPush)
-                .then(result => assert.deepEqual(result, expected));
+            return scm.parseHook(headers, testPayloadPush).then(result => assert.deepEqual(result, expected));
         });
 
         it('resolves null if events are not supported: repoFork', () => {
@@ -362,8 +371,7 @@ describe('index', function () {
                 'x-event-key': 'repo:fork'
             };
 
-            return scm.parseHook(repoFork, {})
-                .then(result => assert.deepEqual(result, null));
+            return scm.parseHook(repoFork, {}).then(result => assert.deepEqual(result, null));
         });
 
         it('resolves null if events are not supported: prComment', () => {
@@ -371,8 +379,7 @@ describe('index', function () {
                 'x-event-key': 'pullrequest:comment_created'
             };
 
-            return scm.parseHook(prComment, {})
-                .then(result => assert.deepEqual(result, null));
+            return scm.parseHook(prComment, {}).then(result => assert.deepEqual(result, null));
         });
 
         it('resolves null if events are not supported: issueCreated', () => {
@@ -380,8 +387,7 @@ describe('index', function () {
                 'x-event-key': 'issue:created'
             };
 
-            return scm.parseHook(issueCreated, {})
-                .then(result => assert.deepEqual(result, null));
+            return scm.parseHook(issueCreated, {}).then(result => assert.deepEqual(result, null));
         });
 
         it('resolves null for a pull request payload with an unsupported action', () => {
@@ -390,8 +396,7 @@ describe('index', function () {
                 action: 'locked'
             };
 
-            return scm.parseHook(testHeaders, { object_kind: 'merge_request' })
-                .then(result => assert.isNull(result));
+            return scm.parseHook(testHeaders, { object_kind: 'merge_request' }).then(result => assert.isNull(result));
         });
     });
 
@@ -413,14 +418,16 @@ describe('index', function () {
         beforeEach(() => {
             fakeResponse = {
                 statusCode: 200,
-                body: [{
-                    username: 'batman',
-                    name: 'Batman',
-                    id: 12345,
-                    state: 'active',
-                    avatar_url: 'https://gitlab.com/uploads/user/avatar/12345/avatar.png',
-                    web_url: 'https://gitlab.com/batman'
-                }]
+                body: [
+                    {
+                        username: 'batman',
+                        name: 'Batman',
+                        id: 12345,
+                        state: 'active',
+                        avatar_url: 'https://gitlab.com/uploads/user/avatar/12345/avatar.png',
+                        web_url: 'https://gitlab.com/batman'
+                    }
+                ]
             };
             requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
         });
@@ -433,14 +440,16 @@ describe('index', function () {
                 avatar: 'https://gitlab.com/uploads/user/avatar/12345/avatar.png'
             };
 
-            return scm.decorateAuthor({
-                username: 'batman',
-                scmContext,
-                token
-            }).then((decorated) => {
-                assert.calledWith(requestMock, expectedOptions);
-                assert.deepEqual(decorated, expected);
-            });
+            return scm
+                .decorateAuthor({
+                    username: 'batman',
+                    scmContext,
+                    token
+                })
+                .then(decorated => {
+                    assert.calledWith(requestMock, expectedOptions);
+                    assert.deepEqual(decorated, expected);
+                });
         });
 
         it('rejects if status code is not 200', () => {
@@ -453,18 +462,20 @@ describe('index', function () {
 
             requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
 
-            return scm.decorateAuthor({
-                username: 'batman',
-                scmContext,
-                token
-            }).then(() => {
-                assert.fail('Should not get here');
-            }).catch((error) => {
-                assert.calledWith(requestMock, expectedOptions);
-                assert.match(error.message, '404 Reason "Resource not found" ' +
-                                            'Caller "_decorateAuthor"');
-                assert.match(error.status, 404);
-            });
+            return scm
+                .decorateAuthor({
+                    username: 'batman',
+                    scmContext,
+                    token
+                })
+                .then(() => {
+                    assert.fail('Should not get here');
+                })
+                .catch(error => {
+                    assert.calledWith(requestMock, expectedOptions);
+                    assert.match(error.message, '404 Reason "Resource not found" Caller "_decorateAuthor"');
+                    assert.match(error.status, 404);
+                });
         });
 
         it('rejects if fails', () => {
@@ -472,16 +483,19 @@ describe('index', function () {
 
             requestMock.yieldsAsync(err);
 
-            return scm.decorateAuthor({
-                username: 'batman',
-                scmContext,
-                token
-            }).then(() => {
-                assert.fail('Should not get here');
-            }).catch((error) => {
-                assert.calledWith(requestMock, expectedOptions);
-                assert.equal(error, err);
-            });
+            return scm
+                .decorateAuthor({
+                    username: 'batman',
+                    scmContext,
+                    token
+                })
+                .then(() => {
+                    assert.fail('Should not get here');
+                })
+                .catch(error => {
+                    assert.calledWith(requestMock, expectedOptions);
+                    assert.equal(error, err);
+                });
         });
     });
 
@@ -513,8 +527,7 @@ describe('index', function () {
                     bearer: token
                 }
             };
-            requestMock.withArgs(repoOptions)
-                .yieldsAsync(null, fakeResponse, fakeResponse.body);
+            requestMock.withArgs(repoOptions).yieldsAsync(null, fakeResponse, fakeResponse.body);
         });
 
         it('resolves to correct decorated url object', () => {
@@ -525,14 +538,16 @@ describe('index', function () {
                 rootDir: ''
             };
 
-            return scm.decorateUrl({
-                scmUri,
-                token,
-                scmContext
-            }).then((decorated) => {
-                assert.calledWith(requestMock, expectedOptions);
-                assert.deepEqual(decorated, expected);
-            });
+            return scm
+                .decorateUrl({
+                    scmUri,
+                    token,
+                    scmContext
+                })
+                .then(decorated => {
+                    assert.calledWith(requestMock, expectedOptions);
+                    assert.deepEqual(decorated, expected);
+                });
         });
 
         it('resolves to correct decorated url object with rootDir', () => {
@@ -543,14 +558,16 @@ describe('index', function () {
                 rootDir: 'path/to/source'
             };
 
-            return scm.decorateUrl({
-                scmUri: 'hostName:repoId:branchName:path/to/source',
-                token,
-                scmContext
-            }).then((decorated) => {
-                assert.calledWith(requestMock, expectedOptions);
-                assert.deepEqual(decorated, expected);
-            });
+            return scm
+                .decorateUrl({
+                    scmUri: 'hostName:repoId:branchName:path/to/source',
+                    token,
+                    scmContext
+                })
+                .then(decorated => {
+                    assert.calledWith(requestMock, expectedOptions);
+                    assert.deepEqual(decorated, expected);
+                });
         });
 
         it('rejects if status code is not 200', () => {
@@ -563,18 +580,20 @@ describe('index', function () {
 
             requestMock.withArgs(repoOptions).yieldsAsync(null, fakeResponse, fakeResponse.body);
 
-            return scm.decorateUrl({
-                scmUri,
-                token,
-                scmContext
-            }).then(() => {
-                assert.fail('Should not get here');
-            }).catch((error) => {
-                assert.calledWith(requestMock, expectedOptions);
-                assert.match(error.message, '404 Reason "Resource not found" ' +
-                                            'Caller "lookupScmUri"');
-                assert.match(error.status, 404);
-            });
+            return scm
+                .decorateUrl({
+                    scmUri,
+                    token,
+                    scmContext
+                })
+                .then(() => {
+                    assert.fail('Should not get here');
+                })
+                .catch(error => {
+                    assert.calledWith(requestMock, expectedOptions);
+                    assert.match(error.message, '404 Reason "Resource not found" Caller "lookupScmUri"');
+                    assert.match(error.status, 404);
+                });
         });
 
         it('rejects if fails', () => {
@@ -582,16 +601,19 @@ describe('index', function () {
 
             requestMock.withArgs(repoOptions).yieldsAsync(err);
 
-            return scm.decorateUrl({
-                scmUri,
-                token,
-                scmContext
-            }).then(() => {
-                assert.fail('Should not get here');
-            }).catch((error) => {
-                assert.called(requestMock);
-                assert.equal(error, err);
-            });
+            return scm
+                .decorateUrl({
+                    scmUri,
+                    token,
+                    scmContext
+                })
+                .then(() => {
+                    assert.fail('Should not get here');
+                })
+                .catch(error => {
+                    assert.called(requestMock);
+                    assert.equal(error, err);
+                });
         });
     });
 
@@ -624,18 +646,15 @@ describe('index', function () {
                 auth: {
                     bearer: token
                 },
-                url: 'https://gitlab.com/api/v4/projects/owner%2FrepoName' +
-                     `/repository/commits/${sha}`
+                url: `https://gitlab.com/api/v4/projects/owner%2FrepoName/repository/commits/${sha}`
             };
             commitLookupResponse = {
                 statusCode: 200,
                 body: testCommit
             };
 
-            requestMock.withArgs(lookupScmUri)
-                .yieldsAsync(null, lookupScmUriResponse, lookupScmUriResponse.body);
-            requestMock.withArgs(commitLookup)
-                .yieldsAsync(null, commitLookupResponse, commitLookupResponse.body);
+            requestMock.withArgs(lookupScmUri).yieldsAsync(null, lookupScmUriResponse, lookupScmUriResponse.body);
+            requestMock.withArgs(commitLookup).yieldsAsync(null, commitLookupResponse, commitLookupResponse.body);
         });
 
         it('resolves to correct decorated object', () => {
@@ -657,15 +676,17 @@ describe('index', function () {
                 url: 'https://gitlab.example.com/thedude/gitlab-foss/-/commit/6104942438c14ec7bd21c6cd5bd995272b3faff6'
             };
 
-            return scm.decorateCommit({
-                sha,
-                scmUri,
-                token,
-                scmContext
-            }).then((decorated) => {
-                assert.calledTwice(requestMock);
-                assert.deepEqual(decorated, expected);
-            });
+            return scm
+                .decorateCommit({
+                    sha,
+                    scmUri,
+                    token,
+                    scmContext
+                })
+                .then(decorated => {
+                    assert.calledTwice(requestMock);
+                    assert.deepEqual(decorated, expected);
+                });
         });
 
         it('rejects if status code is not 200', () => {
@@ -676,22 +697,26 @@ describe('index', function () {
                 }
             };
 
-            requestMock.withArgs(commitLookup)
-                .yieldsAsync(null, fakeResponse, fakeResponse.body);
+            requestMock.withArgs(commitLookup).yieldsAsync(null, fakeResponse, fakeResponse.body);
 
-            return scm.decorateCommit({
-                sha,
-                scmUri,
-                token,
-                scmContext
-            }).then(() => {
-                assert.fail('Should not get here');
-            }).catch((error) => {
-                assert.calledTwice(requestMock);
-                assert.match(error.message, '404 Reason "Resource not found" ' +
-                                            'Caller "_decorateCommit: commitLookup"');
-                assert.match(error.status, 404);
-            });
+            return scm
+                .decorateCommit({
+                    sha,
+                    scmUri,
+                    token,
+                    scmContext
+                })
+                .then(() => {
+                    assert.fail('Should not get here');
+                })
+                .catch(error => {
+                    assert.calledTwice(requestMock);
+                    assert.match(
+                        error.message,
+                        '404 Reason "Resource not found" Caller "_decorateCommit: commitLookup"'
+                    );
+                    assert.match(error.status, 404);
+                });
         });
 
         it('rejects if fails', () => {
@@ -699,23 +724,25 @@ describe('index', function () {
 
             requestMock.withArgs(commitLookup).yieldsAsync(err);
 
-            return scm.decorateCommit({
-                sha,
-                scmUri,
-                token,
-                scmContext
-            }).then(() => {
-                assert.fail('Should not get here');
-            }).catch((error) => {
-                assert.called(requestMock);
-                assert.equal(error, err);
-            });
+            return scm
+                .decorateCommit({
+                    sha,
+                    scmUri,
+                    token,
+                    scmContext
+                })
+                .then(() => {
+                    assert.fail('Should not get here');
+                })
+                .catch(error => {
+                    assert.called(requestMock);
+                    assert.equal(error, err);
+                });
         });
     });
 
     describe('getCommitSha', () => {
-        const apiUrl = 'https://gitlab.com/api/v4/projects/repoId' +
-                       '/repository/branches/branchName';
+        const apiUrl = 'https://gitlab.com/api/v4/projects/repoId/repository/branches/branchName';
         const expectedOptions = {
             url: apiUrl,
             method: 'GET',
@@ -739,15 +766,16 @@ describe('index', function () {
         });
 
         it('resolves to correct commit sha', () =>
-            scm.getCommitSha({
-                scmUri,
-                token,
-                scmContext
-            }).then((sha) => {
-                assert.calledWith(requestMock, expectedOptions);
-                assert.deepEqual(sha, 'hashValue');
-            })
-        );
+            scm
+                .getCommitSha({
+                    scmUri,
+                    token,
+                    scmContext
+                })
+                .then(sha => {
+                    assert.calledWith(requestMock, expectedOptions);
+                    assert.deepEqual(sha, 'hashValue');
+                }));
 
         it('rejects if status code is not 200', () => {
             fakeResponse = {
@@ -759,18 +787,20 @@ describe('index', function () {
 
             requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
 
-            return scm.getCommitSha({
-                scmUri,
-                token,
-                scmContext
-            }).then(() => {
-                assert.fail('Should not get here');
-            }).catch((error) => {
-                assert.calledWith(requestMock, expectedOptions);
-                assert.match(error.message, '404 Reason "Resource not found" ' +
-                                            'Caller "_getCommitSha"');
-                assert.match(error.status, 404);
-            });
+            return scm
+                .getCommitSha({
+                    scmUri,
+                    token,
+                    scmContext
+                })
+                .then(() => {
+                    assert.fail('Should not get here');
+                })
+                .catch(error => {
+                    assert.calledWith(requestMock, expectedOptions);
+                    assert.match(error.message, '404 Reason "Resource not found" Caller "_getCommitSha"');
+                    assert.match(error.status, 404);
+                });
         });
 
         it('rejects if fails', () => {
@@ -778,22 +808,24 @@ describe('index', function () {
 
             requestMock.yieldsAsync(err);
 
-            return scm.getCommitSha({
-                scmUri,
-                token,
-                scmContext
-            }).then(() => {
-                assert.fail('Should not get here');
-            }).catch((error) => {
-                assert.calledWith(requestMock, expectedOptions);
-                assert.equal(error, err);
-            });
+            return scm
+                .getCommitSha({
+                    scmUri,
+                    token,
+                    scmContext
+                })
+                .then(() => {
+                    assert.fail('Should not get here');
+                })
+                .catch(error => {
+                    assert.calledWith(requestMock, expectedOptions);
+                    assert.equal(error, err);
+                });
         });
     });
 
     describe('addPrComment', () => {
-        const apiUrl = 'https://gitlab.com/api/v4/projects/repoId' +
-                       '/merge_requests/12345/notes';
+        const apiUrl = 'https://gitlab.com/api/v4/projects/repoId/merge_requests/12345/notes';
         const comment = 'this is a merge request comment';
         const prNum = 12345;
         const expectedOptions = {
@@ -819,67 +851,73 @@ describe('index', function () {
                 statusCode: 200,
                 body: testPrComments
             };
-            requestMock.onFirstCall().yieldsAsync(null, {
-                statusCode: 200,
-                body: []
-            }, []);
+            requestMock.onFirstCall().yieldsAsync(
+                null,
+                {
+                    statusCode: 200,
+                    body: []
+                },
+                []
+            );
             requestMock.onSecondCall().yieldsAsync(null, fakeResponse, fakeResponse.body);
         });
 
         it('resolves to correct PR metadata', () =>
-            scm.addPrComment({
-                comment,
-                prNum,
-                scmUri,
-                token,
-                scmContext
-            }).then((result) => {
-                assert.calledWith(requestMock.secondCall, expectedOptions);
-                assert.deepEqual(result, {
-                    commentId: 126861726,
-                    createTime: '2018-12-21T20:33:33.157Z',
-                    username: 'tkyi'
-                });
-            })
-        );
+            scm
+                .addPrComment({
+                    comment,
+                    prNum,
+                    scmUri,
+                    token,
+                    scmContext
+                })
+                .then(result => {
+                    assert.calledWith(requestMock.secondCall, expectedOptions);
+                    assert.deepEqual(result, {
+                        commentId: 126861726,
+                        createTime: '2018-12-21T20:33:33.157Z',
+                        username: 'tkyi'
+                    });
+                }));
 
         it('resolves to correct PR metadata for edited comment', () => {
-            requestMock.onFirstCall().yieldsAsync(null, fakeCommentsResponse,
-                fakeCommentsResponse.body);
+            requestMock.onFirstCall().yieldsAsync(null, fakeCommentsResponse, fakeCommentsResponse.body);
             requestMock.onSecondCall().yieldsAsync(null, fakeResponse, fakeResponse.body);
 
-            return scm.addPrComment({
-                comment,
-                prNum,
-                scmUri,
-                token,
-                scmContext
-            }).then((result) => {
-                assert.calledWith(requestMock.firstCall, {
-                    json: true,
-                    method: 'GET',
-                    auth: {
-                        bearer: commentUserToken
-                    },
-                    url: apiUrl
+            return scm
+                .addPrComment({
+                    comment,
+                    prNum,
+                    scmUri,
+                    token,
+                    scmContext
+                })
+                .then(result => {
+                    assert.calledWith(requestMock.firstCall, {
+                        json: true,
+                        method: 'GET',
+                        auth: {
+                            bearer: commentUserToken
+                        },
+                        url: apiUrl
+                    });
+                    assert.calledWith(requestMock.secondCall, {
+                        json: true,
+                        method: 'PUT',
+                        auth: {
+                            bearer: commentUserToken
+                        },
+                        url: `${apiUrl}/575311268`,
+                        qs: {
+                            body: 'this is a merge request comment'
+                        }
+                    });
+                    assert.deepEqual(result, {
+                        commentId: 126861726,
+                        createTime: '2018-12-21T20:33:33.157Z',
+                        username: 'tkyi'
+                    });
                 });
-                assert.calledWith(requestMock.secondCall, {
-                    json: true,
-                    method: 'PUT',
-                    auth: {
-                        bearer: commentUserToken
-                    },
-                    url: `${apiUrl}/575311268`,
-                    qs: {
-                        body: 'this is a merge request comment'
-                    }
-                });
-                assert.deepEqual(result, {
-                    commentId: 126861726,
-                    createTime: '2018-12-21T20:33:33.157Z',
-                    username: 'tkyi'
-                });
-            });
         });
 
         it('resolves null if status code is not 200', () => {
@@ -891,20 +929,22 @@ describe('index', function () {
             };
             requestMock.onSecondCall().yieldsAsync(null, fakeResponse, fakeResponse.body);
 
-            return scm.addPrComment({
-                comment,
-                prNum,
-                scmUri,
-                token,
-                scmContext
-            }).then((data) => {
-                assert.isNull(data);
-            }).catch((error) => {
-                assert.calledWith(requestMock, expectedOptions);
-                assert.match(error.message, '404 Reason "Resource not found" ' +
-                                            'Caller "_addPrComment"');
-                assert.match(error.status, 404);
-            });
+            return scm
+                .addPrComment({
+                    comment,
+                    prNum,
+                    scmUri,
+                    token,
+                    scmContext
+                })
+                .then(data => {
+                    assert.isNull(data);
+                })
+                .catch(error => {
+                    assert.calledWith(requestMock, expectedOptions);
+                    assert.match(error.message, '404 Reason "Resource not found" Caller "_addPrComment"');
+                    assert.match(error.status, 404);
+                });
         });
 
         it('resolves null if status code is not 200 for edited comment', () => {
@@ -914,30 +954,30 @@ describe('index', function () {
                     message: 'Resource not found'
                 }
             };
-            requestMock.onFirstCall().yieldsAsync(null, fakeCommentsResponse,
-                fakeCommentsResponse.body);
+            requestMock.onFirstCall().yieldsAsync(null, fakeCommentsResponse, fakeCommentsResponse.body);
             requestMock.onSecondCall().yieldsAsync(null, fakeResponse, fakeResponse.body);
 
-            return scm.addPrComment({
-                comment,
-                prNum,
-                scmUri,
-                token,
-                scmContext
-            }).then((data) => {
-                assert.isNull(data);
-            }).catch((error) => {
-                assert.calledWith(requestMock, expectedOptions);
-                assert.match(error.message, '404 Reason "Resource not found" ' +
-                                            'Caller "_addPrComment"');
-                assert.match(error.status, 404);
-            });
+            return scm
+                .addPrComment({
+                    comment,
+                    prNum,
+                    scmUri,
+                    token,
+                    scmContext
+                })
+                .then(data => {
+                    assert.isNull(data);
+                })
+                .catch(error => {
+                    assert.calledWith(requestMock, expectedOptions);
+                    assert.match(error.message, '404 Reason "Resource not found" Caller "_addPrComment"');
+                    assert.match(error.status, 404);
+                });
         });
     });
 
     describe('getFile', () => {
-        const apiUrl = 'https://gitlab.com/api/v4/projects/repoId' +
-                       '/repository/files/path%2Fto%2Ffile.txt';
+        const apiUrl = 'https://gitlab.com/api/v4/projects/repoId/repository/files/path%2Fto%2Ffile.txt';
         let expectedOptions;
         let fakeResponse;
         let params;
@@ -971,18 +1011,18 @@ describe('index', function () {
         });
 
         it('resolves to correct commit sha', () =>
-            scm.getFile(params).then((content) => {
+            scm.getFile(params).then(content => {
                 assert.calledWith(requestMock, expectedOptions);
                 assert.deepEqual(content, 'dataValue');
-            })
-        );
+            }));
 
         it('resolves to correct commit sha when rootDir is passed in', () => {
             params.scmUri = 'hostName:repoId:branchName:path/to/source';
-            expectedOptions.url = 'https://gitlab.com/api/v4/projects/repoId' +
-                           '/repository/files/path%2Fto%2Fsource%2Fpath%2Fto%2Ffile.txt';
+            expectedOptions.url =
+                'https://gitlab.com/api/v4/projects/repoId' +
+                '/repository/files/path%2Fto%2Fsource%2Fpath%2Fto%2Ffile.txt';
 
-            return scm.getFile(params).then((content) => {
+            return scm.getFile(params).then(content => {
                 assert.calledWith(requestMock, expectedOptions);
                 assert.deepEqual(content, 'dataValue');
             });
@@ -998,14 +1038,16 @@ describe('index', function () {
 
             requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
 
-            return scm.getFile(params).then(() => {
-                assert.fail('Should not get here');
-            }).catch((error) => {
-                assert.calledWith(requestMock, expectedOptions);
-                assert.match(error.message, '404 Reason "Resource not found" ' +
-                                            'Caller "_getFile"');
-                assert.match(error.status, 404);
-            });
+            return scm
+                .getFile(params)
+                .then(() => {
+                    assert.fail('Should not get here');
+                })
+                .catch(error => {
+                    assert.calledWith(requestMock, expectedOptions);
+                    assert.match(error.message, '404 Reason "Resource not found" Caller "_getFile"');
+                    assert.match(error.status, 404);
+                });
         });
 
         it('rejects if fails', () => {
@@ -1013,12 +1055,15 @@ describe('index', function () {
 
             requestMock.yieldsAsync(err);
 
-            return scm.getFile(params).then(() => {
-                assert.fail('Should not get here');
-            }).catch((error) => {
-                assert.calledWith(requestMock, expectedOptions);
-                assert.equal(error, err);
-            });
+            return scm
+                .getFile(params)
+                .then(() => {
+                    assert.fail('Should not get here');
+                })
+                .catch(error => {
+                    assert.calledWith(requestMock, expectedOptions);
+                    assert.equal(error, err);
+                });
         });
     });
 
@@ -1047,25 +1092,25 @@ describe('index', function () {
                 }
             };
 
-            requestMock.withArgs(expectedOptions)
-                .yieldsAsync(null, fakeResponse, fakeResponse.body);
+            requestMock.withArgs(expectedOptions).yieldsAsync(null, fakeResponse, fakeResponse.body);
         });
 
         it('get correct permissions for level 50', () =>
-            scm.getPermissions({
-                scmUri,
-                token,
-                scmContext
-            }).then((permissions) => {
-                assert.calledOnce(requestMock);
-                assert.calledWith(requestMock, expectedOptions);
-                assert.deepEqual(permissions, {
-                    admin: true,
-                    push: true,
-                    pull: true
-                });
-            })
-        );
+            scm
+                .getPermissions({
+                    scmUri,
+                    token,
+                    scmContext
+                })
+                .then(permissions => {
+                    assert.calledOnce(requestMock);
+                    assert.calledWith(requestMock, expectedOptions);
+                    assert.deepEqual(permissions, {
+                        admin: true,
+                        push: true,
+                        pull: true
+                    });
+                }));
 
         it('get correct permissions for level 40', () => {
             fakeResponse = {
@@ -1079,22 +1124,23 @@ describe('index', function () {
                 }
             };
 
-            requestMock.withArgs(expectedOptions)
-                .yieldsAsync(null, fakeResponse, fakeResponse.body);
+            requestMock.withArgs(expectedOptions).yieldsAsync(null, fakeResponse, fakeResponse.body);
 
-            return scm.getPermissions({
-                scmUri,
-                token,
-                scmContext
-            }).then((permissions) => {
-                assert.calledOnce(requestMock);
-                assert.calledWith(requestMock, expectedOptions);
-                assert.deepEqual(permissions, {
-                    admin: true,
-                    push: true,
-                    pull: true
+            return scm
+                .getPermissions({
+                    scmUri,
+                    token,
+                    scmContext
+                })
+                .then(permissions => {
+                    assert.calledOnce(requestMock);
+                    assert.calledWith(requestMock, expectedOptions);
+                    assert.deepEqual(permissions, {
+                        admin: true,
+                        push: true,
+                        pull: true
+                    });
                 });
-            });
         });
 
         it('get correct permissions for level 30', () => {
@@ -1109,22 +1155,23 @@ describe('index', function () {
                 }
             };
 
-            requestMock.withArgs(expectedOptions)
-                .yieldsAsync(null, fakeResponse, fakeResponse.body);
+            requestMock.withArgs(expectedOptions).yieldsAsync(null, fakeResponse, fakeResponse.body);
 
-            return scm.getPermissions({
-                scmUri,
-                token,
-                scmContext
-            }).then((permissions) => {
-                assert.calledOnce(requestMock);
-                assert.calledWith(requestMock, expectedOptions);
-                assert.deepEqual(permissions, {
-                    admin: false,
-                    push: true,
-                    pull: true
+            return scm
+                .getPermissions({
+                    scmUri,
+                    token,
+                    scmContext
+                })
+                .then(permissions => {
+                    assert.calledOnce(requestMock);
+                    assert.calledWith(requestMock, expectedOptions);
+                    assert.deepEqual(permissions, {
+                        admin: false,
+                        push: true,
+                        pull: true
+                    });
                 });
-            });
         });
 
         it('get correct permissions for level 20', () => {
@@ -1139,22 +1186,23 @@ describe('index', function () {
                 }
             };
 
-            requestMock.withArgs(expectedOptions)
-                .yieldsAsync(null, fakeResponse, fakeResponse.body);
+            requestMock.withArgs(expectedOptions).yieldsAsync(null, fakeResponse, fakeResponse.body);
 
-            return scm.getPermissions({
-                scmUri,
-                token,
-                scmContext
-            }).then((permissions) => {
-                assert.calledOnce(requestMock);
-                assert.calledWith(requestMock, expectedOptions);
-                assert.deepEqual(permissions, {
-                    admin: false,
-                    push: false,
-                    pull: true
+            return scm
+                .getPermissions({
+                    scmUri,
+                    token,
+                    scmContext
+                })
+                .then(permissions => {
+                    assert.calledOnce(requestMock);
+                    assert.calledWith(requestMock, expectedOptions);
+                    assert.deepEqual(permissions, {
+                        admin: false,
+                        push: false,
+                        pull: true
+                    });
                 });
-            });
         });
 
         it('get correct permissions for level 10', () => {
@@ -1169,22 +1217,23 @@ describe('index', function () {
                 }
             };
 
-            requestMock.withArgs(expectedOptions)
-                .yieldsAsync(null, fakeResponse, fakeResponse.body);
+            requestMock.withArgs(expectedOptions).yieldsAsync(null, fakeResponse, fakeResponse.body);
 
-            return scm.getPermissions({
-                scmUri,
-                token,
-                scmContext
-            }).then((permissions) => {
-                assert.calledOnce(requestMock);
-                assert.calledWith(requestMock, expectedOptions);
-                assert.deepEqual(permissions, {
-                    admin: false,
-                    push: false,
-                    pull: false
+            return scm
+                .getPermissions({
+                    scmUri,
+                    token,
+                    scmContext
+                })
+                .then(permissions => {
+                    assert.calledOnce(requestMock);
+                    assert.calledWith(requestMock, expectedOptions);
+                    assert.deepEqual(permissions, {
+                        admin: false,
+                        push: false,
+                        pull: false
+                    });
                 });
-            });
         });
 
         it('get correct permissions for level 90', () => {
@@ -1199,22 +1248,23 @@ describe('index', function () {
                 }
             };
 
-            requestMock.withArgs(expectedOptions)
-                .yieldsAsync(null, fakeResponse, fakeResponse.body);
+            requestMock.withArgs(expectedOptions).yieldsAsync(null, fakeResponse, fakeResponse.body);
 
-            return scm.getPermissions({
-                scmUri,
-                token,
-                scmContext
-            }).then((permissions) => {
-                assert.calledOnce(requestMock);
-                assert.calledWith(requestMock, expectedOptions);
-                assert.deepEqual(permissions, {
-                    admin: false,
-                    push: false,
-                    pull: false
+            return scm
+                .getPermissions({
+                    scmUri,
+                    token,
+                    scmContext
+                })
+                .then(permissions => {
+                    assert.calledOnce(requestMock);
+                    assert.calledWith(requestMock, expectedOptions);
+                    assert.deepEqual(permissions, {
+                        admin: false,
+                        push: false,
+                        pull: false
+                    });
                 });
-            });
         });
 
         it('get correct permissions when no access_level is present', () => {
@@ -1223,22 +1273,23 @@ describe('index', function () {
                 body: {}
             };
 
-            requestMock.withArgs(expectedOptions)
-                .yieldsAsync(null, fakeResponse, fakeResponse.body);
+            requestMock.withArgs(expectedOptions).yieldsAsync(null, fakeResponse, fakeResponse.body);
 
-            return scm.getPermissions({
-                scmUri,
-                token,
-                scmContext
-            }).then((permissions) => {
-                assert.calledOnce(requestMock);
-                assert.calledWith(requestMock, expectedOptions);
-                assert.deepEqual(permissions, {
-                    admin: false,
-                    push: false,
-                    pull: false
+            return scm
+                .getPermissions({
+                    scmUri,
+                    token,
+                    scmContext
+                })
+                .then(permissions => {
+                    assert.calledOnce(requestMock);
+                    assert.calledWith(requestMock, expectedOptions);
+                    assert.deepEqual(permissions, {
+                        admin: false,
+                        push: false,
+                        pull: false
+                    });
                 });
-            });
         });
 
         it('rejects if status code is not 200', () => {
@@ -1249,37 +1300,40 @@ describe('index', function () {
                 }
             };
 
-            requestMock.withArgs(expectedOptions)
-                .yieldsAsync(null, fakeResponse, fakeResponse.body);
+            requestMock.withArgs(expectedOptions).yieldsAsync(null, fakeResponse, fakeResponse.body);
 
-            return scm.getPermissions({
-                scmUri,
-                token,
-                scmContext
-            }).then(() => {
-                assert.fail('Should not get here');
-            }).catch((error) => {
-                assert.match(error.message, '404 Reason "Resource not found" ' +
-                                            'Caller "_getPermissions"');
-                assert.match(error.status, 404);
-            });
+            return scm
+                .getPermissions({
+                    scmUri,
+                    token,
+                    scmContext
+                })
+                .then(() => {
+                    assert.fail('Should not get here');
+                })
+                .catch(error => {
+                    assert.match(error.message, '404 Reason "Resource not found" Caller "_getPermissions"');
+                    assert.match(error.status, 404);
+                });
         });
 
         it('rejects if fails', () => {
             const error = new Error('Gitlab API error');
 
-            requestMock.withArgs(expectedOptions)
-                .yieldsAsync(error);
+            requestMock.withArgs(expectedOptions).yieldsAsync(error);
 
-            return scm.getPermissions({
-                scmUri,
-                token,
-                scmContext
-            }).then(() => {
-                assert.fail('Should not get here');
-            }).catch((err) => {
-                assert.equal(error, err);
-            });
+            return scm
+                .getPermissions({
+                    scmUri,
+                    token,
+                    scmContext
+                })
+                .then(() => {
+                    assert.fail('Should not get here');
+                })
+                .catch(err => {
+                    assert.equal(error, err);
+                });
         });
     });
 
@@ -1300,8 +1354,7 @@ describe('index', function () {
                 jobName: 'main',
                 pipelineId: 675
             };
-            apiUrl = 'https://gitlab.com/api/v4/projects/repoId/statuses/' +
-                     `${config.sha}`;
+            apiUrl = `https://gitlab.com/api/v4/projects/repoId/statuses/${config.sha}`;
             fakeResponse = {
                 statusCode: 201
             };
@@ -1325,8 +1378,7 @@ describe('index', function () {
         it('successfully update status', () =>
             scm.updateCommitStatus(config).then(() => {
                 assert.calledWith(requestMock, expectedOptions);
-            })
-        );
+            }));
 
         it('successfully update status with correct values', () => {
             config.buildStatus = 'FAILURE';
@@ -1349,14 +1401,16 @@ describe('index', function () {
 
             requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
 
-            return scm.updateCommitStatus(config).then(() => {
-                assert.fail('Should not get here');
-            }).catch((error) => {
-                assert.calledWith(requestMock, expectedOptions);
-                assert.match(error.message, '401 Reason "Access token expired" ' +
-                                            'Caller "_updateCommitStatus"');
-                assert.match(error.status, 401);
-            });
+            return scm
+                .updateCommitStatus(config)
+                .then(() => {
+                    assert.fail('Should not get here');
+                })
+                .catch(error => {
+                    assert.calledWith(requestMock, expectedOptions);
+                    assert.match(error.message, '401 Reason "Access token expired" Caller "_updateCommitStatus"');
+                    assert.match(error.status, 401);
+                });
         });
 
         it('rejects if fails', () => {
@@ -1364,18 +1418,21 @@ describe('index', function () {
 
             requestMock.yieldsAsync(err);
 
-            return scm.updateCommitStatus(config).then(() => {
-                assert.fail('Should not get here');
-            }).catch((error) => {
-                assert.calledWith(requestMock, expectedOptions);
-                assert.equal(error, err);
-            });
+            return scm
+                .updateCommitStatus(config)
+                .then(() => {
+                    assert.fail('Should not get here');
+                })
+                .catch(error => {
+                    assert.calledWith(requestMock, expectedOptions);
+                    assert.equal(error, err);
+                });
         });
     });
 
     describe('getBellConfiguration', () => {
         it('resolves a default configuration', () =>
-            scm.getBellConfiguration().then((config) => {
+            scm.getBellConfiguration().then(config => {
                 assert.deepEqual(config, {
                     'gitlab:gitlab.com': {
                         clientId: 'myclientid',
@@ -1389,8 +1446,7 @@ describe('index', function () {
                         cookie: 'gitlab-gitlab.com'
                     }
                 });
-            })
-        );
+            }));
 
         it('resolves a configuration for gitlabHost chenged from default', () => {
             scm = new GitlabScm({
@@ -1413,7 +1469,7 @@ describe('index', function () {
                 }
             };
 
-            return scm.getBellConfiguration().then((config) => {
+            return scm.getBellConfiguration().then(config => {
                 assert.deepEqual(config, expected);
             });
         });
@@ -1437,51 +1493,46 @@ describe('index', function () {
                     bearer: token
                 }
             };
-            requestMock.withArgs(expectedOptions)
-                .yieldsAsync(null, fakeResponse, fakeResponse.body);
+            requestMock.withArgs(expectedOptions).yieldsAsync(null, fakeResponse, fakeResponse.body);
         });
 
         it('returns changed files for a push event payload', () => {
             type = 'repo';
 
-            return scm.getChangedFiles({
-                type,
-                token,
-                payload: testPayloadPush
-            })
-                .then((result) => {
-                    assert.deepEqual(result, [
-                        'CHANGELOG',
-                        'app/controller/application.rb'
-                    ]);
+            return scm
+                .getChangedFiles({
+                    type,
+                    token,
+                    payload: testPayloadPush
+                })
+                .then(result => {
+                    assert.deepEqual(result, ['CHANGELOG', 'app/controller/application.rb']);
                 });
         });
 
         it('returns changed files for any given pr', () =>
-            scm.getChangedFiles({
-                type: 'pr',
-                token,
-                payload: null,
-                scmUri: 'github.com:28476:master',
-                prNum: 1
-            }).then((result) => {
-                assert.deepEqual(result, [
-                    'test/screwdriver.yaml',
-                    'README.md',
-                    'screwdriver.yaml'
-                ]);
-            })
-        );
+            scm
+                .getChangedFiles({
+                    type: 'pr',
+                    token,
+                    payload: null,
+                    scmUri: 'github.com:28476:master',
+                    prNum: 1
+                })
+                .then(result => {
+                    assert.deepEqual(result, ['test/screwdriver.yaml', 'README.md', 'screwdriver.yaml']);
+                }));
 
         it('returns empty array for an event payload that is not type repo or pr', () => {
             type = 'ping';
 
-            return scm.getChangedFiles({
-                type,
-                token,
-                payload: testPayloadOpen
-            })
-                .then((result) => {
+            return scm
+                .getChangedFiles({
+                    type,
+                    token,
+                    payload: testPayloadOpen
+                })
+                .then(result => {
                     assert.deepEqual(result, []);
                 });
         });
@@ -1489,12 +1540,13 @@ describe('index', function () {
         it('returns empty array for an event payload which does not have changed files', () => {
             type = 'repo';
 
-            return scm.getChangedFiles({
-                type,
-                token,
-                payload: testPayloadPushBadHead
-            })
-                .then((result) => {
+            return scm
+                .getChangedFiles({
+                    type,
+                    token,
+                    payload: testPayloadPushBadHead
+                })
+                .then(result => {
                     assert.deepEqual(result, []);
                 });
         });
@@ -1519,32 +1571,29 @@ describe('index', function () {
         });
 
         it('returns a pull request with the given prNum', () =>
-            scm._getPrInfo(config).then((data) => {
-                assert.deepEqual(data,
-                    {
-                        name: 'PR-1',
-                        ref: 'pull/1/merge',
-                        sha,
-                        url: 'http://gitlab.example.com/my-group/my-project/merge_requests/1',
-                        username: 'admin',
-                        title: 'test1',
-                        createTime: '2017-04-29T08:46:00Z',
-                        userProfile: 'https://gitlab.example.com/admin',
-                        prBranchName: 'test1',
-                        baseBranch: 'test1',
-                        mergeable: false,
-                        prSource: 'fork'
-                    }
-                );
-            })
-        );
+            scm._getPrInfo(config).then(data => {
+                assert.deepEqual(data, {
+                    name: 'PR-1',
+                    ref: 'pull/1/merge',
+                    sha,
+                    url: 'http://gitlab.example.com/my-group/my-project/merge_requests/1',
+                    username: 'admin',
+                    title: 'test1',
+                    createTime: '2017-04-29T08:46:00Z',
+                    userProfile: 'https://gitlab.example.com/admin',
+                    prBranchName: 'test1',
+                    baseBranch: 'test1',
+                    mergeable: false,
+                    prSource: 'fork'
+                });
+            }));
 
         it('rejects when failing to lookup the SCM URI information', () => {
             const testError = new Error('testError');
 
             requestMock.yieldsAsync(testError);
 
-            return scm._getPrInfo(config).then(assert.fail, (err) => {
+            return scm._getPrInfo(config).then(assert.fail, err => {
                 assert.instanceOf(err, Error);
                 assert.strictEqual(testError.message, err.message);
             });
@@ -1566,15 +1615,14 @@ describe('index', function () {
         });
 
         it('resolves checkout command without prRef', () =>
-            scm.getCheckoutCommand(config).then((command) => {
+            scm.getCheckoutCommand(config).then(command => {
                 assert.deepEqual(command, testCommands);
-            })
-        );
+            }));
 
         it('resolves checkout command with prRef', () => {
             config.prRef = 'prBranch';
 
-            return scm.getCheckoutCommand(config).then((command) => {
+            return scm.getCheckoutCommand(config).then(command => {
                 assert.deepEqual(command, testPrCommands);
             });
         });
@@ -1588,10 +1636,9 @@ describe('index', function () {
                 email: 'dev-null@my.email.com'
             });
 
-            return scm.getCheckoutCommand(config)
-                .then((command) => {
-                    assert.deepEqual(command, testCustomPrCommands);
-                });
+            return scm.getCheckoutCommand(config).then(command => {
+                assert.deepEqual(command, testCustomPrCommands);
+            });
         });
 
         it('resolves checkout command with rootDir', () => {
@@ -1603,10 +1650,9 @@ describe('index', function () {
                 email: 'dev-null@my.email.com'
             });
 
-            return scm.getCheckoutCommand(config)
-                .then((command) => {
-                    assert.deepEqual(command, testRootDirCommands);
-                });
+            return scm.getCheckoutCommand(config).then(command => {
+                assert.deepEqual(command, testRootDirCommands);
+            });
         });
 
         it('promises to get the checkout command for a child pipeline', () => {
@@ -1618,10 +1664,9 @@ describe('index', function () {
                 sha: '54321'
             };
 
-            return scm.getCheckoutCommand(config)
-                .then((command) => {
-                    assert.deepEqual(command, testChildCommands);
-                });
+            return scm.getCheckoutCommand(config).then(command => {
+                assert.deepEqual(command, testChildCommands);
+            });
         });
     });
 
@@ -1665,16 +1710,14 @@ describe('index', function () {
             requestMock.onFirstCall().yieldsAsync(null, findWebhookResponse);
 
             /* eslint-disable no-underscore-dangle */
-            return scm._addWebhook({
-            /* eslint-enable no-underscore-dangle */
-                scmUri,
-                token,
-                webhookUrl: 'url',
-                actions: [
-                    'merge_requests_events',
-                    'push_events'
-                ]
-            })
+            return scm
+                ._addWebhook({
+                    /* eslint-enable no-underscore-dangle */
+                    scmUri,
+                    token,
+                    webhookUrl: 'url',
+                    actions: ['merge_requests_events', 'push_events']
+                })
                 .then(() => {
                     assert.calledWith(requestMock, {
                         json: true,
@@ -1725,38 +1768,37 @@ describe('index', function () {
             requestMock.onFirstCall().yieldsAsync(null, findWebhookResponse);
 
             /* eslint-disable no-underscore-dangle */
-            return scm._addWebhook({
-            /* eslint-enable no-underscore-dangle */
-                scmUri,
-                token,
-                webhookUrl: 'url',
-                actions: [
-                    'merge_requests_events',
-                    'push_events'
-                ]
-            }).then(() => {
-                assert.calledWith(requestMock, {
-                    json: true,
-                    method: 'GET',
-                    auth: {
-                        bearer: token
-                    },
-                    url: 'https://gitlab.com/api/v4/projects/repoId/hooks'
+            return scm
+                ._addWebhook({
+                    /* eslint-enable no-underscore-dangle */
+                    scmUri,
+                    token,
+                    webhookUrl: 'url',
+                    actions: ['merge_requests_events', 'push_events']
+                })
+                .then(() => {
+                    assert.calledWith(requestMock, {
+                        json: true,
+                        method: 'GET',
+                        auth: {
+                            bearer: token
+                        },
+                        url: 'https://gitlab.com/api/v4/projects/repoId/hooks'
+                    });
+                    assert.calledWith(requestMock, {
+                        json: true,
+                        method: 'PUT',
+                        auth: {
+                            bearer: token
+                        },
+                        url: `https://gitlab.com/api/v4/projects/repoId/hooks/${hookid}`,
+                        qs: {
+                            url: 'url',
+                            push_events: true,
+                            merge_requests_events: true
+                        }
+                    });
                 });
-                assert.calledWith(requestMock, {
-                    json: true,
-                    method: 'PUT',
-                    auth: {
-                        bearer: token
-                    },
-                    url: `https://gitlab.com/api/v4/projects/repoId/hooks/${hookid}`,
-                    qs: {
-                        url: 'url',
-                        push_events: true,
-                        merge_requests_events: true
-                    }
-                });
-            });
         });
 
         it('rejects when failing to get the current list of webhooks', () => {
@@ -1770,21 +1812,23 @@ describe('index', function () {
             requestMock.onFirstCall().yieldsAsync(null, findWebhookResponse);
 
             /* eslint-disable no-underscore-dangle */
-            return scm._addWebhook({
-            /* eslint-enable no-underscore-dangle */
-                scmUri,
-                token,
-                webhookUrl: 'url',
-                actions: [
-                    'merge_requests_events',
-                    'push_events'
-                ]
-            }).then(assert.fail, (error) => {
-                assert.match(error.message, '403 Reason "Your credentials lack one or more ' +
-                                            'required privilege scopes." ' +
-                                            'Caller "_findWebhook"');
-                assert.match(error.status, 403);
-            });
+            return scm
+                ._addWebhook({
+                    /* eslint-enable no-underscore-dangle */
+                    scmUri,
+                    token,
+                    webhookUrl: 'url',
+                    actions: ['merge_requests_events', 'push_events']
+                })
+                .then(assert.fail, error => {
+                    assert.match(
+                        error.message,
+                        '403 Reason "Your credentials lack one or more ' +
+                            'required privilege scopes." ' +
+                            'Caller "_findWebhook"'
+                    );
+                    assert.match(error.status, 403);
+                });
         });
 
         it('rejects with a stringified error when gitlab API fails to list webhooks', () => {
@@ -1798,20 +1842,18 @@ describe('index', function () {
             requestMock.onFirstCall().yieldsAsync(null, findWebhookResponse);
 
             /* eslint-disable no-underscore-dangle */
-            return scm._addWebhook({
-            /* eslint-enable no-underscore-dangle */
-                scmUri,
-                token,
-                url: 'url',
-                actions: [
-                    'merge_requests_events',
-                    'push_events'
-                ]
-            }).then(assert.fail, (error) => {
-                assert.match(error.message, '500 Reason "{"blah":"undefined"}" ' +
-                                            'Caller "_findWebhook"');
-                assert.match(error.status, 500);
-            });
+            return scm
+                ._addWebhook({
+                    /* eslint-enable no-underscore-dangle */
+                    scmUri,
+                    token,
+                    url: 'url',
+                    actions: ['merge_requests_events', 'push_events']
+                })
+                .then(assert.fail, error => {
+                    assert.match(error.message, '500 Reason "{"blah":"undefined"}" Caller "_findWebhook"');
+                    assert.match(error.status, 500);
+                });
         });
 
         it('rejects when failing to create a webhook', () => {
@@ -1830,21 +1872,23 @@ describe('index', function () {
             requestMock.onSecondCall().yieldsAsync(null, createWebhookResponse);
 
             /* eslint-disable no-underscore-dangle */
-            return scm._addWebhook({
-            /* eslint-enable no-underscore-dangle */
-                scmUri,
-                token,
-                url: 'url',
-                actions: [
-                    'merge_requests_events',
-                    'push_events'
-                ]
-            }).then(assert.fail, (error) => {
-                assert.match(error.message, '403 Reason "Your credentials lack one or more ' +
-                                            'required privilege scopes." ' +
-                                            'Caller "_createWebhook"');
-                assert.match(error.status, 403);
-            });
+            return scm
+                ._addWebhook({
+                    /* eslint-enable no-underscore-dangle */
+                    scmUri,
+                    token,
+                    url: 'url',
+                    actions: ['merge_requests_events', 'push_events']
+                })
+                .then(assert.fail, error => {
+                    assert.match(
+                        error.message,
+                        '403 Reason "Your credentials lack one or more ' +
+                            'required privilege scopes." ' +
+                            'Caller "_createWebhook"'
+                    );
+                    assert.match(error.status, 403);
+                });
         });
 
         it('rejects when failing to update a webhook', () => {
@@ -1879,21 +1923,23 @@ describe('index', function () {
             requestMock.onSecondCall().yieldsAsync(null, createWebhookResponse);
 
             /* eslint-disable no-underscore-dangle */
-            return scm._addWebhook({
-            /* eslint-enable no-underscore-dangle */
-                scmUri,
-                token,
-                url: 'url',
-                actions: [
-                    'merge_requests_events',
-                    'push_events'
-                ]
-            }).then(assert.fail, (error) => {
-                assert.strictEqual(error.message, '403 Reason "Your credentials lack one or more ' +
-                                                'required privilege scopes." ' +
-                                                'Caller "_createWebhook"');
-                assert.match(error.status, 403);
-            });
+            return scm
+                ._addWebhook({
+                    /* eslint-enable no-underscore-dangle */
+                    scmUri,
+                    token,
+                    url: 'url',
+                    actions: ['merge_requests_events', 'push_events']
+                })
+                .then(assert.fail, error => {
+                    assert.strictEqual(
+                        error.message,
+                        '403 Reason "Your credentials lack one or more ' +
+                            'required privilege scopes." ' +
+                            'Caller "_createWebhook"'
+                    );
+                    assert.match(error.status, 403);
+                });
         });
     });
 
@@ -1940,11 +1986,12 @@ describe('index', function () {
             });
 
             // eslint-disable-next-line no-underscore-dangle
-            return scm._getOpenedPRs({
-                scmUri,
-                token
-            })
-                .then((response) => {
+            return scm
+                ._getOpenedPRs({
+                    scmUri,
+                    token
+                })
+                .then(response => {
                     assert.calledWith(requestMock, expectedOptions);
                     assert.deepEqual(response, [
                         {
@@ -1997,10 +2044,9 @@ describe('index', function () {
                 'x-gitlab-event': 'Merge Request Hook'
             };
 
-            return scm.canHandleWebhook(headers, testPayloadOpen)
-                .then((result) => {
-                    assert.strictEqual(result, true);
-                });
+            return scm.canHandleWebhook(headers, testPayloadOpen).then(result => {
+                assert.strictEqual(result, true);
+            });
         });
 
         it('returns a true for closed PR', () => {
@@ -2009,10 +2055,9 @@ describe('index', function () {
                 'x-gitlab-event': 'Merge Request Hook'
             };
 
-            return scm.canHandleWebhook(headers, testPayloadClose)
-                .then((result) => {
-                    assert.strictEqual(result, true);
-                });
+            return scm.canHandleWebhook(headers, testPayloadClose).then(result => {
+                assert.strictEqual(result, true);
+            });
         });
 
         it('returns a true for push to repo event', () => {
@@ -2021,10 +2066,9 @@ describe('index', function () {
                 'x-gitlab-event': 'Push Hook'
             };
 
-            return scm.canHandleWebhook(headers, testPayloadPush)
-                .then((result) => {
-                    assert.strictEqual(result, true);
-                });
+            return scm.canHandleWebhook(headers, testPayloadPush).then(result => {
+                assert.strictEqual(result, true);
+            });
         });
 
         it('returns a false for scm not supporting', () => {
@@ -2034,10 +2078,9 @@ describe('index', function () {
                 'x-github-delivery': '3c77bf80-9a2f-11e6-80d6-72f7fe03ea29'
             };
 
-            return scm.canHandleWebhook(headers, testPayloadOpen)
-                .then((result) => {
-                    assert.strictEqual(result, false);
-                });
+            return scm.canHandleWebhook(headers, testPayloadOpen).then(result => {
+                assert.strictEqual(result, false);
+            });
         });
 
         it('returns a false when parseHook resolves null', () => {
@@ -2049,10 +2092,9 @@ describe('index', function () {
             scm._parseHook = sinon.stub();
             scm._parseHook.resolves(null);
 
-            return scm.canHandleWebhook(headers, testPayloadOpen)
-                .then((result) => {
-                    assert.strictEqual(result, false);
-                });
+            return scm.canHandleWebhook(headers, testPayloadOpen).then(result => {
+                assert.strictEqual(result, false);
+            });
         });
 
         it('returns a false when parseHook catches some error', () => {
@@ -2063,10 +2105,9 @@ describe('index', function () {
 
             scm._parseHook = sinon.stub().rejects();
 
-            return scm.canHandleWebhook(headers, testPayloadOpen)
-                .then((result) => {
-                    assert.strictEqual(result, false);
-                });
+            return scm.canHandleWebhook(headers, testPayloadOpen).then(result => {
+                assert.strictEqual(result, false);
+            });
         });
     });
 
@@ -2075,14 +2116,15 @@ describe('index', function () {
             scm.openPr({
                 checkoutUrl: 'https://hostName/username/repoName/tree/branchName',
                 token: 'thisisatoken',
-                files: [{
-                    name: 'file.txt',
-                    content: 'content'
-                }],
+                files: [
+                    {
+                        name: 'file.txt',
+                        content: 'content'
+                    }
+                ],
                 title: 'update file',
                 message: 'update file'
-            })
-                .then(result => assert.isNull(result));
+            }).then(result => assert.isNull(result));
         });
     });
 });

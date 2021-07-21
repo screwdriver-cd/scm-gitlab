@@ -3,13 +3,13 @@
 'use strict';
 
 const Breaker = require('circuit-fuses').breaker;
-const Request = require('request');
 const Hoek = require('@hapi/hoek');
 const Joi = require('joi');
 const Path = require('path');
 const Schema = require('screwdriver-data-schema');
 const Scm = require('screwdriver-scm-base');
 const logger = require('screwdriver-logger');
+const got = require('./lib/got');
 
 const DEFAULT_AUTHOR = {
     avatar: 'https://cd.screwdriver.cd/assets/unknown_user.png',
@@ -34,37 +34,6 @@ const DESCRIPTION_MAP = {
     FAILURE: 'Did not work as expected.',
     PENDING: 'Parked it as Pending...'
 };
-
-/**
- * Check the status code of the server's response.
- *
- * If there was an error encountered with the request, this will format a human-readable
- * error message.
- * @method checkResponseError
- * @param  {HTTPResponse}   response                               HTTP Response from `request` call
- * @param  {Number}         response.statusCode                    HTTP status code of the HTTP request
- * @param  {String}         [response.body.error.message]          Error message from the server
- * @param  {String}         [response.body.error.detail.required]  Error resolution message
- * @return {Promise}                                               Resolves when no error encountered.
- *                                                                 Rejects when status code is non-200
- */
-function checkResponseError(response, caller) {
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-        return;
-    }
-
-    const errorCode = Hoek.reach(response, 'statusCode', {
-        default: 'SCM service unavailable.'
-    });
-    const errorReason = Hoek.reach(response, 'body.message', {
-        default: JSON.stringify(response.body)
-    });
-
-    const error = new Error(`${errorCode} Reason "${errorReason}" Caller "${caller}"`);
-
-    error.status = errorCode;
-    throw error;
-}
 
 /**
  * Get repo information
@@ -103,6 +72,28 @@ function getScmUriParts(scmUri) {
 }
 
 class GitlabScm extends Scm {
+    /**
+     * Github command to run
+     * @method _gitlabCommand
+     * @param  {Object}      options              An object that tells what command & params to run
+     * @param  {String}      options.action       Github method. For example: get
+     * @param  {String}      options.token        Github token used for authentication of requests
+     * @param  {Object}      options.params       Parameters to run with
+     * @param  {String}      [options.scopeType]  Type of request to make. Default is 'repos'
+     * @param  {String}      [options.route]      Route for gitlab.request()
+     * @param  {Function}    callback             Callback function from gitlab API
+     */
+    _gitlabCommand(options, callback) {
+        const config = { ...options, ...this.gitlabConfig };
+
+        got(options.route, config)
+            .then(function cb() {
+                // Use "function" (not "arrow function") for getting "arguments"
+                callback(null, ...arguments);
+            })
+            .catch(err => callback(err));
+    }
+
     /**
      * Constructor
      * @method constructor
@@ -165,15 +156,15 @@ class GitlabScm extends Scm {
             'Invalid config for Gitlab'
         );
 
-        const gitlabConfig = {};
+        this.gitlabConfig = { prefixUrl: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` };
 
-        if (this.config.gitlabHost) {
-            gitlabConfig.host = this.config.gitlabHost;
-            gitlabConfig.protocol = this.config.gitlabProtocol;
-            gitlabConfig.pathPrefix = '';
-        }
-
-        this.breaker = new Breaker(Request, this.config.fusebox);
+        // eslint-disable-next-line no-underscore-dangle
+        this.breaker = new Breaker(this._gitlabCommand.bind(this), {
+            // Do not retry when there is a 4XX error
+            shouldRetry: err => err && err.status && !(err.status >= 400 && err.status < 500),
+            retry: this.config.fusebox.retry,
+            breaker: this.config.fusebox.breaker
+        });
     }
 
     /**
@@ -190,16 +181,12 @@ class GitlabScm extends Scm {
 
         return this.breaker
             .runCommand({
-                json: true,
                 method: 'GET',
-                auth: {
-                    bearer: token
-                },
-                url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4/projects/${scmInfo.repoId}`
+                route: `projects/${scmInfo.repoId}`,
+                token,
+                caller: 'lookupScmUri'
             })
             .then(response => {
-                checkResponseError(response, 'lookupScmUri');
-
                 const [owner, reponame] = response.body.path_with_namespace.split('/');
 
                 return {
@@ -238,16 +225,12 @@ class GitlabScm extends Scm {
 
         return this.breaker
             .runCommand({
-                json: true,
                 method: 'GET',
-                auth: {
-                    bearer: token
-                },
-                url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4/projects/${repoId}/hooks`
+                route: `projects/${repoId}/hooks`,
+                token,
+                caller: '_findWebhook'
             })
             .then(response => {
-                checkResponseError(response, '_findWebhook');
-
                 const hooks = response.body;
                 const result = hooks.find(hook => hook.url === url);
 
@@ -275,27 +258,21 @@ class GitlabScm extends Scm {
         };
         const action = {
             method: 'POST',
-            url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4/projects/${repoId}/hooks`
+            route: `projects/${repoId}/hooks`
         };
 
         if (hookInfo) {
             action.method = 'PUT';
-            action.url += `/${hookInfo.id}`;
+            action.route += `/${hookInfo.id}`;
         }
 
-        return this.breaker
-            .runCommand({
-                json: true,
-                method: action.method,
-                auth: {
-                    bearer: token
-                },
-                url: action.url,
-                qs: params
-            })
-            .then(response => {
-                checkResponseError(response, '_createWebhook');
-            });
+        return this.breaker.runCommand({
+            method: action.method,
+            route: action.route,
+            json: params,
+            token,
+            caller: '_createWebhook'
+        });
     }
 
     /** Extended from screwdriver-scm-base */
@@ -352,18 +329,12 @@ class GitlabScm extends Scm {
 
         return this.breaker
             .runCommand({
-                json: true,
                 method: 'GET',
-                auth: {
-                    bearer: token
-                },
-                url:
-                    `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
-                    `/projects/${owner}%2F${reponame}`
+                route: `projects/${owner}%2F${reponame}`,
+                token,
+                caller: '_parseUrl'
             })
             .then(response => {
-                checkResponseError(response, '_parseUrl');
-
                 const scmUri = `${hostname}:${response.body.id}:${branch || response.body.default_branch}`;
 
                 return sourceDir ? `${scmUri}:${sourceDir}` : scmUri;
@@ -672,39 +643,34 @@ class GitlabScm extends Scm {
         });
 
         // There's no username provided, so skipping decorateAuthor
-        const commit = await this.breaker.runCommand({
-            json: true,
-            method: 'GET',
-            auth: {
-                bearer: token
-            },
-            url:
-                `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
-                `/projects/${owner}%2F${reponame}` +
-                `/repository/commits/${sha}`
-        });
+        return this.breaker
+            .runCommand({
+                method: 'GET',
+                token,
+                route: `projects/${owner}%2F${reponame}/repository/commits/${sha}`,
+                caller: '_decorateCommit: commitLookup'
+            })
+            .then(commit => {
+                const authorName = Hoek.reach(commit, 'body.author_name');
+                const committerName = Hoek.reach(commit, 'body.committer_name');
+                const author = { ...DEFAULT_AUTHOR };
+                const committer = { ...DEFAULT_AUTHOR };
 
-        checkResponseError(commit, '_decorateCommit: commitLookup');
+                if (authorName) {
+                    author.name = authorName;
+                }
 
-        const authorName = Hoek.reach(commit, 'body.author_name');
-        const committerName = Hoek.reach(commit, 'body.committer_name');
-        const author = { ...DEFAULT_AUTHOR };
-        const committer = { ...DEFAULT_AUTHOR };
+                if (committerName) {
+                    committer.name = committerName;
+                }
 
-        if (authorName) {
-            author.name = authorName;
-        }
-
-        if (committerName) {
-            committer.name = committerName;
-        }
-
-        return {
-            author,
-            committer,
-            message: commit.body.message,
-            url: commit.body.web_url
-        };
+                return {
+                    author,
+                    committer,
+                    message: commit.body.message,
+                    url: commit.body.web_url
+                };
+            });
     }
 
     /**
@@ -718,19 +684,15 @@ class GitlabScm extends Scm {
     async _decorateAuthor({ token, username }) {
         return this.breaker
             .runCommand({
-                json: true,
                 method: 'GET',
-                auth: {
-                    bearer: token
-                },
-                url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4/users`,
-                qs: {
+                token,
+                route: `users`,
+                json: {
                     username
-                }
+                },
+                caller: '_decorateAuthor'
             })
             .then(response => {
-                checkResponseError(response, '_decorateAuthor');
-
                 const author = Hoek.reach(response, 'body.0', {
                     default: {
                         web_url: DEFAULT_AUTHOR.url,
@@ -763,16 +725,12 @@ class GitlabScm extends Scm {
 
         return this.breaker
             .runCommand({
-                json: true,
                 method: 'GET',
-                auth: {
-                    bearer: token
-                },
-                url: `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4/projects/${repoId}`
+                token,
+                route: `projects/${repoId}`,
+                caller: '_getPermissions'
             })
             .then(response => {
-                checkResponseError(response, '_getPermissions');
-
                 const result = {
                     admin: false,
                     push: false,
@@ -835,19 +793,12 @@ class GitlabScm extends Scm {
 
         return this.breaker
             .runCommand({
-                json: true,
                 method: 'GET',
-                auth: {
-                    bearer: token
-                },
-                url:
-                    `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
-                    `/projects/${repoId}/repository` +
-                    `/branches/${branch}`
+                token,
+                route: `projects/${repoId}/repository/branches/${branch}`,
+                caller: '_getCommitSha'
             })
             .then(response => {
-                checkResponseError(response, '_getCommitSha');
-
                 return response.body.commit.id;
             });
     }
@@ -864,14 +815,10 @@ class GitlabScm extends Scm {
 
         try {
             prComments = await this.breaker.runCommand({
-                json: true,
                 method: 'GET',
-                auth: {
-                    bearer: this.config.commentUserToken
-                },
-                url:
-                    `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
-                    `/projects/${repoId}/merge_requests/${prNum}/notes`
+                token: this.config.commentUserToken,
+                route: `projects/${repoId}/merge_requests/${prNum}/notes`,
+                caller: 'prComments'
             });
 
             return { comments: prComments.body };
@@ -894,17 +841,13 @@ class GitlabScm extends Scm {
     async editPrComment(commentId, repoId, prNum, comment) {
         try {
             const pullRequestComment = await this.breaker.runCommand({
-                json: true,
                 method: 'PUT',
-                auth: {
-                    bearer: this.config.commentUserToken // need to use a token with public_repo permissions
-                },
-                url:
-                    `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
-                    `/projects/${repoId}/merge_requests/${prNum}/notes/${commentId}`,
-                qs: {
+                token: this.config.commentUserToken, // need to use a token with public_repo permissions
+                route: `projects/${repoId}/merge_requests/${prNum}/notes/${commentId}`,
+                json: {
                     body: comment
-                }
+                },
+                caller: 'editPrComment'
             });
 
             return pullRequestComment;
@@ -957,17 +900,13 @@ class GitlabScm extends Scm {
 
         try {
             const pullRequestComment = await this.breaker.runCommand({
-                json: true,
                 method: 'POST',
-                auth: {
-                    bearer: this.config.commentUserToken
-                },
-                url:
-                    `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
-                    `/projects/${repoId}/merge_requests/${prNum}/notes`,
-                qs: {
+                token: this.config.commentUserToken,
+                route: `projects/${repoId}/merge_requests/${prNum}/notes`,
+                json: {
                     body: comment
-                }
+                },
+                caller: 'createPullRequestComment'
             });
 
             if (pullRequestComment.statusCode !== 200) {
@@ -1022,26 +961,18 @@ class GitlabScm extends Scm {
             ? `Screwdriver/${pipelineId}/${context}`
             : `Screwdriver/${pipelineId}/${jobName.replace(/^PR-\d+/g, 'PR')}`; // (e.g. Screwdriver/12/PR:main)
 
-        return this.breaker
-            .runCommand({
-                json: true,
-                method: 'POST',
-                auth: {
-                    bearer: token
-                },
-                url:
-                    `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
-                    `/projects/${repoInfo.repoId}/statuses/${sha}`,
-                qs: {
-                    context: statusTitle,
-                    description: description || DESCRIPTION_MAP[buildStatus],
-                    state: STATE_MAP[buildStatus] || 'failed',
-                    target_url: url
-                }
-            })
-            .then(response => {
-                checkResponseError(response, '_updateCommitStatus');
-            });
+        return this.breaker.runCommand({
+            method: 'POST',
+            token,
+            route: `projects/${repoInfo.repoId}/statuses/${sha}`,
+            json: {
+                context: statusTitle,
+                description: description || DESCRIPTION_MAP[buildStatus],
+                state: STATE_MAP[buildStatus] || 'failed',
+                target_url: url
+            },
+            caller: '_updateCommitStatus'
+        });
     }
 
     /**
@@ -1061,21 +992,15 @@ class GitlabScm extends Scm {
 
         return this.breaker
             .runCommand({
-                json: true,
                 method: 'GET',
-                auth: {
-                    bearer: token
-                },
-                url:
-                    `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
-                    `/projects/${repoId}/repository/files/${encodeURIComponent(fullPath)}`,
-                qs: {
+                token,
+                route: `projects/${repoId}/repository/files/${encodeURIComponent(fullPath)}`,
+                json: {
                     ref: ref || branch
-                }
+                },
+                caller: '_getFile'
             })
             .then(response => {
-                checkResponseError(response, '_getFile');
-
                 return Buffer.from(response.body.content, response.body.encoding).toString();
             });
     }
@@ -1097,14 +1022,10 @@ class GitlabScm extends Scm {
                 const { repoId } = getScmUriParts(scmUri);
 
                 const files = await this.breaker.runCommand({
-                    json: true,
                     method: 'GET',
-                    auth: {
-                        bearer: token
-                    },
-                    url:
-                        `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
-                        `/projects/${repoId}/merge_requests/${prNum}/changes`
+                    token,
+                    route: `projects/${repoId}/merge_requests/${prNum}/changes`,
+                    caller: '_getChangedFiles'
                 });
 
                 return files.body.changes.map(file => file.new_path);
@@ -1143,14 +1064,10 @@ class GitlabScm extends Scm {
 
         return this.breaker
             .runCommand({
-                json: true,
                 method: 'GET',
-                auth: {
-                    bearer: token
-                },
-                url:
-                    `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
-                    `/projects/${repoId}/merge_requests/${prNum}`
+                token,
+                route: `projects/${repoId}/merge_requests/${prNum}`,
+                caller: '_getPrInfo'
             })
             .then(pullRequestInfo => {
                 const prSource =
@@ -1222,20 +1139,14 @@ class GitlabScm extends Scm {
         return this.breaker
             .runCommand({
                 method: 'GET',
-                json: true,
-                auth: {
-                    bearer: token
-                },
-                qs: {
+                token,
+                json: {
                     state: 'opened'
                 },
-                url:
-                    `${this.config.gitlabProtocol}://${this.config.gitlabHost}/api/v4` +
-                    `/projects/${repoInfo.repoId}/merge_requests`
+                route: `projects/${repoInfo.repoId}/merge_requests`,
+                caller: '_getOpenedPRs'
             })
             .then(response => {
-                checkResponseError(response, '_getOpenedPRs');
-
                 const prList = response.body;
 
                 return prList.map(pr => ({

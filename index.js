@@ -84,9 +84,24 @@ class GitlabScm extends Scm {
      * @param  {Function}    callback             Callback function from gitlab API
      */
     _gitlabCommand(options, callback) {
-        const config = { ...options, ...this.gitlabConfig };
+        const config = {
+            url: `${this.gitlabConfig.prefixUrl}/${options.route}`, // Generate url
+            method: options.method
+        };
 
-        got(options.route, config)
+        delete options.method;
+        delete options.route;
+
+        // Json goes at top level of config
+        if (options.json) {
+            config.json = options.json;
+            delete options.json;
+        }
+
+        // Everything else goes into context
+        config.context = options;
+
+        got(config)
             .then(function cb() {
                 // Use "function" (not "arrow function") for getting "arguments"
                 callback(null, ...arguments);

@@ -49,10 +49,12 @@ describe('index', function() {
         });
 
         it('throws when missing token', () => {
-            return got(route, {
+            return got({
                 method: 'GET',
-                caller: '_getProject',
-                prefixUrl
+                url: `${prefixUrl}/${route}`,
+                context: {
+                    caller: '_getProject'
+                }
             })
                 .then(() => {
                     assert.fail('should not get here');
@@ -74,12 +76,13 @@ describe('index', function() {
                 .reply(200, result)
                 .persist();
 
-            return got(route, {
+            return got({
                 method: 'GET',
-                caller: '_getProject',
-                prefixUrl,
-                token,
-                route
+                url: `${prefixUrl}/${route}`,
+                context: {
+                    caller: '_getProject',
+                    token
+                }
             }).then(res => {
                 assert.strictEqual(res.requestUrl, `${prefixUrl}/${route}`);
                 assert.deepEqual(res.body, result);
@@ -98,12 +101,13 @@ describe('index', function() {
                 })
                 .persist();
 
-            return got(route, {
+            return got({
                 method: 'GET',
-                caller: '_getProject',
-                prefixUrl,
-                token,
-                route
+                url: `${prefixUrl}/${route}`,
+                context: {
+                    caller: '_getProject',
+                    token
+                }
             })
                 .then(() => {
                     assert.fail('should not get here');

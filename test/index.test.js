@@ -31,8 +31,7 @@ describe('index', function() {
 
     let GitlabScm;
     let scm;
-    let gotMock;
-    let gotMockClass;
+    let requestMock;
 
     before(() => {
         mockery.enable({
@@ -42,9 +41,8 @@ describe('index', function() {
     });
 
     beforeEach(() => {
-        gotMock = sinon.stub();
-        gotMockClass = { extend: sinon.stub().returns(gotMock) };
-        mockery.registerMock('got', gotMockClass);
+        requestMock = sinon.stub();
+        mockery.registerMock('screwdriver-request', requestMock);
 
         /* eslint-disable global-require */
         GitlabScm = require('../index');
@@ -126,7 +124,7 @@ describe('index', function() {
                 }
             };
             expected = 'gitlab.com:12345:master';
-            gotMock.resolves(fakeResponse);
+            requestMock.resolves(fakeResponse);
         });
 
         it('resolves to the correct parsed url for ssh', () =>
@@ -137,7 +135,7 @@ describe('index', function() {
                     scmContext
                 })
                 .then(parsed => {
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.equal(parsed, expected);
                 }));
 
@@ -151,7 +149,7 @@ describe('index', function() {
                     scmContext
                 })
                 .then(parsed => {
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.equal(parsed, expected);
                 });
         });
@@ -166,7 +164,7 @@ describe('index', function() {
                     scmContext
                 })
                 .then(parsed => {
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.equal(parsed, expected);
                 });
         });
@@ -181,7 +179,7 @@ describe('index', function() {
                     scmContext
                 })
                 .then(parsed => {
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.equal(parsed, expected);
                 });
         });
@@ -189,7 +187,7 @@ describe('index', function() {
         it('rejects if request fails', () => {
             const err = new Error('Gitlab API error');
 
-            gotMock.rejects(err);
+            requestMock.rejects(err);
 
             return scm
                 .parseUrl({
@@ -199,7 +197,7 @@ describe('index', function() {
                 })
                 .then(() => assert.fail('Should not get here'))
                 .catch(error => {
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.deepEqual(error, err);
                 });
         });
@@ -209,7 +207,7 @@ describe('index', function() {
 
             err.status = 404;
 
-            gotMock.rejects(err);
+            requestMock.rejects(err);
 
             return scm
                 .parseUrl({
@@ -219,7 +217,7 @@ describe('index', function() {
                 })
                 .then(() => assert.fail('Should not get here'))
                 .catch(error => {
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.match(error.message, '404 Reason "404 Project Not Found" Caller "_parseUrl"');
                     assert.match(error.status, 404);
                 });
@@ -230,7 +228,7 @@ describe('index', function() {
 
             err.status = 500;
 
-            gotMock.rejects(err);
+            requestMock.rejects(err);
 
             return scm
                 .parseUrl({
@@ -240,7 +238,7 @@ describe('index', function() {
                 })
                 .then(() => assert.fail('Should not get here'))
                 .catch(error => {
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.match(error.message, '500 Reason "Internal Server Error" Caller "_parseUrl"');
                     assert.match(error.status, 500);
                 });
@@ -426,7 +424,7 @@ describe('index', function() {
                     }
                 ]
             };
-            gotMock.resolves(fakeResponse);
+            requestMock.resolves(fakeResponse);
         });
 
         it('resolves to correct decorated author', () => {
@@ -444,7 +442,7 @@ describe('index', function() {
                     token
                 })
                 .then(decorated => {
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.deepEqual(decorated, expected);
                 });
         });
@@ -454,7 +452,7 @@ describe('index', function() {
 
             err.status = 404;
 
-            gotMock.rejects(err);
+            requestMock.rejects(err);
 
             return scm
                 .decorateAuthor({
@@ -466,7 +464,7 @@ describe('index', function() {
                     assert.fail('Should not get here');
                 })
                 .catch(error => {
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.match(error.message, '404 Reason "Resource not found" Caller "_decorateAuthor"');
                     assert.match(error.status, 404);
                 });
@@ -477,7 +475,7 @@ describe('index', function() {
 
             err.status = 500;
 
-            gotMock.rejects(err);
+            requestMock.rejects(err);
 
             return scm
                 .decorateAuthor({
@@ -489,7 +487,7 @@ describe('index', function() {
                     assert.fail('Should not get here');
                 })
                 .catch(error => {
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.equal(error, err);
                 });
         });
@@ -515,7 +513,7 @@ describe('index', function() {
                     caller: 'lookupScmUri'
                 }
             };
-            gotMock.resolves(fakeResponse);
+            requestMock.resolves(fakeResponse);
         });
 
         it('resolves to correct decorated url object', () => {
@@ -533,7 +531,7 @@ describe('index', function() {
                     scmContext
                 })
                 .then(decorated => {
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.deepEqual(decorated, expected);
                 });
         });
@@ -553,7 +551,7 @@ describe('index', function() {
                     scmContext
                 })
                 .then(decorated => {
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.deepEqual(decorated, expected);
                 });
         });
@@ -563,7 +561,7 @@ describe('index', function() {
 
             err.status = 404;
 
-            gotMock.rejects(err);
+            requestMock.rejects(err);
 
             return scm
                 .decorateUrl({
@@ -575,7 +573,7 @@ describe('index', function() {
                     assert.fail('Should not get here');
                 })
                 .catch(error => {
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.match(error.message, '404 Reason "Resource not found" Caller "lookupScmUri"');
                     assert.match(error.status, 404);
                 });
@@ -586,7 +584,7 @@ describe('index', function() {
 
             err.status = 500;
 
-            gotMock.rejects(err);
+            requestMock.rejects(err);
 
             return scm
                 .decorateUrl({
@@ -598,7 +596,7 @@ describe('index', function() {
                     assert.fail('Should not get here');
                 })
                 .catch(error => {
-                    assert.called(gotMock);
+                    assert.called(requestMock);
                     assert.equal(error, err);
                 });
         });
@@ -641,8 +639,8 @@ describe('index', function() {
                 body: testCommit
             };
 
-            gotMock.onFirstCall().resolves(lookupScmUriResponse);
-            gotMock.onSecondCall().resolves(commitLookupResponse);
+            requestMock.onFirstCall().resolves(lookupScmUriResponse);
+            requestMock.onSecondCall().resolves(commitLookupResponse);
         });
 
         it('resolves to correct decorated object', () => {
@@ -672,9 +670,9 @@ describe('index', function() {
                     scmContext
                 })
                 .then(decorated => {
-                    assert.calledWith(gotMock.firstCall, lookupScmUri);
-                    assert.calledWith(gotMock.secondCall, commitLookup);
-                    assert.calledTwice(gotMock);
+                    assert.calledWith(requestMock.firstCall, lookupScmUri);
+                    assert.calledWith(requestMock.secondCall, commitLookup);
+                    assert.calledTwice(requestMock);
                     assert.deepEqual(decorated, expected);
                 });
         });
@@ -684,8 +682,8 @@ describe('index', function() {
 
             err.status = 404;
 
-            gotMock.onFirstCall().resolves(lookupScmUriResponse);
-            gotMock.onSecondCall().rejects(err);
+            requestMock.onFirstCall().resolves(lookupScmUriResponse);
+            requestMock.onSecondCall().rejects(err);
 
             return scm
                 .decorateCommit({
@@ -698,7 +696,7 @@ describe('index', function() {
                     assert.fail('Should not get here');
                 })
                 .catch(error => {
-                    // assert.calledTwice(gotMock);
+                    // assert.calledTwice(requestMock);
                     assert.match(
                         error.message,
                         '404 Reason "Resource not found" Caller "_decorateCommit: commitLookup"'
@@ -729,7 +727,7 @@ describe('index', function() {
                     }
                 }
             };
-            gotMock.resolves(fakeResponse);
+            requestMock.resolves(fakeResponse);
         });
 
         it('resolves to correct commit sha', () =>
@@ -740,7 +738,7 @@ describe('index', function() {
                     scmContext
                 })
                 .then(sha => {
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.deepEqual(sha, 'hashValue');
                 }));
 
@@ -749,7 +747,7 @@ describe('index', function() {
 
             err.status = 404;
 
-            gotMock.rejects(err);
+            requestMock.rejects(err);
 
             return scm
                 .getCommitSha({
@@ -761,7 +759,7 @@ describe('index', function() {
                     assert.fail('Should not get here');
                 })
                 .catch(error => {
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.match(error.message, '404 Reason "Resource not found" Caller "_getCommitSha"');
                     assert.match(error.status, 404);
                 });
@@ -770,7 +768,7 @@ describe('index', function() {
         it('rejects if fails', () => {
             const err = new Error('Gitlab API error');
 
-            gotMock.rejects(err);
+            requestMock.rejects(err);
 
             return scm
                 .getCommitSha({
@@ -782,7 +780,7 @@ describe('index', function() {
                     assert.fail('Should not get here');
                 })
                 .catch(error => {
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.equal(error, err);
                 });
         });
@@ -815,11 +813,11 @@ describe('index', function() {
                 statusCode: 200,
                 body: testPrComments
             };
-            gotMock.onFirstCall().resolves({
+            requestMock.onFirstCall().resolves({
                 statusCode: 200,
                 body: []
             });
-            gotMock.onSecondCall().resolves(fakeResponse);
+            requestMock.onSecondCall().resolves(fakeResponse);
         });
 
         it('resolves to correct PR metadata', () =>
@@ -832,7 +830,7 @@ describe('index', function() {
                     scmContext
                 })
                 .then(result => {
-                    assert.calledWith(gotMock.secondCall, expectedOptions);
+                    assert.calledWith(requestMock.secondCall, expectedOptions);
                     assert.deepEqual(result, {
                         commentId: 126861726,
                         createTime: '2018-12-21T20:33:33.157Z',
@@ -841,8 +839,8 @@ describe('index', function() {
                 }));
 
         it('resolves to correct PR metadata for edited comment', () => {
-            gotMock.onFirstCall().resolves(fakeCommentsResponse);
-            gotMock.onSecondCall().resolves(fakeResponse);
+            requestMock.onFirstCall().resolves(fakeCommentsResponse);
+            requestMock.onSecondCall().resolves(fakeResponse);
 
             return scm
                 .addPrComment({
@@ -853,7 +851,7 @@ describe('index', function() {
                     scmContext
                 })
                 .then(result => {
-                    assert.calledWith(gotMock.firstCall, {
+                    assert.calledWith(requestMock.firstCall, {
                         url: `${prefixUrl}/${apiUrl}`,
                         method: 'GET',
                         context: {
@@ -861,7 +859,7 @@ describe('index', function() {
                             caller: 'prComments'
                         }
                     });
-                    assert.calledWith(gotMock.secondCall, {
+                    assert.calledWith(requestMock.secondCall, {
                         url: `${prefixUrl}/${apiUrl}/575311268`,
                         method: 'PUT',
                         context: {
@@ -887,7 +885,7 @@ describe('index', function() {
                     message: 'Resource not found'
                 }
             };
-            gotMock.onSecondCall().resolves(fakeResponse);
+            requestMock.onSecondCall().resolves(fakeResponse);
 
             return scm
                 .addPrComment({
@@ -901,7 +899,7 @@ describe('index', function() {
                     assert.isNull(data);
                 })
                 .catch(error => {
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.match(error.message, '404 Reason "Resource not found" Caller "_addPrComment"');
                     assert.match(error.status, 404);
                 });
@@ -914,8 +912,8 @@ describe('index', function() {
                     message: 'Resource not found'
                 }
             };
-            gotMock.onFirstCall().resolves(fakeCommentsResponse, fakeCommentsResponse.body);
-            gotMock.onSecondCall().resolves(fakeResponse);
+            requestMock.onFirstCall().resolves(fakeCommentsResponse, fakeCommentsResponse.body);
+            requestMock.onSecondCall().resolves(fakeResponse);
 
             return scm
                 .addPrComment({
@@ -929,7 +927,7 @@ describe('index', function() {
                     assert.isNull(data);
                 })
                 .catch(error => {
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.match(error.message, '404 Reason "Resource not found" Caller "_addPrComment"');
                     assert.match(error.status, 404);
                 });
@@ -967,12 +965,12 @@ describe('index', function() {
                 token,
                 path: 'path/to/file.txt'
             };
-            gotMock.resolves(fakeResponse);
+            requestMock.resolves(fakeResponse);
         });
 
         it('resolves to correct commit sha', () =>
             scm.getFile(params).then(content => {
-                assert.calledWith(gotMock, expectedOptions);
+                assert.calledWith(requestMock, expectedOptions);
                 assert.deepEqual(content, 'dataValue');
             }));
 
@@ -981,7 +979,7 @@ describe('index', function() {
             expectedOptions.url = `${prefixUrl}/projects/repoId/repository/files/path%2Fto%2Fsource%2Fpath%2Fto%2Ffile.txt`;
 
             return scm.getFile(params).then(content => {
-                assert.calledWith(gotMock, expectedOptions);
+                assert.calledWith(requestMock, expectedOptions);
                 assert.deepEqual(content, 'dataValue');
             });
         });
@@ -991,7 +989,7 @@ describe('index', function() {
 
             err.status = 404;
 
-            gotMock.rejects(err);
+            requestMock.rejects(err);
 
             return scm
                 .getFile(params)
@@ -999,7 +997,7 @@ describe('index', function() {
                     assert.fail('Should not get here');
                 })
                 .catch(error => {
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.match(error.message, '404 Reason "Resource not found" Caller "_getFile"');
                     assert.match(error.status, 404);
                 });
@@ -1008,7 +1006,7 @@ describe('index', function() {
         it('rejects if fails', () => {
             const err = new Error('Gitlab API error');
 
-            gotMock.rejects(err);
+            requestMock.rejects(err);
 
             return scm
                 .getFile(params)
@@ -1016,7 +1014,7 @@ describe('index', function() {
                     assert.fail('Should not get here');
                 })
                 .catch(error => {
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.equal(error, err);
                 });
         });
@@ -1048,7 +1046,7 @@ describe('index', function() {
                 }
             };
 
-            gotMock.resolves(fakeResponse);
+            requestMock.resolves(fakeResponse);
         });
 
         it('get correct permissions for level 50', () =>
@@ -1059,8 +1057,8 @@ describe('index', function() {
                     scmContext
                 })
                 .then(permissions => {
-                    assert.calledOnce(gotMock);
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledOnce(requestMock);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.deepEqual(permissions, {
                         admin: true,
                         push: true,
@@ -1080,7 +1078,7 @@ describe('index', function() {
                 }
             };
 
-            gotMock.resolves(fakeResponse);
+            requestMock.resolves(fakeResponse);
 
             return scm
                 .getPermissions({
@@ -1089,8 +1087,8 @@ describe('index', function() {
                     scmContext
                 })
                 .then(permissions => {
-                    assert.calledOnce(gotMock);
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledOnce(requestMock);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.deepEqual(permissions, {
                         admin: true,
                         push: true,
@@ -1111,7 +1109,7 @@ describe('index', function() {
                 }
             };
 
-            gotMock.resolves(fakeResponse);
+            requestMock.resolves(fakeResponse);
 
             return scm
                 .getPermissions({
@@ -1120,8 +1118,8 @@ describe('index', function() {
                     scmContext
                 })
                 .then(permissions => {
-                    assert.calledOnce(gotMock);
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledOnce(requestMock);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.deepEqual(permissions, {
                         admin: false,
                         push: true,
@@ -1142,7 +1140,7 @@ describe('index', function() {
                 }
             };
 
-            gotMock.resolves(fakeResponse);
+            requestMock.resolves(fakeResponse);
 
             return scm
                 .getPermissions({
@@ -1151,8 +1149,8 @@ describe('index', function() {
                     scmContext
                 })
                 .then(permissions => {
-                    assert.calledOnce(gotMock);
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledOnce(requestMock);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.deepEqual(permissions, {
                         admin: false,
                         push: false,
@@ -1173,7 +1171,7 @@ describe('index', function() {
                 }
             };
 
-            gotMock.resolves(fakeResponse);
+            requestMock.resolves(fakeResponse);
 
             return scm
                 .getPermissions({
@@ -1182,8 +1180,8 @@ describe('index', function() {
                     scmContext
                 })
                 .then(permissions => {
-                    assert.calledOnce(gotMock);
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledOnce(requestMock);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.deepEqual(permissions, {
                         admin: false,
                         push: false,
@@ -1204,7 +1202,7 @@ describe('index', function() {
                 }
             };
 
-            gotMock.resolves(fakeResponse);
+            requestMock.resolves(fakeResponse);
 
             return scm
                 .getPermissions({
@@ -1213,8 +1211,8 @@ describe('index', function() {
                     scmContext
                 })
                 .then(permissions => {
-                    assert.calledOnce(gotMock);
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledOnce(requestMock);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.deepEqual(permissions, {
                         admin: false,
                         push: false,
@@ -1229,7 +1227,7 @@ describe('index', function() {
                 body: {}
             };
 
-            gotMock.resolves(fakeResponse);
+            requestMock.resolves(fakeResponse);
 
             return scm
                 .getPermissions({
@@ -1238,8 +1236,8 @@ describe('index', function() {
                     scmContext
                 })
                 .then(permissions => {
-                    assert.calledOnce(gotMock);
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledOnce(requestMock);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.deepEqual(permissions, {
                         admin: false,
                         push: false,
@@ -1253,7 +1251,7 @@ describe('index', function() {
 
             err.status = 404;
 
-            gotMock.rejects(err);
+            requestMock.rejects(err);
 
             return scm
                 .getPermissions({
@@ -1273,7 +1271,7 @@ describe('index', function() {
         it('rejects if fails', () => {
             const error = new Error('Gitlab API error');
 
-            gotMock.rejects(error);
+            requestMock.rejects(error);
 
             return scm
                 .getPermissions({
@@ -1325,12 +1323,12 @@ describe('index', function() {
                     description: 'Everything looks good!'
                 }
             };
-            gotMock.resolves(fakeResponse);
+            requestMock.resolves(fakeResponse);
         });
 
         it('successfully update status', () =>
             scm.updateCommitStatus(config).then(() => {
-                assert.calledWith(gotMock, expectedOptions);
+                assert.calledWith(requestMock, expectedOptions);
             }));
 
         it('successfully update status with correct values', () => {
@@ -1340,7 +1338,7 @@ describe('index', function() {
             expectedOptions.json.description = 'Did not work as expected.';
 
             return scm.updateCommitStatus(config).then(() => {
-                assert.calledWith(gotMock, expectedOptions);
+                assert.calledWith(requestMock, expectedOptions);
             });
         });
 
@@ -1349,7 +1347,7 @@ describe('index', function() {
 
             err.status = 401;
 
-            gotMock.rejects(err);
+            requestMock.rejects(err);
 
             return scm
                 .updateCommitStatus(config)
@@ -1357,7 +1355,7 @@ describe('index', function() {
                     assert.fail('Should not get here');
                 })
                 .catch(error => {
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.match(error.message, '401 Reason "Access token expired" Caller "_updateCommitStatus"');
                     assert.match(error.status, 401);
                 });
@@ -1366,7 +1364,7 @@ describe('index', function() {
         it('rejects if fails', () => {
             const err = new Error('Gitlab API error');
 
-            gotMock.rejects(err);
+            requestMock.rejects(err);
 
             return scm
                 .updateCommitStatus(config)
@@ -1374,7 +1372,7 @@ describe('index', function() {
                     assert.fail('Should not get here');
                 })
                 .catch(error => {
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.equal(error, err);
                 });
         });
@@ -1444,7 +1442,7 @@ describe('index', function() {
                     caller: '_getChangedFiles'
                 }
             };
-            gotMock.resolves(fakeResponse);
+            requestMock.resolves(fakeResponse);
         });
 
         it('returns changed files for a push event payload', () => {
@@ -1471,7 +1469,7 @@ describe('index', function() {
                     prNum: 1
                 })
                 .then(result => {
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.deepEqual(result, ['test/screwdriver.yaml', 'README.md', 'screwdriver.yaml']);
                 }));
 
@@ -1528,12 +1526,12 @@ describe('index', function() {
                     caller: '_getPrInfo'
                 }
             };
-            gotMock.resolves(fakeResponse);
+            requestMock.resolves(fakeResponse);
         });
 
         it('returns a pull request with the given prNum', () =>
             scm._getPrInfo(config).then(data => {
-                assert.calledWith(gotMock, expectedOptions);
+                assert.calledWith(requestMock, expectedOptions);
                 assert.deepEqual(data, {
                     name: 'PR-1',
                     ref: 'pull/1/merge',
@@ -1553,7 +1551,7 @@ describe('index', function() {
         it('rejects when failing to lookup the SCM URI information', () => {
             const testError = new Error('testError');
 
-            gotMock.rejects(testError);
+            requestMock.rejects(testError);
 
             return scm._getPrInfo(config).then(assert.fail, err => {
                 assert.instanceOf(err, Error);
@@ -1661,7 +1659,7 @@ describe('index', function() {
         const apiUrl = 'projects/repoId/hooks';
 
         beforeEach(() => {
-            gotMock.onSecondCall().resolves({
+            requestMock.onSecondCall().resolves({
                 statusCode: 200
             });
             expectedOptionsFind = {
@@ -1693,7 +1691,7 @@ describe('index', function() {
                 statusCode: 200
             };
 
-            gotMock.onFirstCall().resolves(findWebhookResponse);
+            requestMock.onFirstCall().resolves(findWebhookResponse);
 
             /* eslint-disable no-underscore-dangle */
             return scm
@@ -1705,8 +1703,8 @@ describe('index', function() {
                     actions: ['merge_requests_events', 'push_events']
                 })
                 .then(() => {
-                    assert.calledWith(gotMock.firstCall, expectedOptionsFind);
-                    assert.calledWith(gotMock.secondCall, expectedOptionsCreate);
+                    assert.calledWith(requestMock.firstCall, expectedOptionsFind);
+                    assert.calledWith(requestMock.secondCall, expectedOptionsCreate);
                 });
         });
 
@@ -1734,7 +1732,7 @@ describe('index', function() {
             expectedOptionsCreate.method = 'PUT';
             expectedOptionsCreate.url = `${prefixUrl}/${apiUrl}/${hookId}`;
 
-            gotMock.onFirstCall().resolves(findWebhookResponse);
+            requestMock.onFirstCall().resolves(findWebhookResponse);
 
             /* eslint-disable no-underscore-dangle */
             return scm
@@ -1746,8 +1744,8 @@ describe('index', function() {
                     actions: ['merge_requests_events', 'push_events']
                 })
                 .then(() => {
-                    assert.calledWith(gotMock.firstCall, expectedOptionsFind);
-                    assert.calledWith(gotMock.secondCall, expectedOptionsCreate);
+                    assert.calledWith(requestMock.firstCall, expectedOptionsFind);
+                    assert.calledWith(requestMock.secondCall, expectedOptionsCreate);
                 });
         });
 
@@ -1758,7 +1756,7 @@ describe('index', function() {
 
             err.status = 403;
 
-            gotMock.onFirstCall().rejects(err);
+            requestMock.onFirstCall().rejects(err);
 
             /* eslint-disable no-underscore-dangle */
             return scm
@@ -1791,8 +1789,8 @@ describe('index', function() {
 
             err.status = 403;
 
-            gotMock.onFirstCall().resolves(findWebhookResponse);
-            gotMock.onSecondCall().rejects(err);
+            requestMock.onFirstCall().resolves(findWebhookResponse);
+            requestMock.onSecondCall().rejects(err);
 
             /* eslint-disable no-underscore-dangle */
             return scm
@@ -1841,8 +1839,8 @@ describe('index', function() {
 
             err.status = 403;
 
-            gotMock.onFirstCall().resolves(findWebhookResponse);
-            gotMock.onSecondCall().rejects(err);
+            requestMock.onFirstCall().resolves(findWebhookResponse);
+            requestMock.onSecondCall().rejects(err);
 
             /* eslint-disable no-underscore-dangle */
             return scm
@@ -1880,7 +1878,7 @@ describe('index', function() {
         };
 
         it('returns response of expected format from Gitlab', () => {
-            gotMock.resolves({
+            requestMock.resolves({
                 statusCode: 200,
                 body: [
                     {
@@ -1915,7 +1913,7 @@ describe('index', function() {
                     token
                 })
                 .then(response => {
-                    assert.calledWith(gotMock, expectedOptions);
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.deepEqual(response, [
                         {
                             name: 'PR-2',

@@ -9,7 +9,7 @@ const Path = require('path');
 const Schema = require('screwdriver-data-schema');
 const Scm = require('screwdriver-scm-base');
 const logger = require('screwdriver-logger');
-const got = require('./lib/got');
+const request = require('screwdriver-request');
 
 const DEFAULT_AUTHOR = {
     avatar: 'https://cd.screwdriver.cd/assets/unknown_user.png',
@@ -101,7 +101,7 @@ class GitlabScm extends Scm {
         // Everything else goes into context
         config.context = options;
 
-        got(config)
+        request(config)
             .then(function cb() {
                 // Use "function" (not "arrow function") for getting "arguments"
                 callback(null, ...arguments);

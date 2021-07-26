@@ -46,11 +46,10 @@
   "dependencies": {
     "@hapi/hoek": "^9.2.0",
     "circuit-fuses": "^4.1.0",
-    "got": "^11.8.2",
     "joi": "^17.4.1",
-    "request": "^2.80.0",
     "screwdriver-data-schema": "^21.7.0",
     "screwdriver-logger": "^1.1.0",
+    "screwdriver-request": "^1.0.0",
     "screwdriver-scm-base": "^7.3.0"
   },
   "release": {

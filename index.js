@@ -73,33 +73,30 @@ function getScmUriParts(scmUri) {
 
 class GitlabScm extends Scm {
     /**
-     * Github command to run
+     * GitLab command to run
      * @method _gitlabCommand
      * @param  {Object}      options              An object that tells what command & params to run
-     * @param  {String}      options.action       Github method. For example: get
-     * @param  {String}      options.token        Github token used for authentication of requests
-     * @param  {Object}      options.params       Parameters to run with
-     * @param  {String}      [options.scopeType]  Type of request to make. Default is 'repos'
-     * @param  {String}      [options.route]      Route for gitlab.request()
-     * @param  {Function}    callback             Callback function from gitlab API
+     * @param  {String}      options.caller       Name of method that is making the request
+     * @param  {Object}      [options.json]       Body for request to make
+     * @param  {String}      options.method       GitLab method. For example: get
+     * @param  {String}      options.route        Route for gitlab.request()
+     * @param  {String}      options.token        GitLab token used for authentication of requests
+     * @param  {Function}    callback             Callback function from GitLab API
      */
     _gitlabCommand(options, callback) {
-        const config = {
-            url: `${this.gitlabConfig.prefixUrl}/${options.route}`, // Generate url
-            method: options.method
-        };
+        const config = options;
 
-        delete options.method;
-        delete options.route;
-
-        // Json goes at top level of config
-        if (options.json) {
-            config.json = options.json;
-            delete options.json;
-        }
+        // Generate URL
+        config.url = `${this.gitlabConfig.prefixUrl}/${options.route}`;
+        delete config.route;
 
         // Everything else goes into context
-        config.context = options;
+        config.context = {
+            caller: options.caller,
+            token: options.token
+        };
+        delete config.caller;
+        delete config.token;
 
         request(config)
             .then(function cb() {
@@ -113,15 +110,15 @@ class GitlabScm extends Scm {
      * Constructor
      * @method constructor
      * @param  {Object}  options                         Configuration options
-     * @param  {String}  [options.gitlabHost=null]       If using Gitlab, the host/port of the deployed instance
-     * @param  {String}  [options.gitlabProtocol=https]  If using Gitlab, the protocol to use
-     * @param  {String}  [options.username=sd-buildbot]           Gitlab username for checkout
-     * @param  {String}  [options.email=dev-null@screwdriver.cd]  Gitlab user email for checkout
+     * @param  {String}  [options.gitlabHost=null]       If using GitLab, the host/port of the deployed instance
+     * @param  {String}  [options.gitlabProtocol=https]  If using GitLab, the protocol to use
+     * @param  {String}  [options.username=sd-buildbot]           GitLab username for checkout
+     * @param  {String}  [options.email=dev-null@screwdriver.cd]  GitLab user email for checkout
      * @param  {String}  [options.commentUserToken]      Token with public repo permission
      * @param  {Object}  [options.readOnly={}]           Read-only SCM instance config with: enabled, username, accessToken, cloneType
      * @param  {Boolean} [options.https=false]           Is the Screwdriver API running over HTTPS
-     * @param  {String}  options.oauthClientId           OAuth Client ID provided by Gitlab application
-     * @param  {String}  options.oauthClientSecret       OAuth Client Secret provided by Gitlab application
+     * @param  {String}  options.oauthClientId           OAuth Client ID provided by GitLab application
+     * @param  {String}  options.oauthClientSecret       OAuth Client Secret provided by GitLab application
      * @param  {Object}  [options.fusebox={}]            Circuit Breaker configuration
      * @return {GitlabScm}
      */
@@ -187,7 +184,7 @@ class GitlabScm extends Scm {
      * @async lookupScmUri
      * @param  {Object}     config Config object
      * @param  {Object}     config.scmUri The SCM URI to look up relevant info
-     * @param  {Object}     config.token  Service token to authenticate with Gitlab
+     * @param  {Object}     config.token  Service token to authenticate with GitLab
      * @return {Promise}                  Resolves to an object containing
      *                                    repository-related information
      */
@@ -293,12 +290,12 @@ class GitlabScm extends Scm {
     /** Extended from screwdriver-scm-base */
 
     /**
-     * Adds the Screwdriver webhook to the Gitlab repository
+     * Adds the Screwdriver webhook to the GitLab repository
      * @async _addWebhook
      * @param  {Object}    config            Config object
      * @param  {String}    config.scmUri     The SCM URI to add the webhook to
      * @param  {String}    config.scmContext The scm conntext to which user belongs
-     * @param  {String}    config.token      Service token to authenticate with Gitlab
+     * @param  {String}    config.token      Service token to authenticate with GitLab
      * @param  {String}    config.webhookUrl The URL to use for the webhook notifications
      * @param  {String}    config.actions    Actions for the webhook events
      * @return {Promise}                     Resolve means operation completed without failure.
@@ -622,7 +619,7 @@ class GitlabScm extends Scm {
      * @async _decorateUrl
      * @param  {Config}    config            Configuration object
      * @param  {String}    config.scmUri     The SCM URI the commit belongs to
-     * @param  {String}    config.token      Service token to authenticate with Github
+     * @param  {String}    config.token      Service token to authenticate with GitLab
      * @param  {String}    config.scmContext The scm context to which user belongs
      * @return {Promise}
      */
@@ -647,7 +644,7 @@ class GitlabScm extends Scm {
      * @param  {Object}        config            Configuration object
      * @param  {Object}        config.scmUri     SCM URI the commit belongs to
      * @param  {Object}        config.sha        SHA to decorate data with
-     * @param  {Object}        config.token      Service token to authenticate with Github
+     * @param  {Object}        config.token      Service token to authenticate with GitLab
      * @param  {Object}        config.scmContext Context to which user belongs
      * @return {Promise}
      */
@@ -689,10 +686,10 @@ class GitlabScm extends Scm {
     }
 
     /**
-     * Decorate the author based on the Gitlab service
+     * Decorate the author based on the GitLab service
      * @async _decorateAuthor
      * @param  {Object}        config            Configuration object
-     * @param  {Object}        config.token      Service token to authenticate with Gitlab
+     * @param  {Object}        config.token      Service token to authenticate with GitLab
      * @param  {Object}        config.username   Username to query more information for
      * @return {Promise}
      */
@@ -1021,12 +1018,12 @@ class GitlabScm extends Scm {
     }
 
     /**
-     * Get the changed files from a Github event
+     * Get the changed files from a GitLab event
      * @async  _getChangedFiles
      * @param  {Object}   config
      * @param  {String}   config.type      Can be 'pr' or 'repo'
      * @param  {Object}   [config.payload] The webhook payload received from the SCM service.
-     * @param  {String}   config.token     Service token to authenticate with Github
+     * @param  {String}   config.token     Service token to authenticate with GitLab
      * @param  {String}   [config.scmUri]  The scmUri to get PR info of
      * @param  {Integer}  [config.prNum]   The PR number
      * @return {Promise}                   Resolves to an array of filenames of the changed files
@@ -1226,7 +1223,7 @@ class GitlabScm extends Scm {
     }
 
     /**
-     * Gitlab doesn't have an equivalent endpoint to open pull request,
+     * GitLab doesn't have an equivalent endpoint to open pull request,
      * so returning null for now
      * @async _openPr
      * @param  {Object}     config                  Configuration

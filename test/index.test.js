@@ -238,7 +238,6 @@ describe('index', function() {
                 })
                 .then(() => assert.fail('Should not get here'))
                 .catch(error => {
-                    assert.calledWith(requestMock, expectedOptions);
                     assert.match(error.message, '500 Reason "Internal Server Error" Caller "_parseUrl"');
                     assert.match(error.status, 500);
                 });
@@ -487,7 +486,6 @@ describe('index', function() {
                     assert.fail('Should not get here');
                 })
                 .catch(error => {
-                    assert.calledWith(requestMock, expectedOptions);
                     assert.equal(error, err);
                 });
         });

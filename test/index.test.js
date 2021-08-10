@@ -119,8 +119,7 @@ describe('index', function() {
                 url: `${prefixUrl}/${apiUrl}`,
                 method: 'GET',
                 context: {
-                    token,
-                    caller: '_parseUrl'
+                    token
                 }
             };
             expected = 'gitlab.com:12345:master';
@@ -400,10 +399,9 @@ describe('index', function() {
             url: `${prefixUrl}/${apiUrl}`,
             method: 'GET',
             context: {
-                token,
-                caller: '_decorateAuthor'
+                token
             },
-            json: {
+            searchParams: {
                 username: 'batman'
             }
         };
@@ -507,8 +505,7 @@ describe('index', function() {
                 url: `${prefixUrl}/${apiUrl}`,
                 method: 'GET',
                 context: {
-                    token,
-                    caller: 'lookupScmUri'
+                    token
                 }
             };
             requestMock.resolves(fakeResponse);
@@ -614,8 +611,7 @@ describe('index', function() {
                 url: `${prefixUrl}/${lookupScmUriRoute}`,
                 method: 'GET',
                 context: {
-                    token,
-                    caller: 'lookupScmUri'
+                    token
                 }
             };
             lookupScmUriResponse = {
@@ -628,8 +624,7 @@ describe('index', function() {
                 url: `${prefixUrl}/${commitLookupRoute}`,
                 method: 'GET',
                 context: {
-                    token,
-                    caller: '_decorateCommit: commitLookup'
+                    token
                 }
             };
             commitLookupResponse = {
@@ -710,8 +705,7 @@ describe('index', function() {
             url: `${prefixUrl}/${apiUrl}`,
             method: 'GET',
             context: {
-                token,
-                caller: '_getCommitSha'
+                token
             }
         };
         let fakeResponse;
@@ -792,8 +786,7 @@ describe('index', function() {
             url: `${prefixUrl}/${apiUrl}`,
             method: 'POST',
             context: {
-                token: commentUserToken,
-                caller: 'createPullRequestComment'
+                token: commentUserToken
             },
             json: {
                 body: comment
@@ -853,16 +846,14 @@ describe('index', function() {
                         url: `${prefixUrl}/${apiUrl}`,
                         method: 'GET',
                         context: {
-                            token: commentUserToken,
-                            caller: 'prComments'
+                            token: commentUserToken
                         }
                     });
                     assert.calledWith(requestMock.secondCall, {
                         url: `${prefixUrl}/${apiUrl}/575311268`,
                         method: 'PUT',
                         context: {
-                            token: commentUserToken,
-                            caller: 'editPrComment'
+                            token: commentUserToken
                         },
                         json: {
                             body: 'this is a merge request comment'
@@ -943,10 +934,9 @@ describe('index', function() {
                 url: `${prefixUrl}/${apiUrl}`,
                 method: 'GET',
                 context: {
-                    token,
-                    caller: '_getFile'
+                    token
                 },
-                json: {
+                searchParams: {
                     ref: 'branchName'
                 }
             };
@@ -1028,8 +1018,7 @@ describe('index', function() {
                 url: `${prefixUrl}/${apiUrl}`,
                 method: 'GET',
                 context: {
-                    token,
-                    caller: '_getPermissions'
+                    token
                 }
             };
 
@@ -1311,8 +1300,7 @@ describe('index', function() {
                 url: `${prefixUrl}/${apiUrl}`,
                 method: 'POST',
                 context: {
-                    token,
-                    caller: '_updateCommitStatus'
+                    token
                 },
                 json: {
                     context: 'Screwdriver/675/main',
@@ -1436,8 +1424,7 @@ describe('index', function() {
                 url: `${prefixUrl}/${apiUrl}`,
                 method: 'GET',
                 context: {
-                    token,
-                    caller: '_getChangedFiles'
+                    token
                 }
             };
             requestMock.resolves(fakeResponse);
@@ -1520,8 +1507,7 @@ describe('index', function() {
                 url: `${prefixUrl}/${apiUrl}`,
                 method: 'GET',
                 context: {
-                    token,
-                    caller: '_getPrInfo'
+                    token
                 }
             };
             requestMock.resolves(fakeResponse);
@@ -1664,16 +1650,14 @@ describe('index', function() {
                 url: `${prefixUrl}/${apiUrl}`,
                 method: 'GET',
                 context: {
-                    token,
-                    caller: '_findWebhook'
+                    token
                 }
             };
             expectedOptionsCreate = {
                 url: `${prefixUrl}/${apiUrl}`,
                 method: 'POST',
                 context: {
-                    token,
-                    caller: '_createWebhook'
+                    token
                 },
                 json: {
                     url: 'url',
@@ -1867,10 +1851,9 @@ describe('index', function() {
             url: `${prefixUrl}/${apiUrl}`,
             method: 'GET',
             context: {
-                token,
-                caller: '_getOpenedPRs'
+                token
             },
-            json: {
+            searchParams: {
                 state: 'opened'
             }
         };

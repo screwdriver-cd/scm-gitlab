@@ -76,7 +76,6 @@ class GitlabScm extends Scm {
      * GitLab command to run
      * @method _gitlabCommand
      * @param  {Object}      options              An object that tells what command & params to run
-     * @param  {String}      options.caller       Name of method that is making the request
      * @param  {Object}      [options.json]       Body for request to make
      * @param  {String}      options.method       GitLab method. For example: get
      * @param  {String}      options.route        Route for gitlab.request()
@@ -92,10 +91,8 @@ class GitlabScm extends Scm {
 
         // Everything else goes into context
         config.context = {
-            caller: options.caller,
             token: options.token
         };
-        delete config.caller;
         delete config.token;
 
         request(config)
@@ -195,8 +192,7 @@ class GitlabScm extends Scm {
             .runCommand({
                 method: 'GET',
                 route: `projects/${scmInfo.repoId}`,
-                token,
-                caller: 'lookupScmUri'
+                token
             })
             .then(response => {
                 const [owner, reponame] = response.body.path_with_namespace.split('/');
@@ -239,8 +235,7 @@ class GitlabScm extends Scm {
             .runCommand({
                 method: 'GET',
                 route: `projects/${repoId}/hooks`,
-                token,
-                caller: '_findWebhook'
+                token
             })
             .then(response => {
                 const hooks = response.body;
@@ -282,8 +277,7 @@ class GitlabScm extends Scm {
             method: action.method,
             route: action.route,
             json: params,
-            token,
-            caller: '_createWebhook'
+            token
         });
     }
 
@@ -343,8 +337,7 @@ class GitlabScm extends Scm {
             .runCommand({
                 method: 'GET',
                 route: `projects/${owner}%2F${reponame}`,
-                token,
-                caller: '_parseUrl'
+                token
             })
             .then(response => {
                 const scmUri = `${hostname}:${response.body.id}:${branch || response.body.default_branch}`;
@@ -659,8 +652,7 @@ class GitlabScm extends Scm {
             .runCommand({
                 method: 'GET',
                 token,
-                route: `projects/${owner}%2F${reponame}/repository/commits/${sha}`,
-                caller: '_decorateCommit: commitLookup'
+                route: `projects/${owner}%2F${reponame}/repository/commits/${sha}`
             })
             .then(commit => {
                 const authorName = Hoek.reach(commit, 'body.author_name');
@@ -699,10 +691,9 @@ class GitlabScm extends Scm {
                 method: 'GET',
                 token,
                 route: `users`,
-                json: {
+                searchParams: {
                     username
-                },
-                caller: '_decorateAuthor'
+                }
             })
             .then(response => {
                 const author = Hoek.reach(response, 'body.0', {
@@ -739,8 +730,7 @@ class GitlabScm extends Scm {
             .runCommand({
                 method: 'GET',
                 token,
-                route: `projects/${repoId}`,
-                caller: '_getPermissions'
+                route: `projects/${repoId}`
             })
             .then(response => {
                 const result = {
@@ -807,8 +797,7 @@ class GitlabScm extends Scm {
             .runCommand({
                 method: 'GET',
                 token,
-                route: `projects/${repoId}/repository/branches/${branch}`,
-                caller: '_getCommitSha'
+                route: `projects/${repoId}/repository/branches/${branch}`
             })
             .then(response => {
                 return response.body.commit.id;
@@ -829,8 +818,7 @@ class GitlabScm extends Scm {
             prComments = await this.breaker.runCommand({
                 method: 'GET',
                 token: this.config.commentUserToken,
-                route: `projects/${repoId}/merge_requests/${prNum}/notes`,
-                caller: 'prComments'
+                route: `projects/${repoId}/merge_requests/${prNum}/notes`
             });
 
             return { comments: prComments.body };
@@ -858,8 +846,7 @@ class GitlabScm extends Scm {
                 route: `projects/${repoId}/merge_requests/${prNum}/notes/${commentId}`,
                 json: {
                     body: comment
-                },
-                caller: 'editPrComment'
+                }
             });
 
             return pullRequestComment;
@@ -917,8 +904,7 @@ class GitlabScm extends Scm {
                 route: `projects/${repoId}/merge_requests/${prNum}/notes`,
                 json: {
                     body: comment
-                },
-                caller: 'createPullRequestComment'
+                }
             });
 
             if (pullRequestComment.statusCode !== 200) {
@@ -982,8 +968,7 @@ class GitlabScm extends Scm {
                 description: description || DESCRIPTION_MAP[buildStatus],
                 state: STATE_MAP[buildStatus] || 'failed',
                 target_url: url
-            },
-            caller: '_updateCommitStatus'
+            }
         });
     }
 
@@ -1007,10 +992,9 @@ class GitlabScm extends Scm {
                 method: 'GET',
                 token,
                 route: `projects/${repoId}/repository/files/${encodeURIComponent(fullPath)}`,
-                json: {
+                searchParams: {
                     ref: ref || branch
-                },
-                caller: '_getFile'
+                }
             })
             .then(response => {
                 return Buffer.from(response.body.content, response.body.encoding).toString();
@@ -1036,8 +1020,7 @@ class GitlabScm extends Scm {
                 const files = await this.breaker.runCommand({
                     method: 'GET',
                     token,
-                    route: `projects/${repoId}/merge_requests/${prNum}/changes`,
-                    caller: '_getChangedFiles'
+                    route: `projects/${repoId}/merge_requests/${prNum}/changes`
                 });
 
                 return files.body.changes.map(file => file.new_path);
@@ -1078,8 +1061,7 @@ class GitlabScm extends Scm {
             .runCommand({
                 method: 'GET',
                 token,
-                route: `projects/${repoId}/merge_requests/${prNum}`,
-                caller: '_getPrInfo'
+                route: `projects/${repoId}/merge_requests/${prNum}`
             })
             .then(pullRequestInfo => {
                 const prSource =
@@ -1152,11 +1134,10 @@ class GitlabScm extends Scm {
             .runCommand({
                 method: 'GET',
                 token,
-                json: {
+                searchParams: {
                     state: 'opened'
                 },
-                route: `projects/${repoInfo.repoId}/merge_requests`,
-                caller: '_getOpenedPRs'
+                route: `projects/${repoInfo.repoId}/merge_requests`
             })
             .then(response => {
                 const prList = response.body;

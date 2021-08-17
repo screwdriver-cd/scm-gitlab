@@ -21,6 +21,7 @@ const testPayloadPushBadHead = require('./data/gitlab.push.bad.json');
 const testMergeRequest = require('./data/gitlab.merge_request.json');
 const token = 'myAccessToken';
 const commentUserToken = 'commentUserToken';
+const prefixUrl = 'https://gitlab.com/api/v4';
 
 sinon.assert.expose(assert, { prefix: '' });
 
@@ -41,7 +42,7 @@ describe('index', function() {
 
     beforeEach(() => {
         requestMock = sinon.stub();
-        mockery.registerMock('request', requestMock);
+        mockery.registerMock('screwdriver-request', requestMock);
 
         /* eslint-disable global-require */
         GitlabScm = require('../index');
@@ -101,7 +102,7 @@ describe('index', function() {
     });
 
     describe('parseUrl', () => {
-        const apiUrl = 'https://gitlab.com/api/v4/projects/batman%2Ftest';
+        const apiUrl = 'projects/batman%2Ftest';
         let fakeResponse;
         let expectedOptions;
         let expected;
@@ -115,15 +116,14 @@ describe('index', function() {
                 }
             };
             expectedOptions = {
-                url: apiUrl,
+                url: `${prefixUrl}/${apiUrl}`,
                 method: 'GET',
-                json: true,
-                auth: {
-                    bearer: token
+                context: {
+                    token
                 }
             };
             expected = 'gitlab.com:12345:master';
-            requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
+            requestMock.resolves(fakeResponse);
         });
 
         it('resolves to the correct parsed url for ssh', () =>
@@ -186,7 +186,7 @@ describe('index', function() {
         it('rejects if request fails', () => {
             const err = new Error('Gitlab API error');
 
-            requestMock.yieldsAsync(err);
+            requestMock.rejects(err);
 
             return scm
                 .parseUrl({
@@ -202,14 +202,11 @@ describe('index', function() {
         });
 
         it('rejects if status code is 404', () => {
-            fakeResponse = {
-                statusCode: 404,
-                body: {
-                    message: '404 Project Not Found'
-                }
-            };
+            const err = new Error('404 Reason "404 Project Not Found" Caller "_parseUrl"');
 
-            requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
+            err.status = 404;
+
+            requestMock.rejects(err);
 
             return scm
                 .parseUrl({
@@ -226,14 +223,11 @@ describe('index', function() {
         });
 
         it('rejects if status code is not 200 & 404', () => {
-            fakeResponse = {
-                statusCode: 500,
-                body: {
-                    message: 'Internal Server Error'
-                }
-            };
+            const err = new Error('500 Reason "Internal Server Error" Caller "_parseUrl"');
 
-            requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
+            err.status = 500;
+
+            requestMock.rejects(err);
 
             return scm
                 .parseUrl({
@@ -243,7 +237,6 @@ describe('index', function() {
                 })
                 .then(() => assert.fail('Should not get here'))
                 .catch(error => {
-                    assert.calledWith(requestMock, expectedOptions);
                     assert.match(error.message, '500 Reason "Internal Server Error" Caller "_parseUrl"');
                     assert.match(error.status, 500);
                 });
@@ -401,15 +394,14 @@ describe('index', function() {
     });
 
     describe('decorateAuthor', () => {
-        const apiUrl = 'https://gitlab.com/api/v4/users';
+        const apiUrl = 'users';
         const expectedOptions = {
-            url: apiUrl,
+            url: `${prefixUrl}/${apiUrl}`,
             method: 'GET',
-            json: true,
-            auth: {
-                bearer: token
+            context: {
+                token
             },
-            qs: {
+            searchParams: {
                 username: 'batman'
             }
         };
@@ -429,7 +421,7 @@ describe('index', function() {
                     }
                 ]
             };
-            requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
+            requestMock.resolves(fakeResponse);
         });
 
         it('resolves to correct decorated author', () => {
@@ -453,14 +445,11 @@ describe('index', function() {
         });
 
         it('rejects if status code is not 200', () => {
-            fakeResponse = {
-                statusCode: 404,
-                body: {
-                    message: 'Resource not found'
-                }
-            };
+            const err = new Error('404 Reason "Resource not found" Caller "_decorateAuthor"');
 
-            requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
+            err.status = 404;
+
+            requestMock.rejects(err);
 
             return scm
                 .decorateAuthor({
@@ -479,9 +468,11 @@ describe('index', function() {
         });
 
         it('rejects if fails', () => {
-            const err = new Error('Gitlab API error');
+            const err = new Error('500 Reason "Internal Server Error" Caller "_decorateAuthor"');
 
-            requestMock.yieldsAsync(err);
+            err.status = 500;
+
+            requestMock.rejects(err);
 
             return scm
                 .decorateAuthor({
@@ -493,22 +484,13 @@ describe('index', function() {
                     assert.fail('Should not get here');
                 })
                 .catch(error => {
-                    assert.calledWith(requestMock, expectedOptions);
                     assert.equal(error, err);
                 });
         });
     });
 
     describe('decorateUrl', () => {
-        const apiUrl = 'https://gitlab.com/api/v4/projects/repoId';
-        const repoOptions = {
-            url: apiUrl,
-            method: 'GET',
-            json: true,
-            auth: {
-                bearer: token
-            }
-        };
+        const apiUrl = 'projects/repoId';
         let fakeResponse;
         let expectedOptions;
 
@@ -520,14 +502,13 @@ describe('index', function() {
                 }
             };
             expectedOptions = {
-                url: apiUrl,
+                url: `${prefixUrl}/${apiUrl}`,
                 method: 'GET',
-                json: true,
-                auth: {
-                    bearer: token
+                context: {
+                    token
                 }
             };
-            requestMock.withArgs(repoOptions).yieldsAsync(null, fakeResponse, fakeResponse.body);
+            requestMock.resolves(fakeResponse);
         });
 
         it('resolves to correct decorated url object', () => {
@@ -571,14 +552,11 @@ describe('index', function() {
         });
 
         it('rejects if status code is not 200', () => {
-            fakeResponse = {
-                statusCode: 404,
-                body: {
-                    message: 'Resource not found'
-                }
-            };
+            const err = new Error('404 Reason "Resource not found" Caller "lookupScmUri"');
 
-            requestMock.withArgs(repoOptions).yieldsAsync(null, fakeResponse, fakeResponse.body);
+            err.status = 404;
+
+            requestMock.rejects(err);
 
             return scm
                 .decorateUrl({
@@ -599,7 +577,9 @@ describe('index', function() {
         it('rejects if fails', () => {
             const err = new Error('Gitlab API error');
 
-            requestMock.withArgs(repoOptions).yieldsAsync(err);
+            err.status = 500;
+
+            requestMock.rejects(err);
 
             return scm
                 .decorateUrl({
@@ -619,20 +599,20 @@ describe('index', function() {
 
     describe('decorateCommit', () => {
         const sha = '1111111111111111111111111111111111111111';
+        const lookupScmUriRoute = 'projects/repoId';
+        const commitLookupRoute = `projects/owner%2FrepoName/repository/commits/${sha}`;
         let lookupScmUri;
         let lookupScmUriResponse;
         let commitLookup;
         let commitLookupResponse;
-        let fakeResponse;
 
         beforeEach(() => {
             lookupScmUri = {
-                json: true,
+                url: `${prefixUrl}/${lookupScmUriRoute}`,
                 method: 'GET',
-                auth: {
-                    bearer: token
-                },
-                url: 'https://gitlab.com/api/v4/projects/repoId'
+                context: {
+                    token
+                }
             };
             lookupScmUriResponse = {
                 statusCode: 200,
@@ -641,20 +621,19 @@ describe('index', function() {
                 }
             };
             commitLookup = {
-                json: true,
+                url: `${prefixUrl}/${commitLookupRoute}`,
                 method: 'GET',
-                auth: {
-                    bearer: token
-                },
-                url: `https://gitlab.com/api/v4/projects/owner%2FrepoName/repository/commits/${sha}`
+                context: {
+                    token
+                }
             };
             commitLookupResponse = {
                 statusCode: 200,
                 body: testCommit
             };
 
-            requestMock.withArgs(lookupScmUri).yieldsAsync(null, lookupScmUriResponse, lookupScmUriResponse.body);
-            requestMock.withArgs(commitLookup).yieldsAsync(null, commitLookupResponse, commitLookupResponse.body);
+            requestMock.onFirstCall().resolves(lookupScmUriResponse);
+            requestMock.onSecondCall().resolves(commitLookupResponse);
         });
 
         it('resolves to correct decorated object', () => {
@@ -684,20 +663,20 @@ describe('index', function() {
                     scmContext
                 })
                 .then(decorated => {
+                    assert.calledWith(requestMock.firstCall, lookupScmUri);
+                    assert.calledWith(requestMock.secondCall, commitLookup);
                     assert.calledTwice(requestMock);
                     assert.deepEqual(decorated, expected);
                 });
         });
 
         it('rejects if status code is not 200', () => {
-            fakeResponse = {
-                statusCode: 404,
-                body: {
-                    message: 'Resource not found'
-                }
-            };
+            const err = new Error('404 Reason "Resource not found" Caller "_decorateCommit: commitLookup"');
 
-            requestMock.withArgs(commitLookup).yieldsAsync(null, fakeResponse, fakeResponse.body);
+            err.status = 404;
+
+            requestMock.onFirstCall().resolves(lookupScmUriResponse);
+            requestMock.onSecondCall().rejects(err);
 
             return scm
                 .decorateCommit({
@@ -710,7 +689,7 @@ describe('index', function() {
                     assert.fail('Should not get here');
                 })
                 .catch(error => {
-                    assert.calledTwice(requestMock);
+                    // assert.calledTwice(requestMock);
                     assert.match(
                         error.message,
                         '404 Reason "Resource not found" Caller "_decorateCommit: commitLookup"'
@@ -718,37 +697,15 @@ describe('index', function() {
                     assert.match(error.status, 404);
                 });
         });
-
-        it('rejects if fails', () => {
-            const err = new Error('Gitlab API error');
-
-            requestMock.withArgs(commitLookup).yieldsAsync(err);
-
-            return scm
-                .decorateCommit({
-                    sha,
-                    scmUri,
-                    token,
-                    scmContext
-                })
-                .then(() => {
-                    assert.fail('Should not get here');
-                })
-                .catch(error => {
-                    assert.called(requestMock);
-                    assert.equal(error, err);
-                });
-        });
     });
 
     describe('getCommitSha', () => {
-        const apiUrl = 'https://gitlab.com/api/v4/projects/repoId/repository/branches/branchName';
+        const apiUrl = 'projects/repoId/repository/branches/branchName';
         const expectedOptions = {
-            url: apiUrl,
+            url: `${prefixUrl}/${apiUrl}`,
             method: 'GET',
-            json: true,
-            auth: {
-                bearer: token
+            context: {
+                token
             }
         };
         let fakeResponse;
@@ -762,7 +719,7 @@ describe('index', function() {
                     }
                 }
             };
-            requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
+            requestMock.resolves(fakeResponse);
         });
 
         it('resolves to correct commit sha', () =>
@@ -778,14 +735,11 @@ describe('index', function() {
                 }));
 
         it('rejects if status code is not 200', () => {
-            fakeResponse = {
-                statusCode: 404,
-                body: {
-                    message: 'Resource not found'
-                }
-            };
+            const err = new Error('404 Reason "Resource not found" Caller "_getCommitSha"');
 
-            requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
+            err.status = 404;
+
+            requestMock.rejects(err);
 
             return scm
                 .getCommitSha({
@@ -806,7 +760,7 @@ describe('index', function() {
         it('rejects if fails', () => {
             const err = new Error('Gitlab API error');
 
-            requestMock.yieldsAsync(err);
+            requestMock.rejects(err);
 
             return scm
                 .getCommitSha({
@@ -825,17 +779,16 @@ describe('index', function() {
     });
 
     describe('addPrComment', () => {
-        const apiUrl = 'https://gitlab.com/api/v4/projects/repoId/merge_requests/12345/notes';
+        const apiUrl = 'projects/repoId/merge_requests/12345/notes';
         const comment = 'this is a merge request comment';
         const prNum = 12345;
         const expectedOptions = {
-            url: apiUrl,
+            url: `${prefixUrl}/${apiUrl}`,
             method: 'POST',
-            json: true,
-            auth: {
-                bearer: commentUserToken
+            context: {
+                token: commentUserToken
             },
-            qs: {
+            json: {
                 body: comment
             }
         };
@@ -851,15 +804,11 @@ describe('index', function() {
                 statusCode: 200,
                 body: testPrComments
             };
-            requestMock.onFirstCall().yieldsAsync(
-                null,
-                {
-                    statusCode: 200,
-                    body: []
-                },
-                []
-            );
-            requestMock.onSecondCall().yieldsAsync(null, fakeResponse, fakeResponse.body);
+            requestMock.onFirstCall().resolves({
+                statusCode: 200,
+                body: []
+            });
+            requestMock.onSecondCall().resolves(fakeResponse);
         });
 
         it('resolves to correct PR metadata', () =>
@@ -881,8 +830,8 @@ describe('index', function() {
                 }));
 
         it('resolves to correct PR metadata for edited comment', () => {
-            requestMock.onFirstCall().yieldsAsync(null, fakeCommentsResponse, fakeCommentsResponse.body);
-            requestMock.onSecondCall().yieldsAsync(null, fakeResponse, fakeResponse.body);
+            requestMock.onFirstCall().resolves(fakeCommentsResponse);
+            requestMock.onSecondCall().resolves(fakeResponse);
 
             return scm
                 .addPrComment({
@@ -894,21 +843,19 @@ describe('index', function() {
                 })
                 .then(result => {
                     assert.calledWith(requestMock.firstCall, {
-                        json: true,
+                        url: `${prefixUrl}/${apiUrl}`,
                         method: 'GET',
-                        auth: {
-                            bearer: commentUserToken
-                        },
-                        url: apiUrl
+                        context: {
+                            token: commentUserToken
+                        }
                     });
                     assert.calledWith(requestMock.secondCall, {
-                        json: true,
+                        url: `${prefixUrl}/${apiUrl}/575311268`,
                         method: 'PUT',
-                        auth: {
-                            bearer: commentUserToken
+                        context: {
+                            token: commentUserToken
                         },
-                        url: `${apiUrl}/575311268`,
-                        qs: {
+                        json: {
                             body: 'this is a merge request comment'
                         }
                     });
@@ -927,7 +874,7 @@ describe('index', function() {
                     message: 'Resource not found'
                 }
             };
-            requestMock.onSecondCall().yieldsAsync(null, fakeResponse, fakeResponse.body);
+            requestMock.onSecondCall().resolves(fakeResponse);
 
             return scm
                 .addPrComment({
@@ -954,8 +901,8 @@ describe('index', function() {
                     message: 'Resource not found'
                 }
             };
-            requestMock.onFirstCall().yieldsAsync(null, fakeCommentsResponse, fakeCommentsResponse.body);
-            requestMock.onSecondCall().yieldsAsync(null, fakeResponse, fakeResponse.body);
+            requestMock.onFirstCall().resolves(fakeCommentsResponse, fakeCommentsResponse.body);
+            requestMock.onSecondCall().resolves(fakeResponse);
 
             return scm
                 .addPrComment({
@@ -977,20 +924,19 @@ describe('index', function() {
     });
 
     describe('getFile', () => {
-        const apiUrl = 'https://gitlab.com/api/v4/projects/repoId/repository/files/path%2Fto%2Ffile.txt';
+        const apiUrl = 'projects/repoId/repository/files/path%2Fto%2Ffile.txt';
         let expectedOptions;
         let fakeResponse;
         let params;
 
         beforeEach(() => {
             expectedOptions = {
-                url: apiUrl,
+                url: `${prefixUrl}/${apiUrl}`,
                 method: 'GET',
-                json: true,
-                auth: {
-                    bearer: token
+                context: {
+                    token
                 },
-                qs: {
+                searchParams: {
                     ref: 'branchName'
                 }
             };
@@ -1007,7 +953,7 @@ describe('index', function() {
                 token,
                 path: 'path/to/file.txt'
             };
-            requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
+            requestMock.resolves(fakeResponse);
         });
 
         it('resolves to correct commit sha', () =>
@@ -1018,9 +964,7 @@ describe('index', function() {
 
         it('resolves to correct commit sha when rootDir is passed in', () => {
             params.scmUri = 'hostName:repoId:branchName:path/to/source';
-            expectedOptions.url =
-                'https://gitlab.com/api/v4/projects/repoId' +
-                '/repository/files/path%2Fto%2Fsource%2Fpath%2Fto%2Ffile.txt';
+            expectedOptions.url = `${prefixUrl}/projects/repoId/repository/files/path%2Fto%2Fsource%2Fpath%2Fto%2Ffile.txt`;
 
             return scm.getFile(params).then(content => {
                 assert.calledWith(requestMock, expectedOptions);
@@ -1029,14 +973,11 @@ describe('index', function() {
         });
 
         it('rejects if status code is not 200', () => {
-            fakeResponse = {
-                statusCode: 404,
-                body: {
-                    message: 'Resource not found'
-                }
-            };
+            const err = new Error('404 Reason "Resource not found" Caller "_getFile"');
 
-            requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
+            err.status = 404;
+
+            requestMock.rejects(err);
 
             return scm
                 .getFile(params)
@@ -1053,7 +994,7 @@ describe('index', function() {
         it('rejects if fails', () => {
             const err = new Error('Gitlab API error');
 
-            requestMock.yieldsAsync(err);
+            requestMock.rejects(err);
 
             return scm
                 .getFile(params)
@@ -1068,16 +1009,16 @@ describe('index', function() {
     });
 
     describe('getPermissions', () => {
+        const apiUrl = 'projects/repoId';
         let expectedOptions;
         let fakeResponse;
 
         beforeEach(() => {
             expectedOptions = {
-                url: 'https://gitlab.com/api/v4/projects/repoId',
+                url: `${prefixUrl}/${apiUrl}`,
                 method: 'GET',
-                json: true,
-                auth: {
-                    bearer: token
+                context: {
+                    token
                 }
             };
 
@@ -1092,7 +1033,7 @@ describe('index', function() {
                 }
             };
 
-            requestMock.withArgs(expectedOptions).yieldsAsync(null, fakeResponse, fakeResponse.body);
+            requestMock.resolves(fakeResponse);
         });
 
         it('get correct permissions for level 50', () =>
@@ -1124,7 +1065,7 @@ describe('index', function() {
                 }
             };
 
-            requestMock.withArgs(expectedOptions).yieldsAsync(null, fakeResponse, fakeResponse.body);
+            requestMock.resolves(fakeResponse);
 
             return scm
                 .getPermissions({
@@ -1155,7 +1096,7 @@ describe('index', function() {
                 }
             };
 
-            requestMock.withArgs(expectedOptions).yieldsAsync(null, fakeResponse, fakeResponse.body);
+            requestMock.resolves(fakeResponse);
 
             return scm
                 .getPermissions({
@@ -1186,7 +1127,7 @@ describe('index', function() {
                 }
             };
 
-            requestMock.withArgs(expectedOptions).yieldsAsync(null, fakeResponse, fakeResponse.body);
+            requestMock.resolves(fakeResponse);
 
             return scm
                 .getPermissions({
@@ -1217,7 +1158,7 @@ describe('index', function() {
                 }
             };
 
-            requestMock.withArgs(expectedOptions).yieldsAsync(null, fakeResponse, fakeResponse.body);
+            requestMock.resolves(fakeResponse);
 
             return scm
                 .getPermissions({
@@ -1248,7 +1189,7 @@ describe('index', function() {
                 }
             };
 
-            requestMock.withArgs(expectedOptions).yieldsAsync(null, fakeResponse, fakeResponse.body);
+            requestMock.resolves(fakeResponse);
 
             return scm
                 .getPermissions({
@@ -1273,7 +1214,7 @@ describe('index', function() {
                 body: {}
             };
 
-            requestMock.withArgs(expectedOptions).yieldsAsync(null, fakeResponse, fakeResponse.body);
+            requestMock.resolves(fakeResponse);
 
             return scm
                 .getPermissions({
@@ -1293,14 +1234,11 @@ describe('index', function() {
         });
 
         it('rejects if status code is not 200', () => {
-            fakeResponse = {
-                statusCode: 404,
-                body: {
-                    message: 'Resource not found'
-                }
-            };
+            const err = new Error('404 Reason "Resource not found" Caller "_getPermissions"');
 
-            requestMock.withArgs(expectedOptions).yieldsAsync(null, fakeResponse, fakeResponse.body);
+            err.status = 404;
+
+            requestMock.rejects(err);
 
             return scm
                 .getPermissions({
@@ -1320,7 +1258,7 @@ describe('index', function() {
         it('rejects if fails', () => {
             const error = new Error('Gitlab API error');
 
-            requestMock.withArgs(expectedOptions).yieldsAsync(error);
+            requestMock.rejects(error);
 
             return scm
                 .getPermissions({
@@ -1354,25 +1292,24 @@ describe('index', function() {
                 jobName: 'main',
                 pipelineId: 675
             };
-            apiUrl = `https://gitlab.com/api/v4/projects/repoId/statuses/${config.sha}`;
+            apiUrl = `projects/repoId/statuses/${config.sha}`;
             fakeResponse = {
                 statusCode: 201
             };
             expectedOptions = {
-                url: apiUrl,
+                url: `${prefixUrl}/${apiUrl}`,
                 method: 'POST',
-                json: true,
-                qs: {
+                context: {
+                    token
+                },
+                json: {
                     context: 'Screwdriver/675/main',
                     target_url: config.url,
                     state: 'success',
                     description: 'Everything looks good!'
-                },
-                auth: {
-                    bearer: token
                 }
             };
-            requestMock.yieldsAsync(null, fakeResponse);
+            requestMock.resolves(fakeResponse);
         });
 
         it('successfully update status', () =>
@@ -1382,9 +1319,9 @@ describe('index', function() {
 
         it('successfully update status with correct values', () => {
             config.buildStatus = 'FAILURE';
-            expectedOptions.qs.context = 'Screwdriver/675/main';
-            expectedOptions.qs.state = 'failed';
-            expectedOptions.qs.description = 'Did not work as expected.';
+            expectedOptions.json.context = 'Screwdriver/675/main';
+            expectedOptions.json.state = 'failed';
+            expectedOptions.json.description = 'Did not work as expected.';
 
             return scm.updateCommitStatus(config).then(() => {
                 assert.calledWith(requestMock, expectedOptions);
@@ -1392,14 +1329,11 @@ describe('index', function() {
         });
 
         it('rejects if status code is not 201 or 200', () => {
-            fakeResponse = {
-                statusCode: 401,
-                body: {
-                    message: 'Access token expired'
-                }
-            };
+            const err = new Error('401 Reason "Access token expired" Caller "_updateCommitStatus"');
 
-            requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
+            err.status = 401;
+
+            requestMock.rejects(err);
 
             return scm
                 .updateCommitStatus(config)
@@ -1416,7 +1350,7 @@ describe('index', function() {
         it('rejects if fails', () => {
             const err = new Error('Gitlab API error');
 
-            requestMock.yieldsAsync(err);
+            requestMock.rejects(err);
 
             return scm
                 .updateCommitStatus(config)
@@ -1476,6 +1410,7 @@ describe('index', function() {
     });
 
     describe('getChangedFiles', () => {
+        const apiUrl = 'projects/28476/merge_requests/1/changes';
         let type;
         let expectedOptions;
         let fakeResponse;
@@ -1486,14 +1421,13 @@ describe('index', function() {
                 body: testChangedFiles
             };
             expectedOptions = {
-                url: 'https://gitlab.com/api/v4/projects/28476/merge_requests/1/changes',
+                url: `${prefixUrl}/${apiUrl}`,
                 method: 'GET',
-                json: true,
-                auth: {
-                    bearer: token
+                context: {
+                    token
                 }
             };
-            requestMock.withArgs(expectedOptions).yieldsAsync(null, fakeResponse, fakeResponse.body);
+            requestMock.resolves(fakeResponse);
         });
 
         it('returns changed files for a push event payload', () => {
@@ -1520,6 +1454,7 @@ describe('index', function() {
                     prNum: 1
                 })
                 .then(result => {
+                    assert.calledWith(requestMock, expectedOptions);
                     assert.deepEqual(result, ['test/screwdriver.yaml', 'README.md', 'screwdriver.yaml']);
                 }));
 
@@ -1553,13 +1488,14 @@ describe('index', function() {
     });
 
     describe('getPrInfo', () => {
+        const apiUrl = 'projects/repoId/merge_requests/1';
         const config = {
             scmUri,
-            token: 'token',
+            token,
             prNum: 1
         };
         const sha = '8888888888888888888888888888888888888888';
-        // let expectedOptions;
+        let expectedOptions;
         let fakeResponse;
 
         beforeEach(() => {
@@ -1567,11 +1503,19 @@ describe('index', function() {
                 statusCode: 200,
                 body: testMergeRequest
             };
-            requestMock.yieldsAsync(null, fakeResponse, fakeResponse.body);
+            expectedOptions = {
+                url: `${prefixUrl}/${apiUrl}`,
+                method: 'GET',
+                context: {
+                    token
+                }
+            };
+            requestMock.resolves(fakeResponse);
         });
 
         it('returns a pull request with the given prNum', () =>
             scm._getPrInfo(config).then(data => {
+                assert.calledWith(requestMock, expectedOptions);
                 assert.deepEqual(data, {
                     name: 'PR-1',
                     ref: 'pull/1/merge',
@@ -1591,7 +1535,7 @@ describe('index', function() {
         it('rejects when failing to lookup the SCM URI information', () => {
             const testError = new Error('testError');
 
-            requestMock.yieldsAsync(testError);
+            requestMock.rejects(testError);
 
             return scm._getPrInfo(config).then(assert.fail, err => {
                 assert.instanceOf(err, Error);
@@ -1692,13 +1636,35 @@ describe('index', function() {
 
     describe('_addWebhook', () => {
         let findWebhookResponse;
-        let createWebhookResponse;
-        const hookid = 'hookid';
+        let expectedOptionsFind;
+        let expectedOptionsCreate;
+
+        const hookId = 'hookId';
+        const apiUrl = 'projects/repoId/hooks';
 
         beforeEach(() => {
-            requestMock.yieldsAsync(null, {
+            requestMock.onSecondCall().resolves({
                 statusCode: 200
             });
+            expectedOptionsFind = {
+                url: `${prefixUrl}/${apiUrl}`,
+                method: 'GET',
+                context: {
+                    token
+                }
+            };
+            expectedOptionsCreate = {
+                url: `${prefixUrl}/${apiUrl}`,
+                method: 'POST',
+                context: {
+                    token
+                },
+                json: {
+                    url: 'url',
+                    push_events: true,
+                    merge_requests_events: true
+                }
+            };
         });
 
         it('works', () => {
@@ -1707,7 +1673,7 @@ describe('index', function() {
                 statusCode: 200
             };
 
-            requestMock.onFirstCall().yieldsAsync(null, findWebhookResponse);
+            requestMock.onFirstCall().resolves(findWebhookResponse);
 
             /* eslint-disable no-underscore-dangle */
             return scm
@@ -1719,27 +1685,8 @@ describe('index', function() {
                     actions: ['merge_requests_events', 'push_events']
                 })
                 .then(() => {
-                    assert.calledWith(requestMock, {
-                        json: true,
-                        method: 'GET',
-                        auth: {
-                            bearer: token
-                        },
-                        url: 'https://gitlab.com/api/v4/projects/repoId/hooks'
-                    });
-                    assert.calledWith(requestMock, {
-                        json: true,
-                        method: 'POST',
-                        auth: {
-                            bearer: token
-                        },
-                        url: 'https://gitlab.com/api/v4/projects/repoId/hooks',
-                        qs: {
-                            url: 'url',
-                            push_events: true,
-                            merge_requests_events: true
-                        }
-                    });
+                    assert.calledWith(requestMock.firstCall, expectedOptionsFind);
+                    assert.calledWith(requestMock.secondCall, expectedOptionsCreate);
                 });
         });
 
@@ -1748,7 +1695,7 @@ describe('index', function() {
                 statusCode: 200,
                 body: [
                     {
-                        id: hookid,
+                        id: hookId,
                         url: 'url',
                         created_at: '2017-03-02T06:38:01.338Z',
                         push_events: true,
@@ -1764,8 +1711,10 @@ describe('index', function() {
                     }
                 ]
             };
+            expectedOptionsCreate.method = 'PUT';
+            expectedOptionsCreate.url = `${prefixUrl}/${apiUrl}/${hookId}`;
 
-            requestMock.onFirstCall().yieldsAsync(null, findWebhookResponse);
+            requestMock.onFirstCall().resolves(findWebhookResponse);
 
             /* eslint-disable no-underscore-dangle */
             return scm
@@ -1777,39 +1726,19 @@ describe('index', function() {
                     actions: ['merge_requests_events', 'push_events']
                 })
                 .then(() => {
-                    assert.calledWith(requestMock, {
-                        json: true,
-                        method: 'GET',
-                        auth: {
-                            bearer: token
-                        },
-                        url: 'https://gitlab.com/api/v4/projects/repoId/hooks'
-                    });
-                    assert.calledWith(requestMock, {
-                        json: true,
-                        method: 'PUT',
-                        auth: {
-                            bearer: token
-                        },
-                        url: `https://gitlab.com/api/v4/projects/repoId/hooks/${hookid}`,
-                        qs: {
-                            url: 'url',
-                            push_events: true,
-                            merge_requests_events: true
-                        }
-                    });
+                    assert.calledWith(requestMock.firstCall, expectedOptionsFind);
+                    assert.calledWith(requestMock.secondCall, expectedOptionsCreate);
                 });
         });
 
         it('rejects when failing to get the current list of webhooks', () => {
-            findWebhookResponse = {
-                statusCode: 403,
-                body: {
-                    message: 'Your credentials lack one or more required privilege scopes.'
-                }
-            };
+            const err = new Error(
+                '403 Reason "Your credentials lack one or more required privilege scopes." Caller "_findWebhook"'
+            );
 
-            requestMock.onFirstCall().yieldsAsync(null, findWebhookResponse);
+            err.status = 403;
+
+            requestMock.onFirstCall().rejects(err);
 
             /* eslint-disable no-underscore-dangle */
             return scm
@@ -1831,45 +1760,19 @@ describe('index', function() {
                 });
         });
 
-        it('rejects with a stringified error when gitlab API fails to list webhooks', () => {
-            findWebhookResponse = {
-                statusCode: 500,
-                body: {
-                    blah: 'undefined'
-                }
-            };
-
-            requestMock.onFirstCall().yieldsAsync(null, findWebhookResponse);
-
-            /* eslint-disable no-underscore-dangle */
-            return scm
-                ._addWebhook({
-                    /* eslint-enable no-underscore-dangle */
-                    scmUri,
-                    token,
-                    url: 'url',
-                    actions: ['merge_requests_events', 'push_events']
-                })
-                .then(assert.fail, error => {
-                    assert.match(error.message, '500 Reason "{"blah":"undefined"}" Caller "_findWebhook"');
-                    assert.match(error.status, 500);
-                });
-        });
-
         it('rejects when failing to create a webhook', () => {
             findWebhookResponse = {
                 statusCode: 200,
                 body: []
             };
-            createWebhookResponse = {
-                statusCode: 403,
-                body: {
-                    message: 'Your credentials lack one or more required privilege scopes.'
-                }
-            };
+            const err = new Error(
+                '403 Reason "Your credentials lack one or more required privilege scopes." Caller "_createWebhook"'
+            );
 
-            requestMock.onFirstCall().yieldsAsync(null, findWebhookResponse);
-            requestMock.onSecondCall().yieldsAsync(null, createWebhookResponse);
+            err.status = 403;
+
+            requestMock.onFirstCall().resolves(findWebhookResponse);
+            requestMock.onSecondCall().rejects(err);
 
             /* eslint-disable no-underscore-dangle */
             return scm
@@ -1896,7 +1799,7 @@ describe('index', function() {
                 statusCode: 200,
                 body: [
                     {
-                        id: hookid,
+                        id: hookId,
                         url: 'url',
                         created_at: '2017-03-02T06:38:01.338Z',
                         push_events: true,
@@ -1912,15 +1815,14 @@ describe('index', function() {
                     }
                 ]
             };
-            createWebhookResponse = {
-                statusCode: 403,
-                body: {
-                    message: 'Your credentials lack one or more required privilege scopes.'
-                }
-            };
+            const err = new Error(
+                '403 Reason "Your credentials lack one or more required privilege scopes." Caller "_createWebhook"'
+            );
 
-            requestMock.onFirstCall().yieldsAsync(null, findWebhookResponse);
-            requestMock.onSecondCall().yieldsAsync(null, createWebhookResponse);
+            err.status = 403;
+
+            requestMock.onFirstCall().resolves(findWebhookResponse);
+            requestMock.onSecondCall().rejects(err);
 
             /* eslint-disable no-underscore-dangle */
             return scm
@@ -1944,20 +1846,20 @@ describe('index', function() {
     });
 
     describe('_getOpenedPRs', () => {
+        const apiUrl = 'projects/repoId/merge_requests';
         const expectedOptions = {
-            url: 'https://gitlab.com/api/v4/projects/repoId/merge_requests',
+            url: `${prefixUrl}/${apiUrl}`,
             method: 'GET',
-            json: true,
-            auth: {
-                bearer: token
+            context: {
+                token
             },
-            qs: {
+            searchParams: {
                 state: 'opened'
             }
         };
 
         it('returns response of expected format from Gitlab', () => {
-            requestMock.yieldsAsync(null, {
+            requestMock.resolves({
                 statusCode: 200,
                 body: [
                     {
@@ -2115,7 +2017,7 @@ describe('index', function() {
         it('resolves null', () => {
             scm.openPr({
                 checkoutUrl: 'https://hostName/username/repoName/tree/branchName',
-                token: 'thisisatoken',
+                token,
                 files: [
                     {
                         name: 'file.txt',

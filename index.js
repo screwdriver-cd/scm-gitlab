@@ -188,6 +188,12 @@ class GitlabScm extends Scm {
     async lookupScmUri({ scmUri, token }) {
         const scmInfo = getScmUriParts(scmUri);
 
+        if (scmInfo.hostname !== this.config.gitlabHost) {
+            throw new Error(
+                `Pipeline's scmHost ${scmInfo.hostname} does not match with user's scmHost ${this.config.gitlabHost}`
+            );
+        }
+
         return this.breaker
             .runCommand({
                 method: 'GET',

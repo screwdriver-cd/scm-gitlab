@@ -4,7 +4,7 @@ const { assert } = require('chai');
 const mockery = require('mockery');
 const sinon = require('sinon');
 const scmContext = 'gitlab:gitlab.com';
-const scmUri = 'hostName:repoId:branchName';
+const scmUri = 'gitlab.com:repoId:branchName';
 const testCommands = require('./data/commands.json');
 const testPrCommands = require('./data/prCommands.json');
 const testPrComment = require('./data/gitlab.merge_request.comment.json');
@@ -513,7 +513,7 @@ describe('index', function() {
 
         it('resolves to correct decorated url object', () => {
             const expected = {
-                url: 'https://hostName/username/repoName/-/tree/branchName',
+                url: 'https://gitlab.com/username/repoName/-/tree/branchName',
                 name: 'username/repoName',
                 branch: 'branchName',
                 rootDir: ''
@@ -533,7 +533,7 @@ describe('index', function() {
 
         it('resolves to correct decorated url object with rootDir', () => {
             const expected = {
-                url: 'https://hostName/username/repoName/-/tree/branchName/path/to/source',
+                url: 'https://gitlab.com/username/repoName/-/tree/branchName/path/to/source',
                 name: 'username/repoName',
                 branch: 'branchName',
                 rootDir: 'path/to/source'
@@ -541,7 +541,7 @@ describe('index', function() {
 
             return scm
                 .decorateUrl({
-                    scmUri: 'hostName:repoId:branchName:path/to/source',
+                    scmUri: 'gitlab.com:repoId:branchName:path/to/source',
                     token,
                     scmContext
                 })
@@ -571,6 +571,29 @@ describe('index', function() {
                     assert.calledWith(requestMock, expectedOptions);
                     assert.match(error.message, '404 Reason "Resource not found" Caller "lookupScmUri"');
                     assert.match(error.status, 404);
+                });
+        });
+
+        it('rejects when scm settings is mismatch', () => {
+            const scmUriNotMatch = 'notMatching.com:repoId:branchName';
+            const [scmHost] = scmUriNotMatch.split(':');
+            const loginContext = scm.getScmContexts();
+            const loginHost = loginContext[0].split(':')[1];
+
+            return scm
+                .decorateUrl({
+                    scmUri: scmUriNotMatch,
+                    token,
+                    scmContext
+                })
+                .then(() => {
+                    assert.fail('Should not get here');
+                })
+                .catch(error => {
+                    assert.match(
+                        error.message,
+                        `Pipeline's scmHost ${scmHost} does not match with user's scmHost ${loginHost}`
+                    );
                 });
         });
 

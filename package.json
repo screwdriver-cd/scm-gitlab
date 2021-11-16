@@ -5,12 +5,11 @@
   "main": "index.js",
   "scripts": {
     "pretest": "eslint .",
-    "test": "nyc --report-dir ./artifacts/coverage --reporter=lcov mocha --reporter mocha-multi-reporters --reporter-options configFile=./mocha.config.json --recursive --timeout 4000 --retries 1 --exit --allow-uncaught true --color true",
-    "semantic-release": "semantic-release pre && npm publish && semantic-release post"
+    "test": "nyc --report-dir ./artifacts/coverage --reporter=lcov mocha --reporter mocha-multi-reporters --reporter-options configFile=./mocha.config.json --recursive --timeout 4000 --retries 1 --exit --allow-uncaught true --color true"
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:screwdriver-cd/scm-gitlab.git"
+    "url": "git+https://github.com/screwdriver-cd/scm-gitlab.git"
   },
   "homepage": "https://github.com/screwdriver-cd/scm-gitlab",
   "bugs": "https://github.com/screwdriver-cd/screwdriver/issues",
@@ -53,6 +52,9 @@
     "screwdriver-scm-base": "^7.3.0"
   },
   "release": {
+    "branches": [
+      "master"
+    ],
     "debug": false
   }
 }

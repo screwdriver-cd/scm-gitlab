@@ -429,7 +429,10 @@ class GitlabScm extends Scm {
                     lastCommitMessage: Hoek.reach(webhookPayload, 'commits.-1.message', { default: '' }) || '',
                     hookId,
                     scmContext,
-                    ref: Hoek.reach(webhookPayload, 'ref')
+                    ref: Hoek.reach(webhookPayload, 'ref'),
+                    addedFiles: Hoek.reach(webhookPayload, ['commits', 0, 'added'], { default: [] }),
+                    modifiedFiles: Hoek.reach(webhookPayload, ['commits', 0, 'modified'], { default: [] }),
+                    removedFiles: Hoek.reach(webhookPayload, ['commits', 0, 'removed'], { default: [] })
                 };
             }
             default:
@@ -1011,14 +1014,14 @@ class GitlabScm extends Scm {
      * Get the changed files from a GitLab event
      * @async  _getChangedFiles
      * @param  {Object}   config
-     * @param  {String}   config.type      Can be 'pr' or 'repo'
-     * @param  {Object}   [config.payload] The webhook payload received from the SCM service.
-     * @param  {String}   config.token     Service token to authenticate with GitLab
-     * @param  {String}   [config.scmUri]  The scmUri to get PR info of
-     * @param  {Integer}  [config.prNum]   The PR number
-     * @return {Promise}                   Resolves to an array of filenames of the changed files
+     * @param  {String}   config.type               Can be 'pr' or 'repo'
+     * @param  {Object}   [config.webhookConfig]    The webhook payload received from the SCM service.
+     * @param  {String}   config.token              Service token to authenticate with GitLab
+     * @param  {String}   [config.scmUri]           The scmUri to get PR info of
+     * @param  {Integer}  [config.prNum]            The PR number
+     * @return {Promise}                            Resolves to an array of filenames of the changed files
      */
-    async _getChangedFiles({ type, payload, token, scmUri, prNum }) {
+    async _getChangedFiles({ type, webhookConfig, token, scmUri, prNum }) {
         if (type === 'pr') {
             try {
                 const { repoId } = getScmUriParts(scmUri);
@@ -1039,9 +1042,9 @@ class GitlabScm extends Scm {
 
         if (type === 'repo') {
             const options = { default: [] };
-            const added = Hoek.reach(payload, ['commits', 0, 'added'], options);
-            const modified = Hoek.reach(payload, ['commits', 0, 'modified'], options);
-            const removed = Hoek.reach(payload, ['commits', 0, 'removed'], options);
+            const added = Hoek.reach(webhookConfig, 'addedFiles', options);
+            const modified = Hoek.reach(webhookConfig, 'modifiedFiles', options);
+            const removed = Hoek.reach(webhookConfig, 'removedFiles', options);
 
             // Adding the arrays together and pruning duplicates
             return [...new Set([...added, ...modified, ...removed])];

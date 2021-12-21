@@ -1,23 +1,23 @@
 {
-    "type": "repo",
-    "action": "push",
-    "username": "jsmith",
-    "checkoutUrl": "git@example.com:mike/diaspora.git",
-    "commitAuthors": [
-      "Jordi Mallach",
-      "GitLab dev user"
-    ],
-    "branch": "master",
-    "lastCommitMessage": "fixed readme",
-    "ref": "refs/heads/master",
-    "sha": "da1560886d4f094c3e6c9ef40349f7d38b5d27d7",
-    "hookId": "",
-    "scmContext": "gitlab:gitlab.com",
-    "addedFiles": [
-      "CHANGELOG"
-    ],
-    "modifiedFiles": [
-      "app/controller/application.rb"
-    ],
-    "removedFiles": []
-  }
+  "type": "repo",
+  "action": "push",
+  "username": "jsmith",
+  "checkoutUrl": "git@example.com:mike/diaspora.git",
+  "commitAuthors": [
+    "Jordi Mallach",
+    "GitLab dev user"
+  ],
+  "branch": "master",
+  "lastCommitMessage": "fixed readme",
+  "ref": "refs/heads/master",
+  "sha": "da1560886d4f094c3e6c9ef40349f7d38b5d27d7",
+  "hookId": "",
+  "scmContext": "gitlab:gitlab.com",
+  "addedFiles": [
+    "CHANGELOG"
+  ],
+  "modifiedFiles": [
+    "app/controller/application.rb"
+  ],
+  "removedFiles": []
+}

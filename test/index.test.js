@@ -17,8 +17,10 @@ const testPayloadClose = require('./data/gitlab.merge_request.closed.json');
 const testPayloadPush = require('./data/gitlab.push.json');
 const testCommit = require('./data/gitlab.commit.json');
 const testChangedFiles = require('./data/gitlab.merge_request.changedFiles.json');
-const testPayloadPushBadHead = require('./data/gitlab.push.bad.json');
 const testMergeRequest = require('./data/gitlab.merge_request.json');
+const testWebhookConfigOpen = require('./data/webhookConfig.merge_request.opened.json');
+const testWebhookConfigPushBadHead = require('./data/webhookConfig.push.bad.json');
+const testWebhookConfigPush = require('./data/webhookConfig.push.json');
 const token = 'myAccessToken';
 const commentUserToken = 'commentUserToken';
 const prefixUrl = 'https://gitlab.com/api/v4';
@@ -349,7 +351,10 @@ describe('index', function() {
                 ref: 'refs/heads/master',
                 sha: 'da1560886d4f094c3e6c9ef40349f7d38b5d27d7',
                 hookId: '',
-                scmContext
+                scmContext,
+                addedFiles: ['CHANGELOG'],
+                modifiedFiles: ['app/controller/application.rb'],
+                removedFiles: []
             };
             const headers = {
                 'content-type': 'application/json',
@@ -1460,7 +1465,7 @@ describe('index', function() {
                 .getChangedFiles({
                     type,
                     token,
-                    payload: testPayloadPush
+                    webhookConfig: testWebhookConfigPush
                 })
                 .then(result => {
                     assert.deepEqual(result, ['CHANGELOG', 'app/controller/application.rb']);
@@ -1472,7 +1477,7 @@ describe('index', function() {
                 .getChangedFiles({
                     type: 'pr',
                     token,
-                    payload: null,
+                    webhookConfig: null,
                     scmUri: 'github.com:28476:master',
                     prNum: 1
                 })
@@ -1488,7 +1493,7 @@ describe('index', function() {
                 .getChangedFiles({
                     type,
                     token,
-                    payload: testPayloadOpen
+                    webhookConfig: testWebhookConfigOpen
                 })
                 .then(result => {
                     assert.deepEqual(result, []);
@@ -1502,7 +1507,7 @@ describe('index', function() {
                 .getChangedFiles({
                     type,
                     token,
-                    payload: testPayloadPushBadHead
+                    webhookConfig: testWebhookConfigPushBadHead
                 })
                 .then(result => {
                     assert.deepEqual(result, []);

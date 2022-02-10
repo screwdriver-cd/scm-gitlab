@@ -724,7 +724,8 @@ class GitlabScm extends Scm {
     }
 
     /**
-     * Get a owners permissions on a repository
+     * Get an owners permissions on a repository. This uses the higher of either the
+     * project-specific or group-level access.
      * @async _getPermissions
      * @param  {Object}   config            Configuration
      * @param  {String}   config.scmUri     The scmUri to get permissions on
@@ -748,9 +749,14 @@ class GitlabScm extends Scm {
                     pull: false
                 };
                 const { permissions } = response.body;
-                const accessLevel = Hoek.reach(permissions, 'project_access.access_level', {
+                const projectAccessLevel = Hoek.reach(permissions, 'project_access.access_level', {
                     default: 0
                 });
+
+                const groupAccessLevel = Hoek.reach(permissions, 'group_access.access_level', {
+                    default: 0
+                });
+                const accessLevel = Math.max(projectAccessLevel, groupAccessLevel);
 
                 // ref: https://docs.gitlab.com/ee/api/members.html
                 // ref: https://docs.gitlab.com/ee/user/permissions.html

@@ -578,11 +578,6 @@ class GitlabScm extends Scm {
         command.push(`$SD_GIT_WRAPPER "git reset --hard '${checkoutRef}' --"`);
         command.push(`echo 'Reset to ${checkoutRef}'`);
 
-        // cd into rootDir after cloning
-        if (rootDir) {
-            command.push(`cd ${rootDir}`);
-        }
-
         // For pull requests
         if (configPrRef) {
             const LOCAL_BRANCH_NAME = 'pr';
@@ -607,6 +602,11 @@ class GitlabScm extends Scm {
         // Init & Update submodule
         command.push('$SD_GIT_WRAPPER "git submodule init"');
         command.push('$SD_GIT_WRAPPER "git submodule update --recursive"');
+
+        // cd into rootDir after merging
+        if (rootDir) {
+            command.push(`cd ${rootDir}`);
+        }
 
         return Promise.resolve({
             name: 'sd-checkout-code',

@@ -359,16 +359,6 @@ class GitlabScm extends Scm {
                 token
             })
             .then(response => {
-                if (response.statusCode === 404) {
-                    throwError(`Cannot find repository ${checkoutUrl}`, response.statusCode);
-                }
-                if (response.statusCode !== 200) {
-                    throwError(
-                        `STATUS CODE ${response.statusCode}: ${JSON.stringify(response.body)}`,
-                        response.statusCode
-                    );
-                }
-
                 const scmUri = `${hostname}:${response.body.id}:${branch || response.body.default_branch}`;
 
                 return sourceDir ? `${scmUri}:${sourceDir}` : scmUri;

@@ -36,6 +36,19 @@ const DESCRIPTION_MAP = {
 };
 
 /**
+ * Throw error with error code
+ * @param {String} errorReason Error message
+ * @param {Number} errorCode   Error code
+ * @throws {Error}             Throws error
+ */
+function throwError(errorReason, errorCode = 500) {
+    const err = new Error(errorReason);
+
+    err.statusCode = errorCode;
+    throw err;
+}
+
+/**
  * Get repo information
  * @method getRepoInfoByCheckoutUrl
  * @param  {String}  checkoutUrl      The url to check out repo
@@ -336,7 +349,7 @@ class GitlabScm extends Scm {
         if (hostname !== myHost) {
             const message = 'This checkoutUrl is not supported for your current login host.';
 
-            throw new Error(message);
+            throwError(message, 400);
         }
 
         return this.breaker

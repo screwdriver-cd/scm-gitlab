@@ -349,7 +349,7 @@ class GitlabScm extends Scm {
         if (hostname !== myHost) {
             const message = 'This checkoutUrl is not supported for your current login host.';
 
-            throwError(message, '400');
+            throwError(message, 400);
         }
 
         return this.breaker

@@ -259,6 +259,7 @@ describe('index', function() {
                     },
                     error => {
                         assert.match(error.message, expectedError);
+                        assert.match(error.statusCode, 400);
                     }
                 );
         });

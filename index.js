@@ -7,6 +7,7 @@ const Hoek = require('@hapi/hoek');
 const Joi = require('joi');
 const Path = require('path');
 const Schema = require('screwdriver-data-schema');
+const CHECKOUT_URL_REGEX = Schema.config.regex.CHECKOUT_URL;
 const Scm = require('screwdriver-scm-base');
 const logger = require('screwdriver-logger');
 const request = require('screwdriver-request');
@@ -1005,15 +1006,32 @@ class GitlabScm extends Scm {
      * @async getFile
      * @param  {Object}   config              Configuration
      * @param  {String}   config.scmUri       The scmUri to get permissions on
-     * @param  {String}   config.path         The file in the repo to fetch
+     * @param  {String}   config.path         The file in the repo to fetch or full checkoutUrl with file path
      * @param  {String}   config.token        The token used to authenticate to the SCM
      * @param  {String}   [config.ref]        The reference to the SCM, either branch or sha
      * @param  {String}   config.scmContext   The scm context to which user belongs
      * @return {Promise}
      */
     async _getFile({ scmUri, path, token, ref }) {
-        const { repoId, branch, rootDir } = getScmUriParts(scmUri);
-        const fullPath = rootDir ? Path.join(rootDir, path) : path;
+        let fullPath = path;
+        let owner;
+        let reponame;
+        let branch;
+        let rootDir;
+        let repoId;
+
+        // If full path to a file is provided, e.g. git@github.com:screwdriver-cd/scm-github.git:path/to/a/file.yaml
+        if (CHECKOUT_URL_REGEX.test(path)) {
+            ({ owner, reponame, branch, rootDir } = getRepoInfoByCheckoutUrl(fullPath));
+            repoId = encodeURIComponent(`${owner}/${reponame}`);
+            fullPath = rootDir;
+        } else {
+            const scmUriParts = getScmUriParts(scmUri);
+
+            ({ branch, rootDir } = scmUriParts);
+            repoId = scmUriParts.repoId;
+            fullPath = rootDir ? Path.join(rootDir, path) : path;
+        }
 
         return this.breaker
             .runCommand({

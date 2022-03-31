@@ -1001,6 +1001,24 @@ describe('index', function() {
             });
         });
 
+        it('resolves to correct commit sha when only full path is passed', () =>
+            scm
+                .getFile({
+                    scmUri: 'gitlab.com:146:master:src/app/component',
+                    path: 'https://ossmirror.vzbuilders.com/screwdriver-cd/scm-gitlab.git#master:path/to/a/file.yaml',
+                    token: 'somerandomtoken'
+                })
+                .then(content => {
+                    assert.deepEqual(content, 'dataValue');
+                    assert.calledWith(requestMock, {
+                        method: 'GET',
+                        searchParams: { ref: 'master' },
+                        url:
+                            'https://gitlab.com/api/v4/projects/screwdriver-cd%2Fscm-gitlab/repository/files/path%2Fto%2Fa%2Ffile.yaml',
+                        context: { token: 'somerandomtoken' }
+                    });
+                }));
+
         it('rejects if status code is not 200', () => {
             const err = new Error('404 Reason "Resource not found" Caller "_getFile"');
 
@@ -1479,7 +1497,7 @@ describe('index', function() {
                     type: 'pr',
                     token,
                     webhookConfig: null,
-                    scmUri: 'github.com:28476:master',
+                    scmUri: 'gitlab.com:28476:master',
                     prNum: 1
                 })
                 .then(result => {

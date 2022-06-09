@@ -895,14 +895,19 @@ class GitlabScm extends Scm {
      * @param  {String}   config.scmUri     The scmUri to get commit sha of
      * @return {Promise}
      */
-    async _addPrComment({ comment, prNum, scmUri }) {
+    async _addPrComment({ comment, jobName, prNum, scmUri, pipelineId }) {
         const { repoId } = getScmUriParts(scmUri);
 
         const prComments = await this.prComments(repoId, prNum);
 
         if (prComments) {
             const botComment = prComments.comments.find(
-                commentObj => commentObj.author.username === this.config.username
+                commentObj =>
+                    commentObj.author.username === this.config.username &&
+                    commentObj.body.split(/\n/)[0].match(/^.+pipelines\/(\d+)\/builds.+ ([\w-:]+)$/) &&
+                    commentObj.body.split(/\n/)[0].match(/^.+pipelines\/(\d+)\/builds.+ ([\w-:]+)$/)[1] ===
+                        pipelineId.toString() &&
+                    commentObj.body.split(/\n/)[0].match(/^.+pipelines\/(\d+)\/builds.+ ([\w-:]+)$/)[2] === jobName
             );
 
             if (botComment) {

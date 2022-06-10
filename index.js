@@ -8,6 +8,7 @@ const Joi = require('joi');
 const Path = require('path');
 const Schema = require('screwdriver-data-schema');
 const CHECKOUT_URL_REGEX = Schema.config.regex.CHECKOUT_URL;
+const PR_COMMENTS_REGEX = /^.+pipelines\/(\d+)\/builds.+ ([\w-:]+)$/;
 const Scm = require('screwdriver-scm-base');
 const logger = require('screwdriver-logger');
 const request = require('screwdriver-request');
@@ -904,10 +905,9 @@ class GitlabScm extends Scm {
             const botComment = prComments.comments.find(
                 commentObj =>
                     commentObj.author.username === this.config.username &&
-                    commentObj.body.split(/\n/)[0].match(/^.+pipelines\/(\d+)\/builds.+ ([\w-:]+)$/) &&
-                    commentObj.body.split(/\n/)[0].match(/^.+pipelines\/(\d+)\/builds.+ ([\w-:]+)$/)[1] ===
-                        pipelineId.toString() &&
-                    commentObj.body.split(/\n/)[0].match(/^.+pipelines\/(\d+)\/builds.+ ([\w-:]+)$/)[2] === jobName
+                    commentObj.body.split(/\n/)[0].match(PR_COMMENTS_REGEX) &&
+                    commentObj.body.split(/\n/)[0].match(PR_COMMENTS_REGEX)[1] === pipelineId.toString() &&
+                    commentObj.body.split(/\n/)[0].match(PR_COMMENTS_REGEX)[2] === jobName
             );
 
             if (botComment) {

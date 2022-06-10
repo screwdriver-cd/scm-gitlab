@@ -46,7 +46,7 @@
     "@hapi/hoek": "^9.2.1",
     "circuit-fuses": "^4.1.2",
     "joi": "^17.6.0",
-    "screwdriver-data-schema": "^21.22.2",
+    "screwdriver-data-schema": "^21.24.0",
     "screwdriver-logger": "^1.1.0",
     "screwdriver-request": "^1.0.2",
     "screwdriver-scm-base": "^7.4.0"

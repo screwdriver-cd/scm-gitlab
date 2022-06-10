@@ -811,6 +811,8 @@ describe('index', function() {
         const apiUrl = 'projects/repoId/merge_requests/12345/notes';
         const comment = 'this is a merge request comment';
         const prNum = 12345;
+        const jobName = 'main';
+        const pipelineId = 123456;
         const expectedOptions = {
             url: `${prefixUrl}/${apiUrl}`,
             method: 'POST',
@@ -844,9 +846,11 @@ describe('index', function() {
             scm
                 .addPrComment({
                     comment,
+                    jobName,
                     prNum,
                     scmUri,
                     token,
+                    pipelineId,
                     scmContext
                 })
                 .then(result => {
@@ -865,9 +869,11 @@ describe('index', function() {
             return scm
                 .addPrComment({
                     comment,
+                    jobName,
                     prNum,
                     scmUri,
                     token,
+                    pipelineId,
                     scmContext
                 })
                 .then(result => {
@@ -908,9 +914,11 @@ describe('index', function() {
             return scm
                 .addPrComment({
                     comment,
+                    jobName,
                     prNum,
                     scmUri,
                     token,
+                    pipelineId,
                     scmContext
                 })
                 .then(data => {
@@ -936,9 +944,11 @@ describe('index', function() {
             return scm
                 .addPrComment({
                     comment,
+                    jobName,
                     prNum,
                     scmUri,
                     token,
+                    pipelineId,
                     scmContext
                 })
                 .then(data => {

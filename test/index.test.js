@@ -27,7 +27,7 @@ const prefixUrl = 'https://gitlab.com/api/v4';
 
 sinon.assert.expose(assert, { prefix: '' });
 
-describe('index', function() {
+describe('index', function () {
     // Time not important. Only life important.
     this.timeout(5000);
 
@@ -1023,8 +1023,7 @@ describe('index', function() {
                     assert.calledWith(requestMock, {
                         method: 'GET',
                         searchParams: { ref: 'master' },
-                        url:
-                            'https://gitlab.com/api/v4/projects/screwdriver-cd%2Fscm-gitlab/repository/files/path%2Fto%2Fa%2Ffile.yaml',
+                        url: 'https://gitlab.com/api/v4/projects/screwdriver-cd%2Fscm-gitlab/repository/files/path%2Fto%2Fa%2Ffile.yaml',
                         context: { token: 'somerandomtoken' }
                     });
                 }));

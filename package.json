@@ -1,6 +1,6 @@
 {
   "name": "screwdriver-scm-gitlab",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "GitLab implementation for the scm-base class",
   "main": "index.js",
   "scripts": {
@@ -31,25 +31,25 @@
     "Tiffany Kyi <tiffanykyi@gmail.com>"
   ],
   "devDependencies": {
-    "chai": "^4.3.6",
-    "eslint": "^7.31.0",
-    "eslint-config-screwdriver": "^5.0.1",
-    "mocha": "^8.4.0",
+    "chai": "^4.3.7",
+    "eslint": "^8.28.0",
+    "eslint-config-screwdriver": "^7.0.0",
+    "mocha": "^10.1.0",
     "mocha-multi-reporters": "^1.5.1",
     "mocha-sonarqube-reporter": "^1.0.2",
-    "mockery": "^2.0.0",
-    "nock": "^13.2.4",
-    "nyc": "^15.0.0",
-    "sinon": "^9.0.0"
+    "mockery": "^2.1.0",
+    "nock": "^13.2.9",
+    "nyc": "^15.1.0",
+    "sinon": "^15.0.0"
   },
   "dependencies": {
-    "@hapi/hoek": "^9.2.1",
-    "circuit-fuses": "^4.1.2",
-    "joi": "^17.6.0",
-    "screwdriver-data-schema": "^21.24.0",
-    "screwdriver-logger": "^1.1.0",
-    "screwdriver-request": "^1.0.2",
-    "screwdriver-scm-base": "^7.4.0"
+    "@hapi/hoek": "^10.0.1",
+    "circuit-fuses": "^5.0.0",
+    "joi": "^17.7.0",
+    "screwdriver-data-schema": "^22.0.1",
+    "screwdriver-logger": "^2.0.0",
+    "screwdriver-request": "^2.0.1",
+    "screwdriver-scm-base": "^8.0.0"
   },
   "release": {
     "branches": [

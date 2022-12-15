@@ -142,36 +142,21 @@ class GitlabScm extends Scm {
             config,
             Joi.object()
                 .keys({
-                    gitlabProtocol: Joi.string()
-                        .optional()
-                        .default('https'),
-                    gitlabHost: Joi.string()
-                        .optional()
-                        .default('gitlab.com'),
-                    username: Joi.string()
-                        .optional()
-                        .default('sd-buildbot'),
-                    email: Joi.string()
-                        .optional()
-                        .default('dev-null@screwdriver.cd'),
-                    commentUserToken: Joi.string()
-                        .optional()
-                        .description('Token for PR comments'),
+                    gitlabProtocol: Joi.string().optional().default('https'),
+                    gitlabHost: Joi.string().optional().default('gitlab.com'),
+                    username: Joi.string().optional().default('sd-buildbot'),
+                    email: Joi.string().optional().default('dev-null@screwdriver.cd'),
+                    commentUserToken: Joi.string().optional().description('Token for PR comments'),
                     readOnly: Joi.object()
                         .keys({
                             enabled: Joi.boolean().optional(),
                             username: Joi.string().optional(),
                             accessToken: Joi.string().optional(),
-                            cloneType: Joi.string()
-                                .valid('https', 'ssh')
-                                .optional()
-                                .default('https')
+                            cloneType: Joi.string().valid('https', 'ssh').optional().default('https')
                         })
                         .optional()
                         .default({}),
-                    https: Joi.boolean()
-                        .optional()
-                        .default(false),
+                    https: Joi.boolean().optional().default(false),
                     oauthClientId: Joi.string().required(),
                     oauthClientSecret: Joi.string().required(),
                     fusebox: Joi.object().default({})
@@ -342,10 +327,13 @@ class GitlabScm extends Scm {
      * @return {Promise}                        Resolves to an ID of 'serviceName:repoId:branchName:rootDir'
      */
     async _parseUrl({ checkoutUrl, rootDir, token }) {
-        const { hostname, owner, reponame, branch, rootDir: sourceDir } = getRepoInfoByCheckoutUrl(
-            checkoutUrl,
-            rootDir
-        );
+        const {
+            hostname,
+            owner,
+            reponame,
+            branch,
+            rootDir: sourceDir
+        } = getRepoInfoByCheckoutUrl(checkoutUrl, rootDir);
         const myHost = this.config.gitlabHost || 'gitlab.com';
 
         if (hostname !== myHost) {
@@ -433,9 +421,7 @@ class GitlabScm extends Scm {
 
                 return {
                     action: 'push',
-                    branch: Hoek.reach(webhookPayload, 'ref')
-                        .split('/')
-                        .slice(-1)[0],
+                    branch: Hoek.reach(webhookPayload, 'ref').split('/').slice(-1)[0],
                     checkoutUrl,
                     sha: Hoek.reach(webhookPayload, 'checkout_sha'),
                     type: 'repo',
@@ -567,10 +553,12 @@ class GitlabScm extends Scm {
             // Git clone
             command.push(`echo Cloning external config repo ${parentCheckoutUrl}`);
             command.push(
-                `${'if [ ! -z $GIT_SHALLOW_CLONE ] && [ $GIT_SHALLOW_CLONE = false ]; ' +
+                `${
+                    'if [ ! -z $GIT_SHALLOW_CLONE ] && [ $GIT_SHALLOW_CLONE = false ]; ' +
                     'then $SD_GIT_WRAPPER ' +
                     `"git clone --recursive --quiet --progress --branch ${parentBranch} ` +
-                    '$CONFIG_URL $SD_CONFIG_DIR"; '}${shallowCloneCmd}` +
+                    '$CONFIG_URL $SD_CONFIG_DIR"; '
+                }${shallowCloneCmd}` +
                     `--recursive --quiet --progress --branch ${parentBranch} ` +
                     '$CONFIG_URL $SD_CONFIG_DIR"; fi'
             );
@@ -582,10 +570,12 @@ class GitlabScm extends Scm {
         // Git clone
         command.push(`echo 'Cloning ${checkoutUrl}, on branch ${branch}'`);
         command.push(
-            `${'if [ ! -z $GIT_SHALLOW_CLONE ] && [ $GIT_SHALLOW_CLONE = false ]; ' +
+            `${
+                'if [ ! -z $GIT_SHALLOW_CLONE ] && [ $GIT_SHALLOW_CLONE = false ]; ' +
                 'then $SD_GIT_WRAPPER ' +
                 `"git clone --recursive --quiet --progress --branch '${branch}' ` +
-                '$SCM_URL $SD_CHECKOUT_DIR_FINAL"; '}${shallowCloneCmd}` +
+                '$SCM_URL $SD_CHECKOUT_DIR_FINAL"; '
+            }${shallowCloneCmd}` +
                 `--recursive --quiet --progress --branch '${branch}' ` +
                 '$SCM_URL $SD_CHECKOUT_DIR_FINAL"; fi'
         );

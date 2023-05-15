@@ -9,6 +9,7 @@ const Path = require('path');
 const Schema = require('screwdriver-data-schema');
 const CHECKOUT_URL_REGEX = Schema.config.regex.CHECKOUT_URL;
 const PR_COMMENTS_REGEX = /^.+pipelines\/(\d+)\/builds.+ ([\w-:]+)$/;
+const PR_COMMENTS_KEYWORD_REGEX = /^__(.*)__.*$/;
 const Scm = require('screwdriver-scm-base');
 const logger = require('screwdriver-logger');
 const request = require('screwdriver-request');
@@ -881,70 +882,74 @@ class GitlabScm extends Scm {
      * Add merge request note
      * @async addPrComment
      * @param  {Object}   config            Configuration
-     * @param  {String}   config.comment    The PR comment
+     * @param  {Array}    config.comments   The PR comments
      * @param  {Integer}  config.prNum      The PR number
      * @param  {String}   config.scmUri     The scmUri to get commit sha of
      * @return {Promise}
      */
-    async _addPrComment({ comment, jobName, prNum, scmUri, pipelineId }) {
+    async _addPrComment({ comments, jobName, prNum, scmUri, pipelineId }) {
         const { repoId } = getScmUriParts(scmUri);
-
         const prComments = await this.prComments(repoId, prNum);
+        const prCommentData = [];
 
-        if (prComments) {
-            const botComment = prComments.comments.find(
-                commentObj =>
-                    commentObj.author.username === this.config.username &&
-                    commentObj.body.split(/\n/)[0].match(PR_COMMENTS_REGEX) &&
-                    commentObj.body.split(/\n/)[0].match(PR_COMMENTS_REGEX)[1] === pipelineId.toString() &&
-                    commentObj.body.split(/\n/)[0].match(PR_COMMENTS_REGEX)[2] === jobName
-            );
+        for (const comment of comments) {
+            let botComment;
+
+            if (prComments) {
+                botComment = prComments.comments.find(
+                    commentObj =>
+                        commentObj.author.username === this.config.username &&
+                        commentObj.body.split(/\n/)[0].match(PR_COMMENTS_REGEX) &&
+                        commentObj.body.split(/\n/)[0].match(PR_COMMENTS_REGEX)[1] === pipelineId.toString() &&
+                        commentObj.body.split(/\n/)[0].match(PR_COMMENTS_REGEX)[2] === jobName &&
+                        commentObj.body.split(/\n/)[3].match(PR_COMMENTS_KEYWORD_REGEX) &&
+                        commentObj.body.split(/\n/)[3].match(PR_COMMENTS_KEYWORD_REGEX)[1] === comment.keyWord
+                );
+            }
 
             if (botComment) {
                 try {
-                    const pullRequestComment = await this.editPrComment(botComment.id, repoId, prNum, comment);
+                    const pullRequestComment = await this.editPrComment(botComment.id, repoId, prNum, comment.text);
 
                     if (pullRequestComment.statusCode !== 200) {
                         throw pullRequestComment;
                     }
 
-                    return {
+                    prCommentData.push({
                         commentId: Hoek.reach(pullRequestComment, 'body.id'),
                         createTime: Hoek.reach(pullRequestComment, 'body.created_at'),
                         username: Hoek.reach(pullRequestComment, 'body.author.username')
-                    };
+                    });
                 } catch (err) {
                     logger.error('Failed to addPRComment: ', err);
+                }
+            } else {
+                try {
+                    const pullRequestComment = await this.breaker.runCommand({
+                        method: 'POST',
+                        token: this.config.commentUserToken,
+                        route: `projects/${repoId}/merge_requests/${prNum}/notes`,
+                        json: {
+                            body: comment.text
+                        }
+                    });
 
-                    return null;
+                    if (pullRequestComment.statusCode !== 200) {
+                        throw pullRequestComment;
+                    }
+
+                    prCommentData.push({
+                        commentId: Hoek.reach(pullRequestComment, 'body.id'),
+                        createTime: Hoek.reach(pullRequestComment, 'body.created_at'),
+                        username: Hoek.reach(pullRequestComment, 'body.author.username')
+                    });
+                } catch (err) {
+                    logger.error('Failed to addPRComment: ', err);
                 }
             }
         }
 
-        try {
-            const pullRequestComment = await this.breaker.runCommand({
-                method: 'POST',
-                token: this.config.commentUserToken,
-                route: `projects/${repoId}/merge_requests/${prNum}/notes`,
-                json: {
-                    body: comment
-                }
-            });
-
-            if (pullRequestComment.statusCode !== 200) {
-                throw pullRequestComment;
-            }
-
-            return {
-                commentId: Hoek.reach(pullRequestComment, 'body.id'),
-                createTime: Hoek.reach(pullRequestComment, 'body.created_at'),
-                username: Hoek.reach(pullRequestComment, 'body.author.username')
-            };
-        } catch (err) {
-            logger.error('Failed to addPRComment: ', err);
-
-            return null;
-        }
+        return prCommentData;
     }
 
     /**

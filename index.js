@@ -902,8 +902,9 @@ class GitlabScm extends Scm {
                         commentObj.body.split(/\n/)[0].match(PR_COMMENTS_REGEX) &&
                         commentObj.body.split(/\n/)[0].match(PR_COMMENTS_REGEX)[1] === pipelineId.toString() &&
                         commentObj.body.split(/\n/)[0].match(PR_COMMENTS_REGEX)[2] === jobName &&
-                        commentObj.body.split(/\n/)[3].match(PR_COMMENTS_KEYWORD_REGEX) &&
-                        commentObj.body.split(/\n/)[3].match(PR_COMMENTS_KEYWORD_REGEX)[1] === comment.keyWord
+                        (!comment.keyWord ||
+                            (commentObj.body.split(/\n/)[3].match(PR_COMMENTS_KEYWORD_REGEX) &&
+                                commentObj.body.split(/\n/)[3].match(PR_COMMENTS_KEYWORD_REGEX)[1] === comment.keyWord))
                 );
             }
 

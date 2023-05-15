@@ -809,7 +809,7 @@ describe('index', function () {
 
     describe('addPrComment', () => {
         const apiUrl = 'projects/repoId/merge_requests/12345/notes';
-        const comments = [{ text: 'this was a great PR', keyWord: 'foo' }];
+        const comments = [{ text: 'this was a great PR' }];
         const prNum = 12345;
         const jobName = 'main';
         const pipelineId = 123456;

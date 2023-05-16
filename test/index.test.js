@@ -910,8 +910,8 @@ describe('index', function () {
 
         it('creats multiple comments', () => {
             const multipleComments = [
-                { text: 'this was a great PR', keyWord: 'foos' },
-                { text: 'this was not a great PR', keyWord: 'bars' }
+                { text: 'this was a great PR', keyword: 'foos' },
+                { text: 'this was not a great PR', keyword: 'bars' }
             ];
 
             requestMock.onFirstCall().resolves(fakeCommentsResponse);
@@ -973,8 +973,8 @@ describe('index', function () {
 
         it('edits multiple comments', () => {
             const multipleComments = [
-                { text: 'this was a great PR', keyWord: 'foo' },
-                { text: 'this was not a great PR', keyWord: 'bar' }
+                { text: 'this was a great PR', keyword: 'foo' },
+                { text: 'this was not a great PR', keyword: 'bar' }
             ];
 
             requestMock.onFirstCall().resolves(fakeCommentsResponse);

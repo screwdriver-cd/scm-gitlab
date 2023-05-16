@@ -889,7 +889,7 @@ describe('index', function () {
                         }
                     });
                     assert.calledWith(requestMock.secondCall, {
-                        url: `${prefixUrl}/${apiUrl}/575311268`,
+                        url: `${prefixUrl}/${apiUrl}/575335839`,
                         method: 'PUT',
                         context: {
                             token: commentUserToken

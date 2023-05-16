@@ -49,7 +49,7 @@
     "screwdriver-data-schema": "^22.0.1",
     "screwdriver-logger": "^2.0.0",
     "screwdriver-request": "^2.0.1",
-    "screwdriver-scm-base": "^8.0.1"
+    "screwdriver-scm-base": "^8.1.0"
   },
   "release": {
     "branches": [

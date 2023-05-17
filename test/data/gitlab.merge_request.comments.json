@@ -2,7 +2,7 @@
     {
         "id": 575389132,
         "type": null,
-        "body": "### SD Build [#133652](https://cd.screwdriver.cd/pipelines/123456/builds/133652) Job main-2",
+        "body": "### SD Build [#133652](https://cd.screwdriver.cd/pipelines/123456/builds/133652) Job main-2\n_node:18_\n- - - -\n__bar__ - Coverage increased by 20%",
         "attachment": null,
         "author": {
             "id": 8615742,
@@ -25,7 +25,7 @@
     {
         "id": 575335839,
         "type": null,
-        "body": "### SD Build [#133652](https://cd.screwdriver.cd/pipelines/1/builds/133652) Job main",
+        "body": "### SD Build [#133652](https://cd.screwdriver.cd/pipelines/123456/builds/133652) Job main\n_node:18_\n- - - -\n__bar__ - Coverage increased by 20%",
         "attachment": null,
         "author": {
             "id": 8615742,
@@ -48,7 +48,7 @@
     {
         "id": 575311268,
         "type": null,
-        "body": "### SD Build [#133652](https://cd.screwdriver.cd/pipelines/123456/builds/133652) Job main",
+        "body": "### SD Build [#133652](https://cd.screwdriver.cd/pipelines/123456/builds/133652) Job main\n_node:18_\n- - - -\n__foo__ - Coverage increased by 20%",
         "attachment": null,
         "author": {
             "id": 8615742,

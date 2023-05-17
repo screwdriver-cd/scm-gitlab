@@ -809,7 +809,7 @@ describe('index', function () {
 
     describe('addPrComment', () => {
         const apiUrl = 'projects/repoId/merge_requests/12345/notes';
-        const comment = 'this is a merge request comment';
+        const comments = [{ text: 'this was a great PR' }];
         const prNum = 12345;
         const jobName = 'main';
         const pipelineId = 123456;
@@ -820,7 +820,7 @@ describe('index', function () {
                 token: commentUserToken
             },
             json: {
-                body: comment
+                body: comments[0].text
             }
         };
         let fakeResponse;
@@ -845,7 +845,7 @@ describe('index', function () {
         it('resolves to correct PR metadata', () =>
             scm
                 .addPrComment({
-                    comment,
+                    comments,
                     jobName,
                     prNum,
                     scmUri,
@@ -854,12 +854,15 @@ describe('index', function () {
                     scmContext
                 })
                 .then(result => {
+                    assert.calledTwice(requestMock);
                     assert.calledWith(requestMock.secondCall, expectedOptions);
-                    assert.deepEqual(result, {
-                        commentId: 126861726,
-                        createTime: '2018-12-21T20:33:33.157Z',
-                        username: 'tkyi'
-                    });
+                    assert.deepEqual(result, [
+                        {
+                            commentId: 126861726,
+                            createTime: '2018-12-21T20:33:33.157Z',
+                            username: 'tkyi'
+                        }
+                    ]);
                 }));
 
         it('resolves to correct PR metadata for edited comment', () => {
@@ -868,7 +871,119 @@ describe('index', function () {
 
             return scm
                 .addPrComment({
-                    comment,
+                    comments,
+                    jobName,
+                    prNum,
+                    scmUri,
+                    token,
+                    pipelineId,
+                    scmContext
+                })
+                .then(result => {
+                    assert.calledTwice(requestMock);
+                    assert.calledWith(requestMock.firstCall, {
+                        url: `${prefixUrl}/${apiUrl}`,
+                        method: 'GET',
+                        context: {
+                            token: commentUserToken
+                        }
+                    });
+                    assert.calledWith(requestMock.secondCall, {
+                        url: `${prefixUrl}/${apiUrl}/575335839`,
+                        method: 'PUT',
+                        context: {
+                            token: commentUserToken
+                        },
+                        json: {
+                            body: 'this was a great PR'
+                        }
+                    });
+                    assert.deepEqual(result, [
+                        {
+                            commentId: 126861726,
+                            createTime: '2018-12-21T20:33:33.157Z',
+                            username: 'tkyi'
+                        }
+                    ]);
+                });
+        });
+
+        it('creats multiple comments', () => {
+            const multipleComments = [
+                { text: 'this was a great PR', keyword: 'foos' },
+                { text: 'this was not a great PR', keyword: 'bars' }
+            ];
+
+            requestMock.onFirstCall().resolves(fakeCommentsResponse);
+            requestMock.onSecondCall().resolves(fakeResponse);
+            requestMock.onThirdCall().resolves(fakeResponse);
+
+            return scm
+                .addPrComment({
+                    comments: multipleComments,
+                    jobName,
+                    prNum,
+                    scmUri,
+                    token,
+                    pipelineId,
+                    scmContext
+                })
+                .then(result => {
+                    assert.calledWith(requestMock.firstCall, {
+                        url: `${prefixUrl}/${apiUrl}`,
+                        method: 'GET',
+                        context: {
+                            token: commentUserToken
+                        }
+                    });
+                    assert.calledWith(requestMock.secondCall, {
+                        url: `${prefixUrl}/${apiUrl}`,
+                        method: 'POST',
+                        context: {
+                            token: commentUserToken
+                        },
+                        json: {
+                            body: 'this was a great PR'
+                        }
+                    });
+                    assert.calledWith(requestMock.thirdCall, {
+                        url: `${prefixUrl}/${apiUrl}`,
+                        method: 'POST',
+                        context: {
+                            token: commentUserToken
+                        },
+                        json: {
+                            body: 'this was not a great PR'
+                        }
+                    });
+                    assert.deepEqual(result, [
+                        {
+                            commentId: 126861726,
+                            createTime: '2018-12-21T20:33:33.157Z',
+                            username: 'tkyi'
+                        },
+                        {
+                            commentId: 126861726,
+                            createTime: '2018-12-21T20:33:33.157Z',
+                            username: 'tkyi'
+                        }
+                    ]);
+                });
+        });
+
+        it('edits multiple comments', () => {
+            const multipleComments = [
+                { text: 'this was a great PR', keyword: 'foo' },
+                { text: 'this was not a great PR', keyword: 'bar' }
+            ];
+
+            requestMock.onFirstCall().resolves(fakeCommentsResponse);
+            requestMock.onSecondCall().resolves(fakeResponse);
+            requestMock.onThirdCall().resolves(fakeResponse);
+
+            return scm
+                .addPrComment({
+                    comments: multipleComments,
                     jobName,
                     prNum,
                     scmUri,
@@ -891,18 +1006,35 @@ describe('index', function () {
                             token: commentUserToken
                         },
                         json: {
-                            body: 'this is a merge request comment'
+                            body: 'this was a great PR'
                         }
                     });
-                    assert.deepEqual(result, {
-                        commentId: 126861726,
-                        createTime: '2018-12-21T20:33:33.157Z',
-                        username: 'tkyi'
+                    assert.calledWithMatch(requestMock, {
+                        url: `${prefixUrl}/${apiUrl}/575335839`,
+                        method: 'PUT',
+                        context: {
+                            token: commentUserToken
+                        },
+                        json: {
+                            body: 'this was not a great PR'
+                        }
                     });
+                    assert.deepEqual(result, [
+                        {
+                            commentId: 126861726,
+                            createTime: '2018-12-21T20:33:33.157Z',
+                            username: 'tkyi'
+                        },
+                        {
+                            commentId: 126861726,
+                            createTime: '2018-12-21T20:33:33.157Z',
+                            username: 'tkyi'
+                        }
+                    ]);
                 });
         });
 
-        it('resolves null if status code is not 200', () => {
+        it('resolves empty array if status code is not 200', () => {
             fakeResponse = {
                 statusCode: 404,
                 body: {
@@ -913,7 +1045,7 @@ describe('index', function () {
 
             return scm
                 .addPrComment({
-                    comment,
+                    comments,
                     jobName,
                     prNum,
                     scmUri,
@@ -922,7 +1054,7 @@ describe('index', function () {
                     scmContext
                 })
                 .then(data => {
-                    assert.isNull(data);
+                    assert.isEmpty(data);
                 })
                 .catch(error => {
                     assert.calledWith(requestMock, expectedOptions);
@@ -931,7 +1063,7 @@ describe('index', function () {
                 });
         });
 
-        it('resolves null if status code is not 200 for edited comment', () => {
+        it('resolves empty array if status code is not 200 for edited comment', () => {
             fakeResponse = {
                 statusCode: 404,
                 body: {
@@ -943,7 +1075,7 @@ describe('index', function () {
 
             return scm
                 .addPrComment({
-                    comment,
+                    comments,
                     jobName,
                     prNum,
                     scmUri,
@@ -952,7 +1084,7 @@ describe('index', function () {
                     scmContext
                 })
                 .then(data => {
-                    assert.isNull(data);
+                    assert.isEmpty(data);
                 })
                 .catch(error => {
                     assert.calledWith(requestMock, expectedOptions);

@@ -432,6 +432,7 @@ describe('index', function () {
 
         it('resolves to correct decorated author', () => {
             const expected = {
+                id: 12345,
                 url: 'https://gitlab.com/batman',
                 name: 'Batman',
                 username: 'batman',

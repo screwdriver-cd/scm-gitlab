@@ -721,7 +721,7 @@ class GitlabScm extends Scm {
                 });
 
                 return {
-                    id: author.id,
+                    id: author.id.toString(),
                     url: author.web_url,
                     name: author.name,
                     username: author.username,

@@ -376,6 +376,10 @@ class GitlabScm extends Scm {
         const commits = Hoek.reach(webhookPayload, 'commits');
         const type = Hoek.reach(webhookPayload, 'object_kind');
 
+        if (!Object.keys(payloadHeaders).includes('x-gitlab-event')) {
+            throwError('Missing x-gitlab-event header', 400);
+        }
+
         switch (type) {
             case 'merge_request': {
                 const mergeRequest = Hoek.reach(webhookPayload, 'object_attributes');
@@ -1234,16 +1238,10 @@ class GitlabScm extends Scm {
      * @return {Promise}
      */
     async _canHandleWebhook(headers, payload) {
-        if (!Object.keys(headers).includes('x-gitlab-event')) {
-            logger.error('Failed to run canHandleWebhook');
-
-            return Promise.resolve(false);
-        }
-
         try {
-            const result = await this._parseHook(headers, payload);
+            await this._parseHook(headers, payload);
 
-            return result !== null;
+            return true;
         } catch (err) {
             logger.error('Failed to run canHandleWebhook', err);
 

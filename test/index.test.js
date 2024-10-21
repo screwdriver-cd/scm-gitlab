@@ -2174,7 +2174,7 @@ describe('index', function () {
             });
         });
 
-        it('returns a false when parseHook resolves null', () => {
+        it('returns a true when parseHook resolves null', () => {
             const headers = {
                 'content-type': 'application/json',
                 'x-gitlab-event': 'Push Hook'

@@ -367,7 +367,7 @@ describe('index', function () {
 
         it('resolves null if events are not supported: repoFork', () => {
             const repoFork = {
-                'x-event-key': 'repo:fork'
+                'x-gitlab-event': 'repo:fork'
             };
 
             return scm.parseHook(repoFork, {}).then(result => assert.deepEqual(result, null));
@@ -375,7 +375,7 @@ describe('index', function () {
 
         it('resolves null if events are not supported: prComment', () => {
             const prComment = {
-                'x-event-key': 'pullrequest:comment_created'
+                'x-gitlab-event': 'Note Hook'
             };
 
             return scm.parseHook(prComment, {}).then(result => assert.deepEqual(result, null));
@@ -383,7 +383,7 @@ describe('index', function () {
 
         it('resolves null if events are not supported: issueCreated', () => {
             const issueCreated = {
-                'x-event-key': 'issue:created'
+                'x-gitlab-event': 'Issue Hook'
             };
 
             return scm.parseHook(issueCreated, {}).then(result => assert.deepEqual(result, null));
@@ -2174,7 +2174,7 @@ describe('index', function () {
             });
         });
 
-        it('returns a false when parseHook resolves null', () => {
+        it('returns a true when parseHook resolves null', () => {
             const headers = {
                 'content-type': 'application/json',
                 'x-gitlab-event': 'Push Hook'
@@ -2184,7 +2184,7 @@ describe('index', function () {
             scm._parseHook.resolves(null);
 
             return scm.canHandleWebhook(headers, testPayloadOpen).then(result => {
-                assert.strictEqual(result, false);
+                assert.strictEqual(result, true);
             });
         });
 

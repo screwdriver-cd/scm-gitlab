@@ -489,6 +489,13 @@ class GitlabScm extends Scm {
                 "else echo 'sd-step exec core/git'; fi)\""
         );
 
+        // Set recursive option
+        command.push(
+            'if [ ! -z $GIT_RECURSIVE_CLONE ] && [ $GIT_RECURSIVE_CLONE = false ]; ' +
+                `then export GIT_RECURSIVE_OPTION=""; ` +
+                `else export GIT_RECURSIVE_OPTION="--recursive"; fi`
+        );
+
         // Export environment variables
         command.push('echo Exporting environment variables');
 
@@ -561,10 +568,10 @@ class GitlabScm extends Scm {
                 `${
                     'if [ ! -z $GIT_SHALLOW_CLONE ] && [ $GIT_SHALLOW_CLONE = false ]; ' +
                     'then $SD_GIT_WRAPPER ' +
-                    `"git clone --recursive --quiet --progress --branch ${parentBranch} ` +
+                    `"git clone $GIT_RECURSIVE_OPTION --quiet --progress --branch ${parentBranch} ` +
                     '$CONFIG_URL $SD_CONFIG_DIR"; '
                 }${shallowCloneCmd}` +
-                    `--recursive --quiet --progress --branch ${parentBranch} ` +
+                    `$GIT_RECURSIVE_OPTION --quiet --progress --branch ${parentBranch} ` +
                     '$CONFIG_URL $SD_CONFIG_DIR"; fi'
             );
             // Reset to SHA
@@ -578,10 +585,10 @@ class GitlabScm extends Scm {
             `${
                 'if [ ! -z $GIT_SHALLOW_CLONE ] && [ $GIT_SHALLOW_CLONE = false ]; ' +
                 'then $SD_GIT_WRAPPER ' +
-                `"git clone --recursive --quiet --progress --branch '${branch}' ` +
+                `"git clone $GIT_RECURSIVE_OPTION --quiet --progress --branch '${branch}' ` +
                 '$SCM_URL $SD_CHECKOUT_DIR_FINAL"; '
             }${shallowCloneCmd}` +
-                `--recursive --quiet --progress --branch '${branch}' ` +
+                `$GIT_RECURSIVE_OPTION --quiet --progress --branch '${branch}' ` +
                 '$SCM_URL $SD_CHECKOUT_DIR_FINAL"; fi'
         );
         // Reset to SHA
@@ -610,8 +617,11 @@ class GitlabScm extends Scm {
         }
 
         // Init & Update submodule
-        command.push('$SD_GIT_WRAPPER "git submodule init"');
-        command.push('$SD_GIT_WRAPPER "git submodule update --recursive"');
+        command.push(
+            'if [ ! -z $GIT_RECURSIVE_CLONE ] && [ $GIT_RECURSIVE_CLONE = false ]; ' +
+                `then $SD_GIT_WRAPPER "git submodule init"; ` +
+                `else $SD_GIT_WRAPPER "git submodule update --init --recursive"; fi`
+        );
 
         // cd into rootDir after merging
         if (rootDir) {

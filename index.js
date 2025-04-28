@@ -389,6 +389,7 @@ class GitlabScm extends Scm {
                 const baseSource = Hoek.reach(mergeRequest, 'target_project_id');
                 const headSource = Hoek.reach(mergeRequest, 'source_project_id');
                 const prSource = baseSource === headSource ? 'branch' : 'fork';
+                const prMerged = action === 'merged';
                 const ref = `pull/${prNum}/merge`;
 
                 // Possible actions
@@ -414,7 +415,8 @@ class GitlabScm extends Scm {
                     type: 'pr',
                     username: Hoek.reach(webhookPayload, 'user.username'),
                     hookId,
-                    scmContext
+                    scmContext,
+                    prMerged
                 };
             }
             case 'push': {

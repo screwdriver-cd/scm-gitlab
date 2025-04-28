@@ -282,7 +282,8 @@ describe('index', function () {
                 prTitle: 'fix tabby cat',
                 ref: 'pull/6/merge',
                 hookId: '',
-                scmContext
+                scmContext,
+                prMerged: false
             };
             const headers = {
                 'content-type': 'application/json',
@@ -306,7 +307,8 @@ describe('index', function () {
                 prTitle: 'Fix this stuff',
                 ref: 'pull/2/merge',
                 hookId: '',
-                scmContext
+                scmContext,
+                prMerged: true
             };
             const headers = {
                 'content-type': 'application/json',
@@ -330,7 +332,8 @@ describe('index', function () {
                 prTitle: 'Fix this stuff',
                 ref: 'pull/2/merge',
                 hookId: '',
-                scmContext
+                scmContext,
+                prMerged: true
             };
             const headers = {
                 'content-type': 'application/json',

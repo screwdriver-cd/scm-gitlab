@@ -454,6 +454,42 @@ describe('index', function () {
                 });
         });
 
+        it('resolves to correct decorated author when avatar_url is not present', () => {
+            const fakeResponse1 = {
+                statusCode: 200,
+                body: [
+                    {
+                        username: 'batman',
+                        name: 'Batman',
+                        id: 12345,
+                        state: 'active',
+                        web_url: 'https://gitlab.com/batman'
+                    }
+                ]
+            };
+
+            requestMock.resolves(fakeResponse1);
+
+            const expected = {
+                id: '12345',
+                url: 'https://gitlab.com/batman',
+                name: 'Batman',
+                username: 'batman',
+                avatar: 'https://cd.screwdriver.cd/assets/unknown_user.png'
+            };
+
+            return scm
+                .decorateAuthor({
+                    username: 'batman',
+                    scmContext,
+                    token
+                })
+                .then(decorated => {
+                    assert.calledWith(requestMock, expectedOptions);
+                    assert.deepEqual(decorated, expected);
+                });
+        });
+
         it('rejects if status code is not 200', () => {
             const err = new Error('404 Reason "Resource not found" Caller "_decorateAuthor"');
 

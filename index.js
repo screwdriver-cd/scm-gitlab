@@ -741,7 +741,7 @@ class GitlabScm extends Scm {
                     url: author.web_url,
                     name: author.name,
                     username: author.username,
-                    avatar: author.avatar_url
+                    avatar: author.avatar_url || DEFAULT_AUTHOR.avatar
                 };
             });
     }

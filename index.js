@@ -508,7 +508,8 @@ class GitlabScm extends Scm {
             // Set sparse option
             trimIndentJoin([
                 'if [ ! -z "$GIT_SPARSE_CHECKOUT_PATH" ]; then',
-                '    export GIT_SPARSE_OPTION="--no-checkout";else',
+                '    export GIT_SPARSE_OPTION="--no-checkout";',
+                'else',
                 '    export GIT_SPARSE_OPTION="";',
                 'fi'
             ])
@@ -551,8 +552,14 @@ class GitlabScm extends Scm {
             'export GIT_MERGE_AUTOEDIT=no',
             // Set config
             'echo Setting user name and user email',
-            `$SD_GIT_WRAPPER "git config --global user.name ${this.config.username}"`,
-            `$SD_GIT_WRAPPER "git config --global user.email ${this.config.email}"`,
+            trimIndentJoin([
+                'if [ ! -z $SD_SKIP_REPOSITORY_CLONE ] && [ $SD_SKIP_REPOSITORY_CLONE = true ] && ! command -v git >/dev/null 2>&1; then',
+                `    echo 'Skipping git config';`,
+                'else',
+                `    $SD_GIT_WRAPPER "git config --global user.name ${this.config.username}";`,
+                `    $SD_GIT_WRAPPER "git config --global user.email ${this.config.email}";`,
+                'fi'
+            ]),
             // Set final checkout dir, default to SD_SOURCE_DIR for backward compatibility
             'export SD_CHECKOUT_DIR_FINAL=$SD_SOURCE_DIR',
             trimIndentJoin([
@@ -583,33 +590,35 @@ class GitlabScm extends Scm {
                 `export SD_CONFIG_DIR=${externalConfigDir}`,
                 `echo Cloning external config repo ${parentCheckoutUrl}`,
                 trimIndentJoin([
-                    'if [ ! -z $GIT_SHALLOW_CLONE ] && [ $GIT_SHALLOW_CLONE = false ]; then',
-                    `    $SD_GIT_WRAPPER "git clone $GIT_SPARSE_OPTION $GIT_RECURSIVE_OPTION --quiet --progress --branch ${parentBranch} $CONFIG_URL $SD_CONFIG_DIR";`,
+                    'if [ ! -z $SD_SKIP_REPOSITORY_CLONE ] && [ $SD_SKIP_REPOSITORY_CLONE = true ]; then',
+                    `    echo 'Skipping cloning ${checkoutUrl}, on branch ${parentBranch}';`,
                     'else',
-                    '    if [ ! -z "$GIT_SHALLOW_CLONE_SINCE" ]; then',
-                    '        export GIT_SHALLOW_CLONE_DEPTH_OPTION="--shallow-since=\'$GIT_SHALLOW_CLONE_SINCE\'";',
+                    '    if [ ! -z $GIT_SHALLOW_CLONE ] && [ $GIT_SHALLOW_CLONE = false ]; then',
+                    `        $SD_GIT_WRAPPER "git clone $GIT_SPARSE_OPTION $GIT_RECURSIVE_OPTION --quiet --progress --branch '${parentBranch}' $CONFIG_URL $SD_CONFIG_DIR";`,
                     '    else',
-                    '        if [ -z $GIT_SHALLOW_CLONE_DEPTH ]; then',
-                    '            export GIT_SHALLOW_CLONE_DEPTH=50;',
+                    '        if [ ! -z "$GIT_SHALLOW_CLONE_SINCE" ]; then',
+                    '            export GIT_SHALLOW_CLONE_DEPTH_OPTION="--shallow-since=\'$GIT_SHALLOW_CLONE_SINCE\'";',
+                    '        else',
+                    '            if [ -z $GIT_SHALLOW_CLONE_DEPTH ]; then',
+                    '                export GIT_SHALLOW_CLONE_DEPTH=50;',
+                    '            fi;',
+                    '            export GIT_SHALLOW_CLONE_DEPTH_OPTION="--depth=$GIT_SHALLOW_CLONE_DEPTH";',
                     '        fi;',
-                    '        export GIT_SHALLOW_CLONE_DEPTH_OPTION="--depth=$GIT_SHALLOW_CLONE_DEPTH";',
+                    '        export GIT_SHALLOW_CLONE_BRANCH="--no-single-branch";',
+                    '        if [ "$GIT_SHALLOW_CLONE_SINGLE_BRANCH" = true ]; then',
+                    '            export GIT_SHALLOW_CLONE_BRANCH="";',
+                    '        fi;',
+                    `        $SD_GIT_WRAPPER "git clone $GIT_SHALLOW_CLONE_DEPTH_OPTION $GIT_SHALLOW_CLONE_BRANCH $GIT_SPARSE_OPTION $GIT_RECURSIVE_OPTION --quiet --progress --branch '${parentBranch}' $CONFIG_URL $SD_CONFIG_DIR";`,
                     '    fi;',
-                    '    export GIT_SHALLOW_CLONE_BRANCH="--no-single-branch";',
-                    '    if [ "$GIT_SHALLOW_CLONE_SINGLE_BRANCH" = true ]; then',
-                    '        export GIT_SHALLOW_CLONE_BRANCH="";',
+                    // Sparse Checkout
+                    '    if [ ! -z "$GIT_SPARSE_CHECKOUT_PATH" ]; then',
+                    '        $SD_GIT_WRAPPER "git sparse-checkout set $GIT_SPARSE_CHECKOUT_PATH" && $SD_GIT_WRAPPER "git checkout";',
                     '    fi;',
-                    `    $SD_GIT_WRAPPER "git clone $GIT_SHALLOW_CLONE_DEPTH_OPTION $GIT_SHALLOW_CLONE_BRANCH $GIT_SPARSE_OPTION $GIT_RECURSIVE_OPTION --quiet --progress --branch ${parentBranch} $CONFIG_URL $SD_CONFIG_DIR";`,
+                    // Reset to SHA
+                    `    $SD_GIT_WRAPPER "git -C $SD_CONFIG_DIR reset --hard ${parentConfig.sha} --";`,
+                    `    echo Reset external config repo to ${parentConfig.sha};`,
                     'fi'
-                ]),
-                // Sparse Checkout
-                trimIndentJoin([
-                    'if [ ! -z "$GIT_SPARSE_CHECKOUT_PATH" ];then',
-                    '    $SD_GIT_WRAPPER "git sparse-checkout set $GIT_SPARSE_CHECKOUT_PATH" && $SD_GIT_WRAPPER "git checkout";',
-                    'fi'
-                ]),
-                // Reset to SHA
-                `$SD_GIT_WRAPPER "git -C $SD_CONFIG_DIR reset --hard ${parentConfig.sha} --"`,
-                `echo Reset external config repo to ${parentConfig.sha}`
+                ])
             );
         }
 
@@ -618,33 +627,35 @@ class GitlabScm extends Scm {
             // Git clone
             `echo 'Cloning ${checkoutUrl}, on branch ${branch}'`,
             trimIndentJoin([
-                'if [ ! -z $GIT_SHALLOW_CLONE ] && [ $GIT_SHALLOW_CLONE = false ]; then',
-                `    $SD_GIT_WRAPPER "git clone $GIT_SPARSE_OPTION $GIT_RECURSIVE_OPTION --quiet --progress --branch '${branch}' $SCM_URL $SD_CHECKOUT_DIR_FINAL";`,
+                'if [ ! -z $SD_SKIP_REPOSITORY_CLONE ] && [ $SD_SKIP_REPOSITORY_CLONE = true ]; then',
+                `    echo 'Skipping cloning ${checkoutUrl}, on branch ${branch}';`,
                 'else',
-                '    if [ ! -z "$GIT_SHALLOW_CLONE_SINCE" ]; then',
-                '        export GIT_SHALLOW_CLONE_DEPTH_OPTION="--shallow-since=\'$GIT_SHALLOW_CLONE_SINCE\'";',
+                '    if [ ! -z $GIT_SHALLOW_CLONE ] && [ $GIT_SHALLOW_CLONE = false ]; then',
+                `        $SD_GIT_WRAPPER "git clone $GIT_SPARSE_OPTION $GIT_RECURSIVE_OPTION --quiet --progress --branch '${branch}' $SCM_URL $SD_CHECKOUT_DIR_FINAL";`,
                 '    else',
-                '        if [ -z $GIT_SHALLOW_CLONE_DEPTH ]; then',
-                '            export GIT_SHALLOW_CLONE_DEPTH=50;',
+                '        if [ ! -z "$GIT_SHALLOW_CLONE_SINCE" ]; then',
+                '            export GIT_SHALLOW_CLONE_DEPTH_OPTION="--shallow-since=\'$GIT_SHALLOW_CLONE_SINCE\'";',
+                '        else',
+                '            if [ -z $GIT_SHALLOW_CLONE_DEPTH ]; then',
+                '                export GIT_SHALLOW_CLONE_DEPTH=50;',
+                '            fi;',
+                '            export GIT_SHALLOW_CLONE_DEPTH_OPTION="--depth=$GIT_SHALLOW_CLONE_DEPTH";',
                 '        fi;',
-                '        export GIT_SHALLOW_CLONE_DEPTH_OPTION="--depth=$GIT_SHALLOW_CLONE_DEPTH";',
+                '        export GIT_SHALLOW_CLONE_BRANCH="--no-single-branch";',
+                '        if [ "$GIT_SHALLOW_CLONE_SINGLE_BRANCH" = true ]; then',
+                '            export GIT_SHALLOW_CLONE_BRANCH="";',
+                '        fi;',
+                `        $SD_GIT_WRAPPER "git clone $GIT_SHALLOW_CLONE_DEPTH_OPTION $GIT_SHALLOW_CLONE_BRANCH $GIT_SPARSE_OPTION $GIT_RECURSIVE_OPTION --quiet --progress --branch '${branch}' $SCM_URL $SD_CHECKOUT_DIR_FINAL";`,
                 '    fi;',
-                '    export GIT_SHALLOW_CLONE_BRANCH="--no-single-branch";',
-                '    if [ "$GIT_SHALLOW_CLONE_SINGLE_BRANCH" = true ]; then',
-                '        export GIT_SHALLOW_CLONE_BRANCH="";',
+                // Sparse Checkout
+                '    if [ ! -z "$GIT_SPARSE_CHECKOUT_PATH" ]; then',
+                '        $SD_GIT_WRAPPER "git sparse-checkout set $GIT_SPARSE_CHECKOUT_PATH" && $SD_GIT_WRAPPER "git checkout";',
                 '    fi;',
-                `    $SD_GIT_WRAPPER "git clone $GIT_SHALLOW_CLONE_DEPTH_OPTION $GIT_SHALLOW_CLONE_BRANCH $GIT_SPARSE_OPTION $GIT_RECURSIVE_OPTION --quiet --progress --branch '${branch}' $SCM_URL $SD_CHECKOUT_DIR_FINAL";`,
+                // Reset to SHA
+                `    $SD_GIT_WRAPPER "git reset --hard '${checkoutRef}' --";`,
+                `    echo 'Reset to ${checkoutRef}';`,
                 'fi'
-            ]),
-            // Sparse Checkout
-            trimIndentJoin([
-                'if [ ! -z "$GIT_SPARSE_CHECKOUT_PATH" ];then',
-                '    $SD_GIT_WRAPPER "git sparse-checkout set $GIT_SPARSE_CHECKOUT_PATH" && $SD_GIT_WRAPPER "git checkout";',
-                'fi'
-            ]),
-            // // Reset to SHA
-            `$SD_GIT_WRAPPER "git reset --hard '${checkoutRef}' --"`,
-            `echo 'Reset to ${checkoutRef}'`
+            ])
         );
 
         // For pull requests
@@ -655,14 +666,20 @@ class GitlabScm extends Scm {
 
             // Fetch a pull request
             command.push(
-                `echo 'Fetching PR ${prRef}'`,
-                `$SD_GIT_WRAPPER "git fetch origin ${prRef}"`,
                 `export PR_BASE_BRANCH_NAME='${branch}'`,
                 `export PR_BRANCH_NAME='${baseRepo}/${prBranchName}'`,
-                `echo 'Checking out the PR branch ${prBranchName}'`,
-                `$SD_GIT_WRAPPER "git checkout ${LOCAL_BRANCH_NAME}"`,
-                `$SD_GIT_WRAPPER "git merge ${branch}"`,
-                `export GIT_BRANCH=origin/refs/${prRef}`
+                `export GIT_BRANCH=origin/refs/${prRef}`,
+                trimIndentJoin([
+                    'if [ ! -z $SD_SKIP_REPOSITORY_CLONE ] && [ $SD_SKIP_REPOSITORY_CLONE = true ]; then',
+                    `    echo 'Skipping fetching PR ${prRef}';`,
+                    'else',
+                    `    echo 'Fetching PR ${prRef}';`,
+                    `    $SD_GIT_WRAPPER "git fetch origin ${prRef}";`,
+                    `    echo 'Checking out the PR branch ${prBranchName}';`,
+                    `    $SD_GIT_WRAPPER "git checkout ${LOCAL_BRANCH_NAME}";`,
+                    `    $SD_GIT_WRAPPER "git merge '${branch}'";`,
+                    'fi'
+                ])
             );
         } else {
             command.push(`export GIT_BRANCH='origin/${branch}'`);
@@ -671,17 +688,29 @@ class GitlabScm extends Scm {
         // Init & Update submodule
         command.push(
             trimIndentJoin([
-                'if [ ! -z $GIT_RECURSIVE_CLONE ] && [ $GIT_RECURSIVE_CLONE = false ]; then',
-                '    $SD_GIT_WRAPPER "git submodule init";',
+                'if [ ! -z $SD_SKIP_REPOSITORY_CLONE ] && [ $SD_SKIP_REPOSITORY_CLONE = true ]; then',
+                `    echo 'Skipping submodule init and update';`,
                 'else',
-                '    $SD_GIT_WRAPPER "git submodule update --init --recursive";',
+                '    if [ ! -z $GIT_RECURSIVE_CLONE ] && [ $GIT_RECURSIVE_CLONE = false ]; then',
+                '        $SD_GIT_WRAPPER "git submodule init";',
+                '    else',
+                '        $SD_GIT_WRAPPER "git submodule update --init --recursive";',
+                '    fi;',
                 'fi'
             ])
         );
 
         // cd into rootDir after merging
         if (rootDir) {
-            command.push(`cd ${rootDir}`);
+            command.push(
+                // eslint-disable-next-line prettier/prettier
+                trimIndentJoin([
+                    'if [ ! -z $SD_SKIP_REPOSITORY_CLONE ] && [ $SD_SKIP_REPOSITORY_CLONE = true ]; then',
+                    `    mkdir -p ${rootDir};`,
+                    'fi'
+                ]),
+                `cd '${rootDir}'`
+            );
         }
 
         return Promise.resolve({

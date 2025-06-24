@@ -655,16 +655,14 @@ class GitlabScm extends Scm {
 
             // Fetch a pull request
             command.push(
-                ...[
-                    `echo 'Fetching PR ${prRef}'`,
-                    `$SD_GIT_WRAPPER "git fetch origin ${prRef}"`,
-                    `export PR_BASE_BRANCH_NAME='${branch}'`,
-                    `export PR_BRANCH_NAME='${baseRepo}/${prBranchName}'`,
-                    `echo 'Checking out the PR branch ${prBranchName}'`,
-                    `$SD_GIT_WRAPPER "git checkout ${LOCAL_BRANCH_NAME}"`,
-                    `$SD_GIT_WRAPPER "git merge ${branch}"`,
-                    `export GIT_BRANCH=origin/refs/${prRef}`
-                ]
+                `echo 'Fetching PR ${prRef}'`,
+                `$SD_GIT_WRAPPER "git fetch origin ${prRef}"`,
+                `export PR_BASE_BRANCH_NAME='${branch}'`,
+                `export PR_BRANCH_NAME='${baseRepo}/${prBranchName}'`,
+                `echo 'Checking out the PR branch ${prBranchName}'`,
+                `$SD_GIT_WRAPPER "git checkout ${LOCAL_BRANCH_NAME}"`,
+                `$SD_GIT_WRAPPER "git merge ${branch}"`,
+                `export GIT_BRANCH=origin/refs/${prRef}`
             );
         } else {
             command.push(`export GIT_BRANCH='origin/${branch}'`);

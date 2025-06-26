@@ -551,11 +551,11 @@ class GitlabScm extends Scm {
             // git 1.7.1 doesn't support --no-edit with merge, this should do same thing
             'export GIT_MERGE_AUTOEDIT=no',
             // Set config
-            'echo Setting user name and user email',
             trimIndentJoin([
-                'if [ ! -z $SD_SKIP_REPOSITORY_CLONE ] && [ $SD_SKIP_REPOSITORY_CLONE = true ] && ! command -v git >/dev/null 2>&1; then',
+                'if [ ! -z $SD_SKIP_REPOSITORY_CLONE ] && [ $SD_SKIP_REPOSITORY_CLONE = true ] && ! $SD_GIT_WRAPPER "git -v" >/dev/null 2>&1; then',
                 `    echo 'Skipping git config';`,
                 'else',
+                '    echo "Setting user name and user email";',
                 `    $SD_GIT_WRAPPER "git config --global user.name ${this.config.username}";`,
                 `    $SD_GIT_WRAPPER "git config --global user.email ${this.config.email}";`,
                 'fi'

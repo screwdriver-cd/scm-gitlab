@@ -490,7 +490,7 @@ describe('index', function () {
                 });
         });
 
-        it('rejects if status code is not 200', () => {
+        it('resolves with author with default values for the optional fields if status code is not 200', () => {
             const err = new Error('404 Reason "Resource not found" Caller "_decorateAuthor"');
 
             err.status = 404;
@@ -503,17 +503,21 @@ describe('index', function () {
                     scmContext,
                     token
                 })
-                .then(() => {
-                    assert.fail('Should not get here');
-                })
-                .catch(error => {
-                    assert.calledWith(requestMock, expectedOptions);
-                    assert.match(error.message, '404 Reason "Resource not found" Caller "_decorateAuthor"');
-                    assert.match(error.status, 404);
+                .then(author => {
+                    assert.deepEqual(
+                        {
+                            id: '',
+                            avatar: 'https://cd.screwdriver.cd/assets/unknown_user.png',
+                            name: 'batman',
+                            username: 'batman',
+                            url: 'https://cd.screwdriver.cd/'
+                        },
+                        author
+                    );
                 });
         });
 
-        it('rejects if fails', () => {
+        it('resolves with author with default values for the optional fields when there is a failure', () => {
             const err = new Error('500 Reason "Internal Server Error" Caller "_decorateAuthor"');
 
             err.status = 500;
@@ -526,11 +530,17 @@ describe('index', function () {
                     scmContext,
                     token
                 })
-                .then(() => {
-                    assert.fail('Should not get here');
-                })
-                .catch(error => {
-                    assert.equal(error, err);
+                .then(author => {
+                    assert.deepEqual(
+                        {
+                            id: '',
+                            avatar: 'https://cd.screwdriver.cd/assets/unknown_user.png',
+                            name: 'batman',
+                            username: 'batman',
+                            url: 'https://cd.screwdriver.cd/'
+                        },
+                        author
+                    );
                 });
         });
     });

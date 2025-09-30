@@ -290,7 +290,9 @@ describe('index', function () {
                 'x-gitlab-event': 'Merge Request Hook'
             };
 
-            return scm.parseHook(headers, testPayloadOpen).then(result => assert.deepEqual(result, expected));
+            return scm
+                .parseHook(headers, JSON.stringify(testPayloadOpen))
+                .then(result => assert.deepEqual(result, expected));
         });
 
         it('resolves the correct parsed config for closed PR after merged', () => {
@@ -315,7 +317,9 @@ describe('index', function () {
                 'x-gitlab-event': 'Merge Request Hook'
             };
 
-            return scm.parseHook(headers, testPayloadClose).then(result => assert.deepEqual(result, expected));
+            return scm
+                .parseHook(headers, JSON.stringify(testPayloadClose))
+                .then(result => assert.deepEqual(result, expected));
         });
 
         it('resolves the correct parsed config for closed PR after declined', () => {
@@ -340,7 +344,9 @@ describe('index', function () {
                 'x-gitlab-event': 'Merge Request Hook'
             };
 
-            return scm.parseHook(headers, testPayloadClose).then(result => assert.deepEqual(result, expected));
+            return scm
+                .parseHook(headers, JSON.stringify(testPayloadClose))
+                .then(result => assert.deepEqual(result, expected));
         });
 
         it('resolves the correct parsed config for push to repo event', () => {
@@ -365,7 +371,9 @@ describe('index', function () {
                 'x-gitlab-event': 'Push Hook'
             };
 
-            return scm.parseHook(headers, testPayloadPush).then(result => assert.deepEqual(result, expected));
+            return scm
+                .parseHook(headers, JSON.stringify(testPayloadPush))
+                .then(result => assert.deepEqual(result, expected));
         });
 
         it('resolves null if events are not supported: repoFork', () => {
@@ -373,7 +381,7 @@ describe('index', function () {
                 'x-gitlab-event': 'repo:fork'
             };
 
-            return scm.parseHook(repoFork, {}).then(result => assert.deepEqual(result, null));
+            return scm.parseHook(repoFork, JSON.stringify({})).then(result => assert.deepEqual(result, null));
         });
 
         it('resolves null if events are not supported: prComment', () => {
@@ -381,7 +389,7 @@ describe('index', function () {
                 'x-gitlab-event': 'Note Hook'
             };
 
-            return scm.parseHook(prComment, {}).then(result => assert.deepEqual(result, null));
+            return scm.parseHook(prComment, JSON.stringify({})).then(result => assert.deepEqual(result, null));
         });
 
         it('resolves null if events are not supported: issueCreated', () => {
@@ -389,7 +397,7 @@ describe('index', function () {
                 'x-gitlab-event': 'Issue Hook'
             };
 
-            return scm.parseHook(issueCreated, {}).then(result => assert.deepEqual(result, null));
+            return scm.parseHook(issueCreated, JSON.stringify({})).then(result => assert.deepEqual(result, null));
         });
 
         it('resolves null for a pull request payload with an unsupported action', () => {
@@ -398,7 +406,9 @@ describe('index', function () {
                 action: 'locked'
             };
 
-            return scm.parseHook(testHeaders, { object_kind: 'merge_request' }).then(result => assert.isNull(result));
+            return scm
+                .parseHook(testHeaders, JSON.stringify({ object_kind: 'merge_request' }))
+                .then(result => assert.isNull(result));
         });
     });
 
@@ -2184,7 +2194,7 @@ describe('index', function () {
                 'x-gitlab-event': 'Merge Request Hook'
             };
 
-            return scm.canHandleWebhook(headers, testPayloadOpen).then(result => {
+            return scm.canHandleWebhook(headers, JSON.stringify(testPayloadOpen)).then(result => {
                 assert.strictEqual(result, true);
             });
         });
@@ -2195,7 +2205,7 @@ describe('index', function () {
                 'x-gitlab-event': 'Merge Request Hook'
             };
 
-            return scm.canHandleWebhook(headers, testPayloadClose).then(result => {
+            return scm.canHandleWebhook(headers, JSON.stringify(testPayloadClose)).then(result => {
                 assert.strictEqual(result, true);
             });
         });
@@ -2206,7 +2216,7 @@ describe('index', function () {
                 'x-gitlab-event': 'Push Hook'
             };
 
-            return scm.canHandleWebhook(headers, testPayloadPush).then(result => {
+            return scm.canHandleWebhook(headers, JSON.stringify(testPayloadPush)).then(result => {
                 assert.strictEqual(result, true);
             });
         });
@@ -2218,7 +2228,7 @@ describe('index', function () {
                 'x-github-delivery': '3c77bf80-9a2f-11e6-80d6-72f7fe03ea29'
             };
 
-            return scm.canHandleWebhook(headers, testPayloadOpen).then(result => {
+            return scm.canHandleWebhook(headers, JSON.stringify(testPayloadOpen)).then(result => {
                 assert.strictEqual(result, false);
             });
         });
@@ -2232,7 +2242,7 @@ describe('index', function () {
             scm._parseHook = sinon.stub();
             scm._parseHook.resolves(null);
 
-            return scm.canHandleWebhook(headers, testPayloadOpen).then(result => {
+            return scm.canHandleWebhook(headers, JSON.stringify(testPayloadOpen)).then(result => {
                 assert.strictEqual(result, true);
             });
         });
@@ -2245,7 +2255,7 @@ describe('index', function () {
 
             scm._parseHook = sinon.stub().rejects();
 
-            return scm.canHandleWebhook(headers, testPayloadOpen).then(result => {
+            return scm.canHandleWebhook(headers, JSON.stringify(testPayloadOpen)).then(result => {
                 assert.strictEqual(result, false);
             });
         });

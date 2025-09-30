@@ -371,19 +371,20 @@ class GitlabScm extends Scm {
      * @async _parseHook
      * @param  {Object}  payloadHeaders  The request headers associated with the
      *                                   webhook payload
-     * @param  {Object}  webhookPayload  The webhook payload received from the
+     * @param  {String}  webhookPayload  The webhook payload received from the
      *                                   SCM service.
      * @return {Promise}                 A key-map of data related to the received
      *                                   payload
      */
     async _parseHook(payloadHeaders, webhookPayload) {
+        const parsedWebhookPayload = JSON.parse(webhookPayload);
         const scmContexts = this._getScmContexts();
         const scmContext = scmContexts[0];
         const hookId = ''; // hookId is not in header or payload
-        const checkoutUrl = Hoek.reach(webhookPayload, 'project.git_ssh_url');
+        const checkoutUrl = Hoek.reach(parsedWebhookPayload, 'project.git_ssh_url');
         const commitAuthors = [];
-        const commits = Hoek.reach(webhookPayload, 'commits');
-        const type = Hoek.reach(webhookPayload, 'object_kind');
+        const commits = Hoek.reach(parsedWebhookPayload, 'commits');
+        const type = Hoek.reach(parsedWebhookPayload, 'object_kind');
 
         if (!Object.keys(payloadHeaders).includes('x-gitlab-event')) {
             throwError('Missing x-gitlab-event header', 400);
@@ -391,7 +392,7 @@ class GitlabScm extends Scm {
 
         switch (type) {
             case 'merge_request': {
-                const mergeRequest = Hoek.reach(webhookPayload, 'object_attributes');
+                const mergeRequest = Hoek.reach(parsedWebhookPayload, 'object_attributes');
                 let action = Hoek.reach(mergeRequest, 'state');
                 const prNum = Hoek.reach(mergeRequest, 'iid');
                 const prTitle = Hoek.reach(mergeRequest, 'title');
@@ -422,7 +423,7 @@ class GitlabScm extends Scm {
                     prSource,
                     sha: Hoek.reach(mergeRequest, 'last_commit.id'),
                     type: 'pr',
-                    username: Hoek.reach(webhookPayload, 'user.username'),
+                    username: Hoek.reach(parsedWebhookPayload, 'user.username'),
                     hookId,
                     scmContext,
                     prMerged
@@ -437,19 +438,19 @@ class GitlabScm extends Scm {
 
                 return {
                     action: 'push',
-                    branch: Hoek.reach(webhookPayload, 'ref').split('/').slice(-1)[0],
+                    branch: Hoek.reach(parsedWebhookPayload, 'ref').split('/').slice(-1)[0],
                     checkoutUrl,
-                    sha: Hoek.reach(webhookPayload, 'checkout_sha'),
+                    sha: Hoek.reach(parsedWebhookPayload, 'checkout_sha'),
                     type: 'repo',
-                    username: Hoek.reach(webhookPayload, 'user_username'),
+                    username: Hoek.reach(parsedWebhookPayload, 'user_username'),
                     commitAuthors,
-                    lastCommitMessage: Hoek.reach(webhookPayload, 'commits.-1.message', { default: '' }) || '',
+                    lastCommitMessage: Hoek.reach(parsedWebhookPayload, 'commits.-1.message', { default: '' }) || '',
                     hookId,
                     scmContext,
-                    ref: Hoek.reach(webhookPayload, 'ref'),
-                    addedFiles: Hoek.reach(webhookPayload, ['commits', 0, 'added'], { default: [] }),
-                    modifiedFiles: Hoek.reach(webhookPayload, ['commits', 0, 'modified'], { default: [] }),
-                    removedFiles: Hoek.reach(webhookPayload, ['commits', 0, 'removed'], { default: [] })
+                    ref: Hoek.reach(parsedWebhookPayload, 'ref'),
+                    addedFiles: Hoek.reach(parsedWebhookPayload, ['commits', 0, 'added'], { default: [] }),
+                    modifiedFiles: Hoek.reach(parsedWebhookPayload, ['commits', 0, 'modified'], { default: [] }),
+                    removedFiles: Hoek.reach(parsedWebhookPayload, ['commits', 0, 'removed'], { default: [] })
                 };
             }
             default:
@@ -1329,7 +1330,7 @@ class GitlabScm extends Scm {
      * Determine if a scm module can handle the received webhook
      * @async canHandleWebhook
      * @param {Object}    headers    The request headers associated with the webhook payload
-     * @param {Object}    payload    The webhook payload received from the SCM service
+     * @param {String}    payload    The webhook payload received from the SCM service
      * @return {Promise}
      */
     async _canHandleWebhook(headers, payload) {

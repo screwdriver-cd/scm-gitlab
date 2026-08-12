@@ -703,14 +703,16 @@ class GitlabScm extends Scm {
 
         // cd into rootDir after merging
         if (rootDir) {
+            const escapedRootDir = rootDir.replace(/'/g, "'\\''");
+
             command.push(
                 // eslint-disable-next-line prettier/prettier
                 trimIndentJoin([
                     'if [ ! -z $SD_SKIP_REPOSITORY_CLONE ] && [ $SD_SKIP_REPOSITORY_CLONE = true ]; then',
-                    `    mkdir -p ${rootDir};`,
+                    `    mkdir -p '${escapedRootDir}';`,
                     'fi'
                 ]),
-                `cd '${rootDir}'`
+                `cd '${escapedRootDir}'`
             );
         }
 
